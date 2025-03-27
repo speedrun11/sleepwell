@@ -1,0 +1,466 @@
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>SLEEPWELL - HOME</title>
+        
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap');
+            
+            * {
+                font-family: 'Montserrat', sans-serif;
+            }
+            
+            body {
+                background: black;
+                color: white;
+            }
+
+            .hero-section, .section {
+                height: 100vh;
+                display: flex;
+                align-items: center;console.log("Navbar scroll event listener added.");
+console.log("Password toggle function added.");
+console.log("Terms and Conditions modal event listener added.");
+console.log("Signup form submission event listener added.");
+console.log("Signin form submission event listener added.");
+console.log("Document ready event listener added.");
+console.log("Signup form submitted.");
+console.log("Signin form submitted.");
+console.log("Terms and Conditions accepted.");
+console.log("Terms and Conditions modal hidden.");
+console.log("Signup modal shown.");
+console.log("Account created successfully!");
+console.log("Login successful!");
+console.log("Error: " + response);
+                padding: 60px 0;
+            }
+
+            .hero-section {
+                background: url("{{ url_for('static', filename='img/hero.jpg') }}") no-repeat left center/cover;
+                position: relative;
+            }
+
+            .overlay {
+                background: rgba(0, 0, 0, 0.6);
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+            }
+
+            .hero-content {
+                position: relative;
+                color: white;
+                max-width: 50%;
+                margin-left: 5%;
+            }
+
+            .navbar {
+            transition: top 0.3s ease-in-out;
+            padding: 15px 20px;
+            }
+
+            .navbar-brand {
+                font-weight: bold;
+                font-size: 1.5rem;
+            }
+
+            #how-it-works img {
+                width: 100%;
+                height: auto;
+            }
+
+            .highlight-box {
+                padding: 15px;
+                border-radius: 10px;
+                transition: background-color 0.3s;
+            }
+
+            .highlight-box:hover {
+                background-color: rgba(255, 255, 255, 0.3);
+            }
+
+            .faq-section {
+                text-align: center;
+            }
+
+            .faq-item {
+                display: flex;
+                align-items: flex-start;
+                gap: 15px;
+                padding: 20px 0;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+                max-width: 800px;
+                margin: 0 auto;
+            }
+
+            .faq-item:last-child {
+                border-bottom: none;
+            }
+
+            .faq-icon {
+                font-size: 22px;
+                color: white;
+            }
+
+            .faq-question {
+                font-size: 22px;
+                font-weight: bold;
+                color: orange;
+                text-align: left;
+            }
+
+            .faq-answer {
+                color: white;
+                font-size: 19px;
+                text-align: justify;
+            }
+
+            /* Footer Styles */
+            .footer {
+                border-top: 1px solid rgba(255, 255, 255, 0.2);
+            }
+
+            .footer a:hover {
+                text-decoration: underline;
+            }
+
+            .footer hr {
+                border-color: rgba(255, 255, 255, 0.5);
+                margin: auto;
+            }
+            .text-justify {
+                text-align: justify;
+            }
+
+
+        </style>
+
+
+    </head>
+    <body>
+
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-black px-4 fixed-top" id="navbar">
+            <a class="navbar-brand" href="#">SleepWell</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="#home">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#how-it-works">How It Works</a></li>
+                    <li class="nav-item">
+                        <a class="btn btn-outline-light me-2" data-bs-toggle="modal" data-bs-target="#signinModal">Sign In</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-light" data-bs-toggle="modal" data-bs-target="#signupModal">Sign Up</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Sign Up Modal -->
+        <div class="modal fade" id="signupModal" tabindex="-1" aria-labelledby="signupModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content bg-dark text-white rounded-4 shadow-lg">
+                    <div class="modal-body p-5">
+                        <h3 class="fw-bold text-center">Create an account</h3>
+                        <p class="text-center">Already have an account? <a href="#" data-bs-toggle="modal" data-bs-target="#signinModal" class="text-primary">Log in</a></p>
+
+                        <form id="signupForm">
+                            <div class="row">
+                                <div class="col-6 mb-3">
+                                    <input type="text" class="form-control bg-secondary text-white" name="first_name" placeholder="First Name" required>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <input type="text" class="form-control bg-secondary text-white" name="last_name" placeholder="Last Name" required>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <input type="email" class="form-control bg-secondary text-white" name="email" placeholder="Email" required>
+                            </div>
+                            
+                            <div class="mb-3 position-relative">
+                                <input type="password" class="form-control bg-secondary text-white" name="password" id="signupPassword" placeholder="Enter your password" required>
+                                <i class="bi bi-eye position-absolute end-0 top-50 translate-middle pe-3" onclick="togglePassword('signupPassword')"></i>
+                            </div>
+                            
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="termsCheckbox" required>
+                                <label class="form-check-label" for="termsCheckbox">
+                                    I agree to the <a href="#" class="text-primary fw-bold" data-bs-toggle="modal" data-bs-target="#termsModal">Terms & Conditions</a>
+                                </label>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100 py-2">Create Account</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sign In Modal -->
+        <div class="modal fade" id="signinModal" tabindex="-1" aria-labelledby="signinModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content bg-dark text-white rounded-4 shadow-lg">
+                    <div class="modal-body p-5">
+                        <h3 class="fw-bold text-center">Welcome Back</h3>
+                        <p class="text-center">Don't have an account? <a href="#" data-bs-toggle="modal" data-bs-target="#signupModal" class="text-primary">Sign up</a></p>
+
+                        <form id="signinForm">
+                            <div class="mb-3">
+                                <input type="email" class="form-control bg-secondary text-white" name="email" placeholder="Email" required>
+                            </div>
+                            
+                            <div class="mb-3 position-relative">
+                                <input type="password" class="form-control bg-secondary text-white" name="password" id="signinPassword" placeholder="Enter your password" required>
+                                <i class="bi bi-eye position-absolute end-0 top-50 translate-middle pe-3" onclick="togglePassword('signinPassword')"></i>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100 py-2">Sign In</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Terms and Conditions Modal -->
+        <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content bg-dark text-white rounded-4 shadow-lg">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold" id="termsModalLabel">Terms & Conditions</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-justify" style="max-height: 400px; overflow-y: auto; padding: 20px;">
+                        <h6 class="fw-bold text-warning">1. Introduction</h6>
+                        <p>Welcome to SleepWell! By signing up, you agree to comply with our terms and conditions.</p>
+
+                        <h6 class="fw-bold text-warning">2. User Responsibilities</h6>
+                        <p>You are responsible for maintaining the confidentiality of your account and any activity under it.</p>
+
+                        <h6 class="fw-bold text-warning">3. Data Privacy</h6>
+                        <p>We prioritize your privacy and ensure your sleep data remains secure.</p>
+
+                        <h6 class="fw-bold text-warning">4. Prohibited Activities</h6>
+                        <p>Users must not misuse the platform, attempt unauthorized access, or share misleading information.</p>
+
+                        <h6 class="fw-bold text-warning">5. Account Termination</h6>
+                        <p>We reserve the right to suspend accounts violating our policies.</p>
+
+                        <h6 class="fw-bold text-warning">6. Changes to Terms</h6>
+                        <p>We may update our terms, and continued use implies acceptance of the changes.</p>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-outline-light me-2" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-warning" id="acceptTerms">Accept</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hero Section -->
+        <section id="home" class="hero-section">
+            <div class="overlay"></div>
+            <div class="hero-content">
+                <h1 class="fw-bold">Transform Your Sleep with Data-Driven Insights</h1>
+                <p class="lead">Track your sleep, analyze patterns, and receive personalized recommendations to improve your sleep quality.</p>
+                <a href="#signupModal" class="btn btn-warning btn-lg">Get Started</a>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="section">
+            <div class="container">
+                <h2 class="text-center fw-bold">About SleepWell</h2>
+                <div class="row mt-4 align-items-center">
+                    <div class="col-md-6">
+                        <img src="{{ url_for('static', filename='img/about.avif') }}" class="img-fluid rounded shadow" alt="About SleepWell">
+                    </div>
+                    <div class="col-md-6">
+                        <p class="lead text-justify">
+                            At SleepWell, we are dedicated to improving your sleep quality through DATA-DRIVEN INSIGHTS.
+                            Our platform helps you track your sleep, analyze patterns, and receive PERSONALIZED RECOMMENDATIONS 
+                            to enhance your rest.
+                        </p>
+                        <p class="text-justify">
+                            Using cutting-edge AI and machine learning, SleepWell analyzes your sleep habits 
+                            and provides customized advice to help you sleep better. 
+                            Whether you're struggling with insomnia or just looking to optimize your rest, 
+                            SleepWell is here to guide you.
+                        </p>
+                        <a href="#signupModal" class="btn btn-warning btn-lg">Join Us</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works Section -->
+        <section id="how-it-works" class="section">
+            <div class="container">
+                <h2 class="text-center fw-bold">How SleepWell Works</h2>
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <img src="{{ url_for('static', filename='img/how.jpeg') }}" class="img-fluid rounded shadow" alt="Sleep Tracking">
+                    </div>
+                    <div class="col-md-6">
+                        <div class="highlight-box">
+                            <h4>Track Your Sleep</h4>
+                            <p>Log your bedtime, wake-up time, and other lifestyle factors affecting your sleep.</p>
+                        </div>
+                        <div class="highlight-box mt-3">
+                            <h4>Analyze Sleep Data</h4>
+                            <p>Explore patterns and trends with Exploratory Data Analysis (EDA) to identify key sleep factors.</p>
+                        </div>
+                        <div class="highlight-box mt-3">
+                            <h4>Receive Smart Recommendations</h4>
+                            <p>Get personalized advice based on Decision Tree analysis to improve your sleep quality.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ Section -->
+        <section id="faq" class="section faq-section">
+            <div class="container">
+                <h2 class="text-center fw-bold">Frequently Asked Questions</h2>
+                <div class="mt-4">
+                    <div class="faq-item">
+                        <span class="faq-icon">❓</span>
+                        <div>
+                            <div class="faq-question">How does SleepWell analyze my sleep?</div>
+                            <div class="faq-answer">SleepWell collects data on your bedtime, wake-up time, and lifestyle habits, then uses Decision Tree algorithms to categorize your sleep quality and provide recommendations.</div>
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <span class="faq-icon">❓</span>
+                        <div>
+                            <div class="faq-question">Do I need a wearable device?</div>
+                            <div class="faq-answer">No, SleepWell can analyze your sleep using manual inputs, but integrating a wearable device can enhance accuracy.</div>
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <span class="faq-icon">❓</span>
+                        <div>
+                            <div class="faq-question">Is my sleep data secure?</div>
+                            <div class="faq-answer">Yes, we use secure authentication and encryption to protect your data and ensure privacy.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer bg-black text-white py-4">
+            <div class="container d-flex justify-content-between align-items-start">
+                <div>
+                    <h4 class="fw-bold">SleepWell</h4>
+                    <p>Improve your sleep quality with data-driven insights. Get personalized recommendations based on your sleep habits.</p>
+                </div>
+                <div>
+                    <h5 class="fw-bold">Navigation</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#home" class="text-white text-decoration-none">Home</a></li>
+                        <li><a href="#about" class="text-white text-decoration-none">About</a></li>
+                        <li><a href="#how-it-works" class="text-white text-decoration-none">How It Works</a></li>
+                    </ul>
+                </div>
+            </div>
+        </footer>
+
+        <script>
+            let lastScrollTop = 0;
+            const navbar = document.getElementById("navbar");
+
+            window.addEventListener("scroll", function () {
+                let scrollTop = window.scrollY || document.documentElement.scrollTop;
+                navbar.style.top = scrollTop > lastScrollTop ? "-80px" : "0";
+                lastScrollTop = scrollTop;
+            });
+        </script>
+        <script>
+            function togglePassword(inputId) {
+                let input = document.getElementById(inputId);
+                input.type = input.type === "password" ? "text" : "password";
+            }
+        </script>
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const acceptTermsButton = document.getElementById("acceptTerms");
+                const termsCheckbox = document.getElementById("termsCheckbox");
+
+                acceptTermsButton.addEventListener("click", function () {
+                    termsCheckbox.checked = true;
+
+                    let termsModalEl = document.getElementById("termsModal");
+                    let termsModalInstance = bootstrap.Modal.getInstance(termsModalEl) || new bootstrap.Modal(termsModalEl);
+                    termsModalInstance.hide();
+
+                    setTimeout(() => {
+                        let signUpModalEl = document.getElementById("signupModal");
+                        let signUpModalInstance = new bootstrap.Modal(signUpModalEl);
+                        signUpModalInstance.show();
+                    }, 500);
+                });
+            });
+        </script>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script>
+        $(document).ready(function() {
+            $("#signupForm").submit(function(event) {
+                event.preventDefault();
+
+                if (!$("#termsCheckbox").is(":checked")) {
+                    alert("You must agree to the Terms & Conditions.");
+                    return;
+                }
+
+                $.ajax({
+                    url: "signup.php",
+                    type: "POST",
+                    data: $(this).serialize(),
+                    success: function(response) {
+                        if (response.trim() === "success") {
+                            alert("Account created successfully! You can now sign in.");
+                            $("#signupModal").modal('hide');
+                            $("#signupForm")[0].reset();
+                        } else {
+                            alert(response);
+                        }
+                    }
+                });
+            });
+        });
+        </script>
+        <script>
+        $(document).ready(function() {
+            $("#signinForm").submit(function(event) {
+                event.preventDefault();
+
+                $.ajax({
+                    url: "signin.php",
+                    type: "POST",
+                    data: $(this).serialize(),
+                    success: function(response) {
+                        if (response.trim() === "success") {
+                            alert("Login successful!");
+                            window.location.href = "dashboard.php";
+                        } else {
+                            alert(response);
+                        }
+                    }
+                });
+            });
+        });
+        </script>
+    </body>
+    </html>
