@@ -15,5 +15,10 @@ def create_user(email, password, first_name, last_name):
     except Exception as e:
         return str(e)
 
-def verify_user(email, password):
-    return "Use Firebase Authentication SDK in frontend"
+def verify_id_token(id_token):
+    """Verify the ID token sent from the frontend."""
+    try:
+        decoded_token = auth.verify_id_token(id_token)
+        return decoded_token
+    except Exception as e:
+        return str(e)
