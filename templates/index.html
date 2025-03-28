@@ -7,6 +7,12 @@
         
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- Bootstrap Icons -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+        <!-- Firebase v8 (keep only one version) -->
+        <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap');
             
@@ -22,20 +28,7 @@
             .hero-section, .section {
                 height: 100vh;
                 display: flex;
-                align-items: center;console.log("Navbar scroll event listener added.");
-console.log("Password toggle function added.");
-console.log("Terms and Conditions modal event listener added.");
-console.log("Signup form submission event listener added.");
-console.log("Signin form submission event listener added.");
-console.log("Document ready event listener added.");
-console.log("Signup form submitted.");
-console.log("Signin form submitted.");
-console.log("Terms and Conditions accepted.");
-console.log("Terms and Conditions modal hidden.");
-console.log("Signup modal shown.");
-console.log("Account created successfully!");
-console.log("Login successful!");
-console.log("Error: " + response);
+                align-items: center;
                 padding: 60px 0;
             }
 
@@ -215,13 +208,14 @@ console.log("Error: " + response);
                         <h3 class="fw-bold text-center">Welcome Back</h3>
                         <p class="text-center">Don't have an account? <a href="#" data-bs-toggle="modal" data-bs-target="#signupModal" class="text-primary">Sign up</a></p>
 
-                        <form id="signinForm">
+                        <form id="signinForm" method="POST"> 
                             <div class="mb-3">
                                 <input type="email" class="form-control bg-secondary text-white" name="email" placeholder="Email" required>
                             </div>
                             
                             <div class="mb-3 position-relative">
-                                <input type="password" class="form-control bg-secondary text-white" name="password" id="signinPassword" placeholder="Enter your password" required>
+                                <input type="password" class="form-control bg-secondary text-white" name="password" id="signinPassword" placeholder="Enter your password" required autocomplete="current-password">
+
                                 <i class="bi bi-eye position-absolute end-0 top-50 translate-middle pe-3" onclick="togglePassword('signinPassword')"></i>
                             </div>
 
@@ -415,52 +409,130 @@ console.log("Error: " + response);
         </script>
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script>
-        $(document).ready(function() {
-            $("#signupForm").submit(function(event) {
-                event.preventDefault();
-
-                if (!$("#termsCheckbox").is(":checked")) {
+            $(document).ready(function () {
+                    $("#signupForm").submit(function (event) {
+                        event.preventDefault();
+                    
+                    // Validate terms checkbox
+                    if (!$("#termsCheckbox").is(":checked")) {
                     alert("You must agree to the Terms & Conditions.");
                     return;
-                }
-
-                $.ajax({
-                    url: "signup.php",
-                    type: "POST",
-                    data: $(this).serialize(),
-                    success: function(response) {
-                        if (response.trim() === "success") {
-                            alert("Account created successfully! You can now sign in.");
-                            $("#signupModal").modal('hide');
-                            $("#signupForm")[0].reset();
-                        } else {
-                            alert(response);
-                        }
                     }
+
+                     // Validate password strength
+                    const password = $("input[name='password']").val();
+                    if (password.length < 8) {
+                        alert("Password must be at least 8 characters");
+                        return;
+                    }
+
+                    // Show loading state
+                    const submitBtn = $(this).find('button[type="submit"]');
+                    submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Creating...');
+
+                    let formData = {
+                        first_name: $("input[name='first_name']").val(),
+                        last_name: $("input[name='last_name']").val(),
+                        email: $("input[name='email']").val(),
+                        password: password
+                    };
+
+                    $.ajax({
+                        url: "/signup",
+                        type: "POST",
+                        contentType: "application/json",
+                        data: JSON.stringify(formData)
+                    })
+                    .done(function(response) {
+                        // Create Firebase account after backend success
+                        firebase.auth().createUserWithEmailAndPassword(formData.email, formData.password)
+                            .then(() => {
+                                $('#signupModal').modal('hide');
+                                window.location.href = "/dashboard.html";
+                            })
+                            .catch((error) => {
+                                console.error("Firebase account creation failed:", error);
+                                alert("Account created but login failed. Please sign in manually.");
+                            });
+                    })
+                    .fail(function(xhr) {
+                        let errorMsg = "Account creation failed";
+                        try {
+                            const errorData = JSON.parse(xhr.responseText);
+                            errorMsg = errorData.error || errorMsg;
+                        } catch (e) {}
+                        alert(errorMsg);
+                    })
+                    .always(function() {
+                        submitBtn.prop('disabled', false).text('Create Account');
+                    });
                 });
             });
-        });
         </script>
+        
         <script>
-        $(document).ready(function() {
-            $("#signinForm").submit(function(event) {
-                event.preventDefault();
+            // Initialize Firebase
+            const firebaseConfig = {
+                apiKey: "AIzaSyDSKYsYwvM-0zof2rHtiKodp4z0HUTNiI4",
+                authDomain: "sleepwell-7ec3a.firebaseapp.com",
+                projectId: "sleepwell-7ec3a",
+                storageBucket: "sleepwell-7ec3a.appspot.com",
+                messagingSenderId: "37760004376",
+                appId: "1:37760004376:web:87a663c13995e6f02c6e6d"
+            };
+            firebase.initializeApp(firebaseConfig);
+        
+            // Sign-in form handler
+            document.getElementById("signinForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+            
+            const email = this.elements['email'].value;
+            const password = this.elements['password'].value;
+            const submitBtn = this.querySelector('button[type="submit"]');
+            
+            try {
+                // Show loading state
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Signing in...';
 
-                $.ajax({
-                    url: "signin.php",
-                    type: "POST",
-                    data: $(this).serialize(),
-                    success: function(response) {
-                        if (response.trim() === "success") {
-                            alert("Login successful!");
-                            window.location.href = "dashboard.php";
-                        } else {
-                            alert(response);
-                        }
-                    }
+                // 1. Sign in with Firebase Auth
+                const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+                const idToken = await userCredential.user.getIdToken();
+                
+                // 2. Send token to backend
+                const response = await fetch("/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ idToken })
                 });
-            });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || "Login failed");
+                }
+                
+                // 3. Hide modal and redirect
+                const modal = bootstrap.Modal.getInstance(document.getElementById('signinModal'));
+                modal.hide();
+                
+                // 4. Redirect to dashboard
+                window.location.href = data.redirect || "/dashboard.html";
+                
+            } catch (error) {
+                console.error("Login error:", error);
+                alert("Login failed: " + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Sign In";
+            }
         });
         </script>
+        
+        <!-- Bootstrap Script -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     </body>
     </html>

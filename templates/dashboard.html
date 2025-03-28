@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SLEEPWELL - DASHBOARD</title>
+    
+    <!-- CSS Dependencies -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap');
+        
+        * {
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        body {
+            background: #121212;
+            color: white;
+            padding-top: 56px; /* Account for fixed navbar */
+        }
+
+        .sidebar {
+            height: 100vh;
+            background: #1e1e1e;
+            padding: 20px;
+            position: fixed;
+            width: 250px;
+            overflow-y: auto;
+        }
+
+        .sidebar a {
+            color: white;
+            text-decoration: none;
+            display: block;
+            padding: 10px;
+            border-radius: 5px;
+            transition: background 0.3s;
+            margin-bottom: 5px;
+        }
+
+        .sidebar a:hover, .sidebar a.active {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar a i {
+            width: 20px;
+            text-align: center;
+            margin-right: 10px;
+        }
+
+        .content {
+            padding: 20px;
+            margin-left: 250px; /* Match sidebar width */
+            flex-grow: 1;
+        }
+
+        .card {
+            background: #2a2a2a;
+            border: none;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            background: #3a3a3a;
+            color: white;
+            border-bottom: 1px solid #444;
+        }
+
+        .card-body {
+            color: #d1d1d1;
+        }
+
+        .user-info {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 5px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 100%;
+                position: relative;
+                height: auto;
+            }
+            .content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-black px-4 fixed-top">
+        <a class="navbar-brand" href="#">SleepWell</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="bi bi-house-door"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <button id="logout-btn" class="btn btn-outline-danger ms-2">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="user-info">
+                <h5 id="sidebar-username">User</h5>
+                <small class="text-muted" id="sidebar-email">email@example.com</small>
+            </div>
+            
+            <nav class="nav flex-column">
+                <a class="nav-link active" href="#overview">
+                    <i class="bi bi-speedometer2"></i> Overview
+                </a>
+                <a class="nav-link" href="#sleep-analysis">
+                    <i class="bi bi-graph-up"></i> Sleep Analysis
+                </a>
+                <a class="nav-link" href="#recommendations">
+                    <i class="bi bi-lightbulb"></i> Recommendations
+                </a>
+                <a class="nav-link" href="#settings">
+                    <i class="bi bi-gear"></i> Settings
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <div id="user-greeting" class="mb-4"></div>
+            
+            <div class="alert alert-info d-flex align-items-center">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                <div>Welcome to your sleep dashboard. Here you can track and analyze your sleep patterns.</div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-moon-stars"></i> Sleep Summary</span>
+                            <button id="refresh-sleep-data" class="btn btn-sm btn-outline-light">
+                                <i class="bi bi-arrow-clockwise"></i>
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <p id="avg-sleep">Average Sleep Duration: <span class="loading-spinner"></span></p>
+                            <p id="sleep-quality">Sleep Quality: <span class="loading-spinner"></span></p>
+                            <p id="sleep-consistency">Consistency: <span class="loading-spinner"></span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="bi bi-lightbulb"></i> Recommendations
+                        </div>
+                        <div class="card-body">
+                            <ul id="recommendations-list" class="list-unstyled">
+                                <li><span class="loading-spinner"></span> Loading recommendations...</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-calendar-week"></i> Weekly Sleep Pattern</span>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-light active">Week</button>
+                        <button class="btn btn-sm btn-outline-light">Month</button>
+                        <button class="btn btn-sm btn-outline-light">Year</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="sleepChart" height="200"></canvas>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <i class="bi bi-plus-circle"></i> Add Sleep Entry
+                </div>
+                <div class="card-body">
+                    <form id="sleep-entry-form">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Bedtime</label>
+                                <input type="time" class="form-control bg-dark text-white" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Wake-up Time</label>
+                                <input type="time" class="form-control bg-dark text-white" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Quality</label>
+                                <select class="form-select bg-dark text-white" required>
+                                    <option value="">Select...</option>
+                                    <option value="5">Excellent</option>
+                                    <option value="4">Good</option>
+                                    <option value="3">Average</option>
+                                    <option value="2">Poor</option>
+                                    <option value="1">Very Poor</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save"></i> Save Entry
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Dependencies -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDSKYsYwvM-0zof2rHtiKodp4z0HUTNiI4",
+            authDomain: "sleepwell-7ec3a.firebaseapp.com",
+            projectId: "sleepwell-7ec3a",
+            storageBucket: "sleepwell-7ec3a.appspot.com",
+            messagingSenderId: "37760004376",
+            appId: "1:37760004376:web:87a663c13995e6f02c6e6d"
+        };
+        firebase.initializeApp(firebaseConfig);
+
+        // DOM Elements
+        const userGreeting = document.getElementById('user-greeting');
+        const sidebarUsername = document.getElementById('sidebar-username');
+        const sidebarEmail = document.getElementById('sidebar-email');
+        const logoutBtn = document.getElementById('logout-btn');
+        const refreshBtn = document.getElementById('refresh-sleep-data');
+        const sleepForm = document.getElementById('sleep-entry-form');
+
+        // Chart initialization
+        let sleepChart;
+        const ctx = document.getElementById('sleepChart').getContext('2d');
+        
+        // Auth State Listener
+        firebase.auth().onAuthStateChanged(user => {
+            if (!user) {
+                window.location.href = "/";
+                return;
+            }
+            
+            // Update user info
+            sidebarUsername.textContent = user.displayName || 'User';
+            sidebarEmail.textContent = user.email;
+            
+            userGreeting.innerHTML = `
+                <h2>Welcome back, ${user.email.split('@')[0]}</h2>
+                <p class="text-muted">Last login: ${new Date().toLocaleString()}</p>
+            `;
+            
+            // Load user data
+            loadUserData(user.uid);
+        });
+
+        // Load user data function
+        async function loadUserData(uid) {
+            try {
+                showLoadingState(true);
+                
+                // Simulate API call (replace with actual fetch to your backend)
+                const sleepData = await mockFetchSleepData(uid);
+                
+                // Update UI with data
+                document.getElementById('avg-sleep').innerHTML = 
+                    `<i class="bi bi-clock"></i> Average Sleep Duration: <strong>${sleepData.avgDuration} hours</strong>`;
+                document.getElementById('sleep-quality').innerHTML = 
+                    `<i class="bi bi-star"></i> Sleep Quality: <strong>${sleepData.quality}</strong>`;
+                document.getElementById('sleep-consistency').innerHTML = 
+                    `<i class="bi bi-check-circle"></i> Consistency: <strong>${sleepData.consistency}</strong>`;
+                
+                // Update recommendations
+                const recList = document.getElementById('recommendations-list');
+                recList.innerHTML = sleepData.recommendations.map(rec => 
+                    `<li class="mb-2"><i class="bi bi-check-circle text-success"></i> ${rec}</li>`
+                ).join('');
+                
+                // Initialize/update chart
+                updateChart(sleepData.weeklyData);
+                
+            } catch (error) {
+                console.error("Error loading data:", error);
+                alert("Failed to load sleep data. Please try again.");
+            } finally {
+                showLoadingState(false);
+            }
+        }
+
+        // Mock data function (replace with actual API call)
+        async function mockFetchSleepData(uid) {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    resolve({
+                        avgDuration: "7.2",
+                        quality: "Good",
+                        consistency: "85%",
+                        recommendations: [
+                            "Maintain consistent bedtime",
+                            "Reduce screen time before bed",
+                            "Limit caffeine after 2pm"
+                        ],
+                        weeklyData: [6.5, 7, 7.5, 8, 7, 6, 7.5]
+                    });
+                }, 1000);
+            });
+        }
+
+        // Chart update function
+        function updateChart(data) {
+            if (sleepChart) {
+                sleepChart.destroy();
+            }
+            
+            sleepChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Hours Slept',
+                        data: data,
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#aaa'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#aaa'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Loading state management
+        function showLoadingState(isLoading) {
+            const elements = document.querySelectorAll('.loading-spinner');
+            elements.forEach(el => {
+                el.style.visibility = isLoading ? 'visible' : 'hidden';
+            });
+            
+            if (refreshBtn) {
+                refreshBtn.disabled = isLoading;
+                if (isLoading) {
+                    refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+                }
+            }
+        }
+
+        // Event Listeners
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                await firebase.auth().signOut();
+                window.location.href = '/';
+            } catch (error) {
+                console.error("Logout error:", error);
+                alert("Logout failed. Please try again.");
+            }
+        });
+
+        refreshBtn.addEventListener('click', () => {
+            const user = firebase.auth().currentUser;
+            if (user) {
+                loadUserData(user.uid);
+            }
+        });
+
+        sleepForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            alert("Sleep entry saved! (This would connect to your backend in production)");
+            sleepForm.reset();
+        });
+
+        // Initial loading state
+        showLoadingState(true);
+    </script>
+</body>
+</html>
