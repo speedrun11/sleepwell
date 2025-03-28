@@ -22,20 +22,7 @@
             .hero-section, .section {
                 height: 100vh;
                 display: flex;
-                align-items: center;console.log("Navbar scroll event listener added.");
-console.log("Password toggle function added.");
-console.log("Terms and Conditions modal event listener added.");
-console.log("Signup form submission event listener added.");
-console.log("Signin form submission event listener added.");
-console.log("Document ready event listener added.");
-console.log("Signup form submitted.");
-console.log("Signin form submitted.");
-console.log("Terms and Conditions accepted.");
-console.log("Terms and Conditions modal hidden.");
-console.log("Signup modal shown.");
-console.log("Account created successfully!");
-console.log("Login successful!");
-console.log("Error: " + response);
+                align-items: center;
                 padding: 60px 0;
             }
 
@@ -415,52 +402,71 @@ console.log("Error: " + response);
         </script>
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script>
-        $(document).ready(function() {
-            $("#signupForm").submit(function(event) {
-                event.preventDefault();
-
-                if (!$("#termsCheckbox").is(":checked")) {
-                    alert("You must agree to the Terms & Conditions.");
-                    return;
-                }
-
-                $.ajax({
-                    url: "signup.php",
-                    type: "POST",
-                    data: $(this).serialize(),
-                    success: function(response) {
-                        if (response.trim() === "success") {
+            $(document).ready(function () {
+                $("#signupForm").submit(function (event) {
+                    event.preventDefault();
+        
+                    if (!$("#termsCheckbox").is(":checked")) {
+                        alert("You must agree to the Terms & Conditions.");
+                        return;
+                    }
+        
+                    let formData = {
+                        first_name: $("input[name='first_name']").val(),
+                        last_name: $("input[name='last_name']").val(),
+                        email: $("input[name='email']").val(),
+                        password: $("input[name='password']").val()
+                    };
+        
+                    $.ajax({
+                        url: "/signup",
+                        type: "POST",
+                        contentType: "application/json",
+                        data: JSON.stringify(formData),
+                        success: function (response) {
                             alert("Account created successfully! You can now sign in.");
                             $("#signupModal").modal('hide');
                             $("#signupForm")[0].reset();
-                        } else {
-                            alert(response);
+                        },
+                        error: function (xhr) {
+                            alert("Error: " + xhr.responseJSON.error);
                         }
-                    }
+                    });
                 });
             });
-        });
         </script>
+        
         <script>
-        $(document).ready(function() {
-            $("#signinForm").submit(function(event) {
-                event.preventDefault();
+            const firebaseConfig = {
+                apiKey: "AIzaSyDSKYsYwvM-0zof2rHtiKodp4z0HUTNiI4",
+                authDomain: "sleepwell-7ec3a.firebaseapp.com",
+            };
+            firebase.initializeApp(firebaseConfig);
+            const auth = firebase.auth();
+        </script>
 
-                $.ajax({
-                    url: "signin.php",
-                    type: "POST",
-                    data: $(this).serialize(),
-                    success: function(response) {
-                        if (response.trim() === "success") {
+        <script>
+            $(document).ready(function () {
+                $("#signinForm").submit(function (event) {
+                    event.preventDefault();
+
+                    let email = $("input[name='email']").val();
+                    let password = $("input[name='password']").val();
+
+                    auth.signInWithEmailAndPassword(email, password)
+                        .then(userCredential => {
                             alert("Login successful!");
-                            window.location.href = "dashboard.php";
-                        } else {
-                            alert(response);
-                        }
-                    }
+                            window.location.href = "dashboard.html";
+                        })
+                        .catch(error => {
+                            alert("Error: " + error.message);
+                        });
                 });
             });
-        });
         </script>
+
+        <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js"></script>
+        
     </body>
     </html>
