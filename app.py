@@ -7,27 +7,23 @@ import firebase_admin
 from firebase_admin import credentials, auth
 import os
 
-# Initialize Flask
 app = Flask(__name__)
 
-# Initialize Firebase Admin (only once)
 if not firebase_admin._apps:
     cred_path = os.path.join(os.path.dirname(__file__), 'sleepwell-7ec3a-firebase-adminsdk-fbsvc-a3ab147fc6.json')
     cred = credentials.Certificate(cred_path)
     firebase_admin.initialize_app(cred)
 
-# Initialize rate limiter
 limiter = Limiter(
     app=app,
     key_func=get_remote_address,
     storage_uri="memory://"
 )
 
-# Authentication required decorator
 def auth_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        token = request.cookies.get('token')
+        token = request.cookies.get('session')
         if not token:
             return redirect(url_for('home'))
         try:
@@ -37,7 +33,6 @@ def auth_required(f):
             return redirect(url_for('home'))
     return decorated_function
 
-# Error handling decorator
 def handle_errors(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -56,11 +51,9 @@ def home():
 @auth_required
 def dashboard():
     try:
-        # Verify session cookie
         session_cookie = request.cookies.get('session')
         decoded_claims = auth.verify_session_cookie(session_cookie)
         
-        # Get user data
         user = auth.get_user(decoded_claims['uid'])
         return render_template("dashboard.html", user={
             'email': user.email,
@@ -76,7 +69,6 @@ def dashboard():
 def signup():
     data = request.get_json()
     
-    # Validate input
     if not data or not all(k in data for k in ["email", "password", "first_name", "last_name"]):
         return jsonify({"error": "Missing required fields"}), 400
     
@@ -94,15 +86,11 @@ def signup():
         }), 400
 
     try:
-        # Create user in Firebase
         user = auth.create_user(
             email=email,
             password=password,
             display_name=f"{first_name} {last_name}"
         )
-        
-        # Here you would typically also create a user record in your database
-        # firebase_config.create_user_in_db(user.uid, email, first_name, last_name)
         
         return jsonify({
             "message": "User created successfully",
@@ -126,11 +114,9 @@ def login():
         return jsonify({"error": "Missing ID token"}), 400
     
     try:
-        # Verify the Firebase ID token
         decoded_token = auth.verify_id_token(data["idToken"])
         user_id = decoded_token['uid']
         
-        # Create session cookie that expires in 1 hour
         session_cookie = auth.create_session_cookie(
             data["idToken"], 
             expires_in=3600
@@ -142,12 +128,11 @@ def login():
             "uid": user_id
         })
         
-        # Set secure HTTP-only cookie
         response.set_cookie(
             'session',
             session_cookie,
             httponly=True,
-            secure=False,  # Set to True in production with HTTPS
+            secure=False,
             samesite='Lax',
             max_age=3600
         )
@@ -162,7 +147,7 @@ def login():
 @app.route("/logout")
 def logout():
     response = redirect(url_for('home'))
-    response.delete_cookie('token')
+    response.delete_cookie('session') 
     return response
 
 if __name__ == "__main__":
