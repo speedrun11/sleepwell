@@ -8,90 +8,273 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+        --primary: #6d28d9;
+        --primary-hover: #7c3aed;
+        --accent: #10b981;
+        --bg: #121212;
+        --surface: #1e1e1e;
+        --surface-hover: rgba(255,255,255,0.05);
+        --surface-light: #2a2a2a;
+        --text: #e0e0e0;
+        --text-muted: #a0a0a0;
+
+        .user-info h5,
+        .user-info small,
+        #last-login,
+        .stat-value,
+        .stat-value i,
+        .stat-value small {
+            color: #fff !important;
+        }
         
         * {
             font-family: 'Montserrat', sans-serif;
+            box-sizing: border-box;
         }
         
         body {
-            background: #121212;
-            color: white;
+            background: var(--bg);
+            color: var(--text);
             padding-top: 56px;
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 600;
+            letter-spacing: -0.025em;
+        }
+
+        .navbar {
+            background: var(--surface) !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--primary) !important;
         }
 
         .sidebar {
             height: 100vh;
-            background: #1e1e1e;
+            background: var(--surface);
             padding: 20px;
             position: fixed;
-            width: 250px;
+            width: 280px;
             overflow-y: auto;
+            border-right: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 4px 0 12px rgba(0,0,0,0.2);
+            z-index: 10;
         }
 
         .sidebar a {
-            color: white;
+            color: var(--text);
             text-decoration: none;
             display: block;
-            padding: 10px;
-            border-radius: 5px;
-            transition: background 0.3s;
-            margin-bottom: 5px;
+            padding: 12px 16px;
+            margin: 4px 0;
+            border-radius: 6px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 3px solid transparent;
         }
 
-        .sidebar a:hover, .sidebar a.active {
-            background: rgba(255, 255, 255, 0.1);
+        .sidebar a:hover {
+            background: var(--surface-hover);
+            transform: translateX(4px);
+            border-left-color: var(--primary);
+        }
+
+        .sidebar a.active {
+            background: linear-gradient(90deg, rgba(16,185,129,0.1) 0%, transparent 100%);
+            border-left-color: var(--accent);
         }
 
         .sidebar a i {
             width: 20px;
             text-align: center;
-            margin-right: 10px;
+            margin-right: 12px;
+            font-size: 1.1rem;
         }
 
         .content {
-            padding: 20px;
-            margin-left: 250px;
+            padding: 24px;
+            margin-left: 280px;
             flex-grow: 1;
         }
 
-        .card {
-            background: #2a2a2a;
-            border: none;
+        .user-info {
+            background: var(--surface-light);
+            padding: 20px;
             border-radius: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(241, 229, 229, 0.1)
+        }
+
+        .user-info h5 {
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .user-info small {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            margin-bottom: 24px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
         }
 
         .card-header {
-            background: #3a3a3a;
-            color: white;
-            border-bottom: 1px solid #444;
+            background: rgba(255,255,255,0.03);
+            color: var(--text);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 16px 20px;
+            border-radius: 12px 12px 0 0 !important;
+            font-weight: 600;
+        }
+
+        .card-header i {
+            margin-right: 8px;
+            color: var(--primary);
         }
 
         .card-body {
-            color: #d1d1d1;
+            color: var(--text-muted);
+            padding: 20px;
         }
 
-        .user-info {
-            background: #2a2a2a;
-            padding: 15px;
+        .card-body .text-muted {
+            color: #fff !important;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            border: none;
+            padding: 8px 20px;
             border-radius: 8px;
-            margin-bottom: 20px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: scale(1.02);
+        }
+
+        .btn-outline-light {
+            border-color: rgba(255,255,255,0.2);
+            color: var(--text);
+            transition: all 0.3s;
+        }
+
+        .btn-outline-light:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .form-control, .form-select {
+            background: rgba(255,255,255,0.05) !important;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text);
+            border-radius: 8px;
+            padding: 10px 16px;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(109,40,217,0.25);
+            background: rgba(255,255,255,0.08) !important;
         }
 
         .loading-spinner {
             display: inline-block;
-            width: 1rem;
-            height: 1rem;
-            border: 2px solid rgba(255,255,255,.3);
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 3px solid rgba(255,255,255,0.2);
             border-radius: 50%;
-            border-top-color: #fff;
+            border-top-color: var(--primary);
             animation: spin 1s ease-in-out infinite;
             margin-right: 5px;
+            vertical-align: middle;
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
+        }
+
+        .alert-info {
+            background: linear-gradient(45deg, rgba(146, 185, 172, 0.1), transparent);
+            border: 1px solid rgba(16,185,129,0.2);
+            backdrop-filter: blur(4px);
+            color: var(--text);
+            border-radius: 10px;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .recommendation-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: rgba(255,255,255,0.03);
+            transition: all 0.3s;
+        }
+
+        .recommendation-item:hover {
+            background: rgba(255,255,255,0.08);
+        }
+
+        .recommendation-item i {
+            color: var(--accent);
+            font-size: 1.2rem;
+            margin-top: 2px;
+        }
+
+        .recommendation-text {
+            flex: 1;
+        }
+
+        .recommendation-text h6 {
+            margin-bottom: 2px;
+            color: var(--text);
+        }
+
+        .recommendation-text small {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        #sleepChart {
+            max-height: 400px;
+        }
+
+        @keyframes pulse {
+            50% { opacity: 0.6; }
+        }
+        
+        .refreshing {
+            animation: pulse 1.5s infinite;
         }
 
         @media (max-width: 992px) {
@@ -99,17 +282,48 @@
                 width: 100%;
                 position: relative;
                 height: auto;
+                box-shadow: none;
+                border-right: none;
             }
+            
             .content {
                 margin-left: 0;
+                padding: 16px;
+            }
+            
+            .card {
+                margin-bottom: 16px;
             }
         }
+
+        #prediction-result {
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .prediction-good {
+            color: #10b981;
+        }
+
+        .prediction-average {
+            color: #f59e0b;
+        }
+
+        .prediction-poor {
+            color: #ef4444;
+        }
     </style>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 </head>
 <body>
 
     <!-- Top Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-black px-4 fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark px-4 fixed-top">
         <a class="navbar-brand" href="#">SleepWell</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
@@ -134,19 +348,19 @@
         <!-- Sidebar -->
         <div class="sidebar">
             <div class="user-info">
-                <h5 id="sidebar-username">User</h5>
-                <small class="text-muted" id="sidebar-email">email@example.com</small>
+                <h5 id="sidebar-username">Loading user...</h5>
+                <small class="text-muted" id="sidebar-email">Loading email...</small>
             </div>
             
             <nav class="nav flex-column">
-                <a class="nav-link active" href="#overview">
-                    <i class="bi bi-speedometer2"></i> Overview
+                <a class="nav-link" href="{{ url_for('dashboard') }}">
+                    <i class="bi bi-graph-up"></i> Overview
                 </a>
-                <a class="nav-link" href="#sleep-analysis">
+                <a class="nav-link" href="{{ url_for('sleep_analysis') }}">
                     <i class="bi bi-graph-up"></i> Sleep Analysis
                 </a>
-                <a class="nav-link" href="#recommendations">
-                    <i class="bi bi-lightbulb"></i> Recommendations
+                <a class="nav-link" href="{{ url_for('recommendations') }}">
+                    <i class="bi bi-graph-up"></i> Recommendations
                 </a>
                 <a class="nav-link" href="#settings">
                     <i class="bi bi-gear"></i> Settings
@@ -156,7 +370,17 @@
 
         <!-- Main Content -->
         <div class="content">
-            <div id="user-greeting" class="mb-4"></div>
+            <div id="user-greeting" class="mb-4">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="bg-primary rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <i class="bi bi-moon-stars-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <h2 class="mb-0" id="greeting-text">Welcome back</h2>
+                        <small class="text-muted" id="last-login">Last login: Today</small>
+                    </div>
+                </div>
+            </div>
             
             <div class="alert alert-info d-flex align-items-center">
                 <i class="bi bi-info-circle-fill me-2"></i>
@@ -167,27 +391,49 @@
                 <div class="col-md-6">
                     <div class="card">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <span><i class="bi bi-moon-stars"></i> Sleep Summary</span>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-moon-stars"></i>
+                                <span>Sleep Statistics</span>
+                            </div>
                             <button id="refresh-sleep-data" class="btn btn-sm btn-outline-light">
-                                <i class="bi bi-arrow-clockwise"></i>
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
                             </button>
                         </div>
                         <div class="card-body">
-                            <p id="avg-sleep">Average Sleep Duration: <span class="loading-spinner"></span></p>
-                            <p id="sleep-quality">Sleep Quality: <span class="loading-spinner"></span></p>
-                            <p id="sleep-consistency">Consistency: <span class="loading-spinner"></span></p>
+                            <div class="d-flex flex-column gap-3">
+                                <div>
+                                    <p class="mb-1 text-muted"><i class="bi bi-clock"></i> Average Sleep Duration</p>
+                                    <p class="stat-value mb-0" id="avg-sleep"><span class="loading-spinner"></span> Loading...</p>
+                                </div>
+                                <div>
+                                    <p class="mb-1 text-muted"><i class="bi bi-star"></i> Sleep Quality</p>
+                                    <p class="stat-value mb-0" id="sleep-quality"><span class="loading-spinner"></span> Loading...</p>
+                                </div>
+                                <div>
+                                    <p class="mb-1 text-muted"><i class="bi bi-check-circle"></i> Consistency</p>
+                                    <p class="stat-value mb-0" id="sleep-consistency"><span class="loading-spinner"></span> Loading...</p>
+                                </div>
+                                <div>
+                                    <p class="mb-1 text-muted"><i class="bi bi-phone"></i> Avg. Screen Time Before Bed</p>
+                                    <p class="stat-value mb-0" id="avg-screen-time"><span class="loading-spinner"></span> Loading...</p>
+                                </div>
+                                <div>
+                                    <p class="mb-1 text-muted"><i class="bi bi-cup-hot"></i> Avg. Caffeine Before Bed</p>
+                                    <p class="stat-value mb-0" id="avg-caffeine-time"><span class="loading-spinner"></span> Loading...</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="card">
-                        <div class="card-header">
-                            <i class="bi bi-lightbulb"></i> Recommendations
+                        <div class="card-header d-flex align-items-center">
+                            <i class="bi bi-lightbulb"></i>
+                            <span>Personalized Recommendations</span>
                         </div>
                         <div class="card-body">
-                            <ul id="recommendations-list" class="list-unstyled">
-                                <li><span class="loading-spinner"></span> Loading recommendations...</li>
-                            </ul>
+                            <div id="recommendations-list">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -195,36 +441,55 @@
 
             <div class="card mt-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-calendar-week"></i> Weekly Sleep Pattern</span>
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-calendar-week"></i>
+                        <span>Weekly Sleep Pattern</span>
+                    </div>
                     <div class="btn-group">
-                        <button class="btn btn-sm btn-outline-light active">Week</button>
-                        <button class="btn btn-sm btn-outline-light">Month</button>
-                        <button class="btn btn-sm btn-outline-light">Year</button>
+                        <button class="btn btn-sm btn-outline-light active" data-period="week">Week</button>
+                        <button class="btn btn-sm btn-outline-light" data-period="month">Month</button>
+                        <button class="btn btn-sm btn-outline-light" data-period="year">Year</button>
                     </div>
                 </div>
                 <div class="card-body">
-                    <canvas id="sleepChart" height="200"></canvas>
+                    <canvas id="sleepChart" height="300"></canvas>
                 </div>
             </div>
 
             <div class="card mt-4">
-                <div class="card-header">
-                    <i class="bi bi-plus-circle"></i> Add Sleep Entry
+                <div class="card-header d-flex align-items-center">
+                    <i class="bi bi-robot"></i>
+                    <span>Sleep Quality Predictor</span>
+                </div>
+                <div class="card-body">
+                    <div id="prediction-result" class="text-center mb-3">
+                        <p class="text-muted">Enter your sleep details to get a prediction</p>
+                    </div>
+                    <button id="predict-quality" class="btn btn-primary w-100" disabled>
+                        <span class="loading-spinner"></span> Training Model...
+                    </button>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header d-flex align-items-center">
+                    <i class="bi bi-plus-circle"></i>
+                    <span>Add Sleep Entry</span>
                 </div>
                 <div class="card-body">
                     <form id="sleep-entry-form">
                         <div class="row g-3">
-                            <div class="col-md-4">
-                                <label class="form-label">Bedtime</label>
-                                <input type="time" class="form-control bg-dark text-white" required>
+                            <div class="col-md-3">
+                                <label class="form-label d-block mb-2">🌙 Bedtime</label>
+                                <input type="datetime-local" class="form-control" id="bedtime" required>
                             </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Wake-up Time</label>
-                                <input type="time" class="form-control bg-dark text-white" required>
+                            <div class="col-md-3">
+                                <label class="form-label d-block mb-2">☀️ Wake-up Time</label>
+                                <input type="datetime-local" class="form-control" id="wakeup-time" required>
                             </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Quality</label>
-                                <select class="form-select bg-dark text-white" required>
+                            <div class="col-md-2">
+                                <label class="form-label d-block mb-2">⭐ Quality</label>
+                                <select class="form-select" id="sleep-quality-input" required>
                                     <option value="">Select...</option>
                                     <option value="5">Excellent</option>
                                     <option value="4">Good</option>
@@ -232,6 +497,14 @@
                                     <option value="2">Poor</option>
                                     <option value="1">Very Poor</option>
                                 </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label d-block mb-2">🖥️ Last Screen Time</label>
+                                <input type="time" class="form-control" id="screen-time" required>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label d-block mb-2">☕ Last Caffeine</label>
+                                <input type="time" class="form-control" id="caffeine-time" required>
                             </div>
                             <div class="col-12">
                                 <button type="submit" class="btn btn-primary">
@@ -247,180 +520,869 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@2.0.2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js"></script>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyDSKYsYwvM-0zof2rHtiKodp4z0HUTNiI4",
-            authDomain: "sleepwell-7ec3a.firebaseapp.com",
-            projectId: "sleepwell-7ec3a",
-            storageBucket: "sleepwell-7ec3a.appspot.com",
-            messagingSenderId: "37760004376",
-            appId: "1:37760004376:web:87a663c13995e6f02c6e6d"
-        };
-        firebase.initializeApp(firebaseConfig);
+    function initializeFirebase() {
+        try {
+            const firebaseConfig = {
+                apiKey: "AIzaSyDSKYsYwvM-0zof2rHtiKodp4z0HUTNiI4",
+                authDomain: "sleepwell-7ec3a.firebaseapp.com",
+                projectId: "sleepwell-7ec3a",
+                storageBucket: "sleepwell-7ec3a.appspot.com",
+                messagingSenderId: "37760004376",
+                appId: "1:37760004376:web:87a663c13995e6f02c6e6d"
+            };
 
-        const userGreeting = document.getElementById('user-greeting');
-        const sidebarUsername = document.getElementById('sidebar-username');
-        const sidebarEmail = document.getElementById('sidebar-email');
-        const logoutBtn = document.getElementById('logout-btn');
-        const refreshBtn = document.getElementById('refresh-sleep-data');
-        const sleepForm = document.getElementById('sleep-entry-form');
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            } else {
+                firebase.app();
+            }
 
-        let sleepChart;
-        const ctx = document.getElementById('sleepChart').getContext('2d');
+            firebase.firestore().enablePersistence()
+                .catch(err => {
+                    console.error("Firestore offline persistence failed:", err);
+                });
+
+            return {
+                auth: firebase.auth(),
+                db: firebase.firestore()
+            };
+        } catch (error) {
+            console.error("Firebase initialization failed:", error);
+            throw new Error("Failed to initialize Firebase services");
+        }
+    }
+
+    let db, auth;
+    try {
+        const firebaseServices = initializeFirebase();
+        db = firebaseServices.db;
+        auth = firebaseServices.auth;
+    } catch (error) {
+        console.error("Critical Firebase error:", error);
+        document.body.innerHTML = `
+            <div class="alert alert-danger m-4">
+                <h4>Application Error</h4>
+                <p>Failed to initialize required services. Please refresh the page.</p>
+                <p><small>${error.message}</small></p>
+            </div>
+        `;
+    }
+
+    const userGreeting = document.getElementById('user-greeting');
+    const greetingText = document.getElementById('greeting-text');
+    const lastLogin = document.getElementById('last-login');
+    const sidebarUsername = document.getElementById('sidebar-username');
+    const sidebarEmail = document.getElementById('sidebar-email');
+    const logoutBtn = document.getElementById('logout-btn');
+    const refreshBtn = document.getElementById('refresh-sleep-data');
+    const sleepForm = document.getElementById('sleep-entry-form');
+    const recommendationsList = document.getElementById('recommendations-list');
+    const periodButtons = document.querySelectorAll('[data-period]');
+    const predictBtn = document.getElementById('predict-quality');
+    const predictionResult = document.getElementById('prediction-result');
+
+    let sleepChart;
+    const ctx = document.getElementById('sleepChart').getContext('2d');
+    let currentPeriod = 'week';
+    let predictionModel = null;
+    let featureScaler = null;
+    let labelScaler = null;
+    const PREDICTION_THRESHOLD = 0.8; // Confidence threshold
+
+    async function saveSleepEntry(entryData, retries = 3) {
+        try {
+            if (!entryData.userId || !entryData.bedtime || !entryData.wakeupTime) {
+                throw new Error("Invalid sleep entry data");
+            }
+
+            const duration = (entryData.wakeupTime.toDate() - entryData.bedtime.toDate()) / (1000 * 60 * 60);
+            if (duration <= 0) {
+                throw new Error("Wake-up time must be after bedtime");
+            }
+
+            const entry = {
+                userId: entryData.userId,
+                bedtime: entryData.bedtime,
+                wakeupTime: entryData.wakeupTime,
+                duration: parseFloat(duration.toFixed(2)),
+                quality: entryData.quality,
+                screenHoursBeforeBed: entryData.screenHoursBeforeBed,
+                caffeineHoursBeforeBed: entryData.caffeineHoursBeforeBed,
+                date: firebase.firestore.Timestamp.fromDate(new Date())
+            };
+
+            let lastError;
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const docRef = await db.collection('sleepEntries').add(entry);
+                    console.log("Entry saved with ID:", docRef.id);
+                    return docRef;
+                } catch (error) {
+                    lastError = error;
+                    console.warn(`Save attempt ${i + 1} failed, retrying...`, error);
+                    await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); 
+                }
+            }
+            
+            throw lastError || new Error("Failed to save after multiple attempts");
+        } catch (error) {
+            console.error("Error in saveSleepEntry:", error);
+            throw error;
+        }
+    }
+
+    function calculateHoursBeforeBed(bedtimeDate, timeString) {
+        try {
+            const [hours, minutes] = timeString.split(':').map(Number);
+            const timeDate = new Date(bedtimeDate);
+            timeDate.setHours(hours, minutes, 0, 0);
+            
+            if (timeDate > bedtimeDate) {
+                timeDate.setDate(timeDate.getDate() - 1);
+            }
+            
+            const hoursBeforeBed = (bedtimeDate - timeDate) / (1000 * 60 * 60);
+            return Math.max(0, parseFloat(hoursBeforeBed.toFixed(1)));
+        } catch (error) {
+            console.error("Error calculating hours before bed:", error);
+            return 0;
+        }
+    }
+
+    auth.onAuthStateChanged(user => {
+        if (!user) {
+            window.location.href = "/index.html";
+            return;
+        }
         
-        firebase.auth().onAuthStateChanged(user => {
-            if (!user) {
-                window.location.href = "/";
+        console.log("User authenticated:", user.uid);
+        updateGreeting(user);
+        updateUserInfo(user);
+        loadUserData(user.uid);
+    });
+
+    function updateGreeting(user) {
+        const displayName = user.displayName || "User";
+        const firstName = displayName.split(' ')[0];
+        document.getElementById('greeting-text').textContent = `Welcome back, ${firstName}`;
+    }
+
+    function updateUserInfo(user) {
+        const displayName = user.displayName || "User";
+        const email = user.email || "No email";
+
+        document.getElementById('sidebar-username').textContent = displayName;
+        document.getElementById('sidebar-email').textContent = email;
+    }
+
+    async function getSleepEntries(uid) {
+        try {
+            console.log("Fetching sleep entries for user:", uid);
+            const snapshot = await db.collection('sleepEntries')
+                .where('userId', '==', uid)
+                .orderBy('date', 'desc')
+                .get();
+            
+            if (snapshot.empty) {
+                console.log("No sleep entries found for this user");
+                return [];
+            }
+            
+            const entries = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    ...data,
+                    date: data.date.toDate(),
+                    bedtime: data.bedtime.toDate(),
+                    wakeupTime: data.wakeupTime.toDate()
+                };
+            });
+            
+            console.log("Retrieved entries:", entries);
+            return entries;
+        } catch (error) {
+            console.error("Error getting sleep entries:", error);
+            throw error;
+        }
+    }
+
+    async function loadUserData(uid) {
+        try {
+            console.log("Loading data for user:", uid);
+            showLoadingState(true);
+            refreshBtn.classList.add('refreshing');
+            
+            let sleepEntries = [];
+            try {
+                sleepEntries = await getSleepEntries(uid);
+                console.log("Raw sleep entries:", sleepEntries);
+            } catch (error) {
+                console.error("Database error:", error);
+                showAlert("Failed to connect to database. Please check your internet connection.", "danger");
                 return;
             }
             
-            sidebarUsername.textContent = user.displayName || 'User';
-            sidebarEmail.textContent = user.email;
-            
-            userGreeting.innerHTML = `
-                <h2>Welcome back, ${user.email.split('@')[0]}</h2>
-                <p class="text-muted">Last login: ${new Date().toLocaleString()}</p>
-            `;
-            
-            loadUserData(user.uid);
-        });
-
-        async function loadUserData(uid) {
-            try {
-                showLoadingState(true);
-                
-                const sleepData = await mockFetchSleepData(uid);
-                
-                document.getElementById('avg-sleep').innerHTML = 
-                    `<i class="bi bi-clock"></i> Average Sleep Duration: <strong>${sleepData.avgDuration} hours</strong>`;
-                document.getElementById('sleep-quality').innerHTML = 
-                    `<i class="bi bi-star"></i> Sleep Quality: <strong>${sleepData.quality}</strong>`;
-                document.getElementById('sleep-consistency').innerHTML = 
-                    `<i class="bi bi-check-circle"></i> Consistency: <strong>${sleepData.consistency}</strong>`;
-                
-                const recList = document.getElementById('recommendations-list');
-                recList.innerHTML = sleepData.recommendations.map(rec => 
-                    `<li class="mb-2"><i class="bi bi-check-circle text-success"></i> ${rec}</li>`
-                ).join('');
-                
-                updateChart(sleepData.weeklyData);
-                
-            } catch (error) {
-                console.error("Error loading data:", error);
-                alert("Failed to load sleep data. Please try again.");
-            } finally {
-                showLoadingState(false);
+            if (sleepEntries.length === 0) {
+                console.log("No entries found, showing empty state");
+                showAlert("No sleep entries found. Add your first entry to see statistics.", "info");
+                updateStats({ 
+                    avgDuration: 0, 
+                    quality: 'N/A', 
+                    consistency: '0%',
+                    avgScreenTime: 0,
+                    lateScreenPercentage: 0,
+                    avgCaffeineTime: 0,
+                    lateCaffeinePercentage: 0
+                });
+                updateChart([]);
+                updateRecommendations([]);
+                return;
             }
+            
+            console.log("Calculating statistics for", sleepEntries.length, "entries");
+            const stats = calculateSleepStats(sleepEntries);
+            updateStats(stats);
+            
+            const chartData = getChartData(sleepEntries, currentPeriod);
+            updateChart(chartData);
+            
+            updateRecommendations(sleepEntries);
+            
+            if (sleepEntries.length >= 20) {
+                try {
+                    predictBtn.innerHTML = '<i class="bi bi-cpu"></i> Train Prediction Model';
+                    predictBtn.disabled = false;
+                    
+                    showAlert("Training AI model with your sleep data...", "info");
+                    await trainModel(sleepEntries);
+                    console.log('Model training complete');
+                    showAlert("AI model trained successfully! Try predicting sleep quality.", "success");
+                    
+                    predictBtn.innerHTML = '<i class="bi bi-cpu"></i> Predict Sleep Quality';
+                    predictBtn.disabled = false;
+                } catch (error) {
+                    console.error('Model training failed:', error);
+                    showAlert("AI model training failed. Trying again later.", "warning");
+                }
+            } else {
+                predictBtn.innerHTML = '<i class="bi bi-info-circle"></i> Need more data (20+ entries)';
+                predictBtn.disabled = true;
+            }
+            
+        } catch (error) {
+            console.error("Error in loadUserData:", error);
+            showAlert("Failed to load sleep data. Please try again.", "danger");
+        } finally {
+            showLoadingState(false);
+            refreshBtn.classList.remove('refreshing');
         }
+    }
 
-        async function mockFetchSleepData(uid) {
-            return new Promise(resolve => {
-                setTimeout(() => {
-                    resolve({
-                        avgDuration: "7.2",
-                        quality: "Good",
-                        consistency: "85%",
-                        recommendations: [
-                            "Maintain consistent bedtime",
-                            "Reduce screen time before bed",
-                            "Limit caffeine after 2pm"
-                        ],
-                        weeklyData: [6.5, 7, 7.5, 8, 7, 6, 7.5]
-                    });
-                }, 1000);
+    function calculateSleepStats(entries) {
+        console.log("Calculating stats for entries:", entries);
+        if (entries.length === 0) {
+            return {
+                avgDuration: 0,
+                quality: 'N/A',
+                consistency: '0%',
+                avgScreenTime: 0,
+                lateScreenPercentage: 0,
+                avgCaffeineTime: 0,
+                lateCaffeinePercentage: 0
+            };
+        }
+        
+        const totalDuration = entries.reduce((sum, entry) => sum + entry.duration, 0);
+        const avgDuration = (totalDuration / entries.length).toFixed(1);
+        
+        const qualityMap = {
+            '5': 'Excellent',
+            '4': 'Good',
+            '3': 'Average',
+            '2': 'Poor',
+            '1': 'Very Poor'
+        };
+        const totalQuality = entries.reduce((sum, entry) => sum + parseInt(entry.quality), 0);
+        const avgQuality = Math.round(totalQuality / entries.length);
+        const quality = qualityMap[avgQuality] || 'N/A';
+        
+        const consistentNights = entries.filter(entry => 
+            entry.duration >= 7 && entry.duration <= 9
+        ).length;
+        const consistency = Math.round((consistentNights / entries.length) * 100) + '%';
+        
+        const screenStats = entries.reduce((acc, entry) => {
+            const screenTime = entry.screenHoursBeforeBed || 0;
+            acc.total += screenTime;
+            if (screenTime < 2) acc.lateCount++;
+            return acc;
+        }, { total: 0, lateCount: 0 });
+        
+        const caffeineStats = entries.reduce((acc, entry) => {
+            const caffeineTime = entry.caffeineHoursBeforeBed || 0;
+            acc.total += caffeineTime;
+            if (caffeineTime < 6) acc.lateCount++;
+            return acc;
+        }, { total: 0, lateCount: 0 });
+        
+        return {
+            avgDuration,
+            quality,
+            consistency,
+            avgScreenTime: (screenStats.total / entries.length).toFixed(1),
+            lateScreenPercentage: Math.round((screenStats.lateCount / entries.length) * 100),
+            avgCaffeineTime: (caffeineStats.total / entries.length).toFixed(1),
+            lateCaffeinePercentage: Math.round((caffeineStats.lateCount / entries.length) * 100)
+        };
+    }
+
+    function getChartData(entries, period) {
+        const now = new Date();
+        let filteredEntries = entries;
+
+        if (period === 'week') {
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const dayData = days.map(() => []);
+
+            filteredEntries.forEach(entry => {
+                const dayIndex = entry.date.getDay();
+                dayData[dayIndex].push(entry.duration);
+            });
+
+            return dayData.map(dayEntries => {
+                return dayEntries.length > 0 ? 
+                    dayEntries.reduce((a, b) => a + b, 0) / dayEntries.length : 0;
+            });
+        } 
+        else if (period === 'month') {
+            const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            filteredEntries = entries.filter(entry => 
+                entry.date >= oneMonthAgo
+            );
+            
+            const weeklyData = [[], [], [], []];
+            
+            filteredEntries.forEach(entry => {
+                const daysAgo = Math.floor((now - entry.date) / (1000 * 60 * 60 * 24));
+                const weekIndex = Math.min(Math.floor(daysAgo / 7), 3);
+                weeklyData[weekIndex].push(entry.duration);
+            });
+            
+            return weeklyData.map(weekEntries => {
+                if (weekEntries.length === 0) return 0;
+                return weekEntries.reduce((a, b) => a + b, 0) / weekEntries.length;
+            });
+        } 
+        else if (period === 'year') {
+            const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+            filteredEntries = entries.filter(entry => 
+                entry.date >= oneYearAgo
+            );
+            
+            const monthlyData = Array(12).fill().map(() => []);
+            
+            filteredEntries.forEach(entry => {
+                const monthIndex = entry.date.getMonth();
+                monthlyData[monthIndex].push(entry.duration);
+            });
+            
+            return monthlyData.map(monthEntries => {
+                if (monthEntries.length === 0) return 0;
+                return monthEntries.reduce((a, b) => a + b, 0) / monthEntries.length;
             });
         }
+        
+        return [];
+    }
 
-        function updateChart(data) {
-            if (sleepChart) {
-                sleepChart.destroy();
-            }
-            
-            sleepChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                    datasets: [{
-                        label: 'Hours Slept',
-                        data: data,
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        tension: 0.4,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
+    function updateStats(stats) {
+        document.getElementById('avg-sleep').innerHTML = 
+            `<i class="bi bi-clock"></i> ${stats.avgDuration} <small class="text-muted">hours</small>`;
+        document.getElementById('sleep-quality').innerHTML = 
+            `<i class="bi bi-star"></i> ${stats.quality}`;
+        document.getElementById('sleep-consistency').innerHTML = 
+            `<i class="bi bi-check-circle"></i> ${stats.consistency}`;
+        document.getElementById('avg-screen-time').innerHTML = 
+            `<i class="bi bi-phone"></i> ${stats.avgScreenTime} <small class="text-muted">hours before bed</small>`;
+        document.getElementById('avg-caffeine-time').innerHTML = 
+            `<i class="bi bi-cup-hot"></i> ${stats.avgCaffeineTime} <small class="text-muted">hours before bed</small>`;
+    }
+
+    function updateChart(data) {
+        if (sleepChart) {
+            sleepChart.destroy();
+        }
+        
+        let labels, datasetLabel;
+        
+        if (currentPeriod === 'week') {
+            labels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            datasetLabel = 'Daily Average (hours)';
+        } else if (currentPeriod === 'month') {
+            labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+            datasetLabel = 'Weekly Average (hours)';
+        } else if (currentPeriod === 'year') {
+            labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            datasetLabel = 'Monthly Average (hours)';
+        }
+        
+        sleepChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: datasetLabel,
+                    data: data,
+                    backgroundColor: 'rgba(109, 40, 217, 0.2)',
+                    borderColor: 'rgba(109, 40, 217, 1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: 'rgba(109, 40, 217, 1)',
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            },
-                            ticks: {
-                                color: '#aaa'
-                            }
-                        },
-                        x: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            },
-                            ticks: {
-                                color: '#aaa'
+                    tooltip: {
+                        backgroundColor: 'rgba(30,30,30,0.9)',
+                        titleColor: '#fff',
+                        bodyColor: '#e0e0e0',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1,
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                return `Hours: ${context.raw.toFixed(1)}`;
                             }
                         }
                     }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#a0a0a0',
+                            callback: function(value) {
+                                return value + ' hrs';
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#a0a0a0'
+                        }
+                    }
                 }
-            });
-        }
-
-        function showLoadingState(isLoading) {
-            const elements = document.querySelectorAll('.loading-spinner');
-            elements.forEach(el => {
-                el.style.visibility = isLoading ? 'visible' : 'hidden';
-            });
-            
-            if (refreshBtn) {
-                refreshBtn.disabled = isLoading;
-                if (isLoading) {
-                    refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
-                }
-            }
-        }
-
-        logoutBtn.addEventListener('click', async () => {
-            try {
-                await firebase.auth().signOut();
-                window.location.href = '/';
-            } catch (error) {
-                console.error("Logout error:", error);
-                alert("Logout failed. Please try again.");
             }
         });
+    }
 
-        refreshBtn.addEventListener('click', () => {
-            const user = firebase.auth().currentUser;
+    function updateRecommendations(entries) {
+        if (entries.length === 0) {
+            recommendationsList.innerHTML = `
+                <div class="text-center text-muted py-3">
+                    No recommendations yet. Add sleep entries to get personalized advice.
+                </div>
+            `;
+            return;
+        }
+        
+        const recommendations = generateRecommendations(entries);
+        recommendationsList.innerHTML = recommendations.map(rec => `
+            <div class="recommendation-item">
+                <i class="bi bi-check-circle-fill"></i>
+                <div class="recommendation-text">
+                    <h6 class="mb-0">${rec.title}</h6>
+                    <small>${rec.description}</small>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function generateRecommendations(entries) {
+        const stats = calculateSleepStats(entries);
+        const recommendations = [];
+        
+        if (stats.avgDuration < 7) {
+            recommendations.push({
+                title: "Increase your sleep duration",
+                description: "Your average sleep duration is below the recommended 7-9 hours for adults."
+            });
+        } else if (stats.avgDuration > 9) {
+            recommendations.push({
+                title: "Check for oversleeping",
+                description: "Your average sleep duration is above the recommended range, which can sometimes indicate health issues."
+            });
+        }
+        
+        if (stats.consistency === '0%' || parseInt(stats.consistency) < 50) {
+            recommendations.push({
+                title: "Maintain consistent bedtimes",
+                description: "Try to go to bed and wake up at the same time each day, even on weekends."
+            });
+        }
+        
+        if (stats.quality === 'Poor' || stats.quality === 'Very Poor') {
+            recommendations.push({
+                title: "Improve sleep environment",
+                description: "Consider reducing screen time before bed, keeping your bedroom cool and dark, and avoiding caffeine late in the day."
+            });
+        }
+        
+        if (stats.lateScreenPercentage > 50) {
+            recommendations.push({
+                title: "Reduce late screen time",
+                description: `You're using screens within 2 hours of bedtime ${stats.lateScreenPercentage}% of the time. Try stopping screen use earlier.`
+            });
+        }
+        
+        if (stats.lateCaffeinePercentage > 50) {
+            recommendations.push({
+                title: "Avoid late caffeine",
+                description: `You're consuming caffeine within 6 hours of bedtime ${stats.lateCaffeinePercentage}% of the time. Try cutting off caffeine earlier.`
+            });
+        }
+        
+        if (predictionModel) {
+            recommendations.push({
+                title: "AI-Powered Insights",
+                description: "Our machine learning model can predict your sleep quality based on your habits. Try the prediction feature!"
+            });
+        }
+        
+        if (recommendations.length === 0) {
+            recommendations.push({
+                title: "Maintain your good habits",
+                description: "Your sleep patterns look healthy. Keep up the good work!"
+            });
+        }
+        
+        return recommendations;
+    }
+
+    function createScaler(data, featureRange = [0, 1]) {
+        const scaler = {};
+        data.forEach(features => {
+            features.forEach((val, idx) => {
+                if (!scaler[idx]) {
+                    scaler[idx] = { min: Infinity, max: -Infinity };
+                }
+                scaler[idx].min = Math.min(scaler[idx].min, val);
+                scaler[idx].max = Math.max(scaler[idx].max, val);
+            });
+        });
+
+        return {
+            scale: (features) => features.map((val, idx) => {
+                const range = scaler[idx].max - scaler[idx].min;
+                if (range === 0) return featureRange[0];
+                return ((val - scaler[idx].min) / range) * 
+                      (featureRange[1] - featureRange[0]) + featureRange[0];
+            }),
+            descale: (scaled, idx) => {
+                const range = scaler[idx].max - scaler[idx].min;
+                return (scaled - featureRange[0]) * range / 
+                      (featureRange[1] - featureRange[0]) + scaler[idx].min;
+            }
+        };
+    }
+
+    function prepareTrainingData(entries) {
+        const features = [];
+        const labels = [];
+        
+        entries.forEach(entry => {
+            features.push([
+                entry.duration,
+                entry.screenHoursBeforeBed || 0,
+                entry.caffeineHoursBeforeBed || 0,
+                new Date(entry.bedtime).getHours()
+            ]);
+            labels.push(parseInt(entry.quality));
+        });
+        
+        featureScaler = createScaler(features);
+        labelScaler = createScaler([labels.map(l => [l])], [0, 1]);
+        
+        return {
+            features: tf.tensor2d(features.map(featureScaler.scale)),
+            labels: tf.tensor2d(labels.map(l => [labelScaler.scale([l])[0]]))
+        };
+    }
+
+    function createModel() {
+        const model = tf.sequential();
+        
+        model.add(tf.layers.dense({
+            units: 16,
+            activation: 'relu',
+            inputShape: [4]
+        }));
+        
+        model.add(tf.layers.dense({
+            units: 8,
+            activation: 'relu'
+        }));
+        
+        model.add(tf.layers.dense({
+            units: 1,
+            activation: 'sigmoid'
+        }));
+        
+        model.compile({
+            optimizer: 'adam',
+            loss: 'meanSquaredError',
+            metrics: ['accuracy']
+        });
+        
+        return model;
+    }
+
+    async function trainModel(entries) {
+        if (entries.length < 20) {
+            console.log('Not enough data to train model');
+            showAlert('Need at least 20 entries for accurate predictions', 'warning');
+            return null;
+        }
+
+        const { features, labels } = prepareTrainingData(entries);
+        const splitIdx = Math.floor(entries.length * 0.8);
+        
+        const trainFeatures = features.slice([0, 0], [splitIdx, 4]);
+        const trainLabels = labels.slice([0, 0], [splitIdx, 1]);
+        
+        const testFeatures = features.slice([splitIdx, 0], [entries.length - splitIdx, 4]);
+        const testLabels = labels.slice([splitIdx, 0], [entries.length - splitIdx, 1]);
+
+        predictionModel = createModel();
+        
+        await predictionModel.fit(trainFeatures, trainLabels, {
+            epochs: 100,
+            validationData: [testFeatures, testLabels],
+            batchSize: 8,
+            callbacks: {
+                onEpochEnd: (epoch, logs) => {
+                    console.log(`Epoch ${epoch}: loss = ${logs.loss}`);
+                }
+            }
+        });
+        
+        return predictionModel;
+    }
+
+    async function predictSleepQuality() {
+        const bedtime = document.getElementById('bedtime').value;
+        const wakeup = document.getElementById('wakeup-time').value;
+        const screenTime = document.getElementById('screen-time').value;
+        const caffeineTime = document.getElementById('caffeine-time').value;
+
+        if (!bedtime || !wakeup || !screenTime || !caffeineTime) {
+            showAlert('Please fill all fields to get prediction', 'warning');
+            return;
+        }
+
+        try {
+            predictBtn.innerHTML = '<span class="loading-spinner"></span> Predicting...';
+            predictBtn.disabled = true;
+            
+            const bedtimeDate = new Date(bedtime);
+            const features = [
+                (new Date(wakeup) - bedtimeDate) / (1000 * 60 * 60),
+                calculateHoursBeforeBed(bedtimeDate, screenTime),
+                calculateHoursBeforeBed(bedtimeDate, caffeineTime),
+                bedtimeDate.getHours()
+            ];
+
+            const scaledFeatures = featureScaler.scale(features);
+            const tensor = tf.tensor2d([scaledFeatures]);
+            const prediction = await predictionModel.predict(tensor).data();
+            const quality = Math.round(labelScaler.descale(prediction[0], 0));
+            
+            const confidence = prediction[0] > PREDICTION_THRESHOLD ? 
+                'high confidence' : 'low confidence';
+            
+            let predictionClass = '';
+            if (quality >= 4) predictionClass = 'prediction-good';
+            else if (quality >= 3) predictionClass = 'prediction-average';
+            else predictionClass = 'prediction-poor';
+            
+            predictionResult.innerHTML = `
+                <h4 class="${predictionClass}">Predicted Quality: ${quality}/5</h4>
+                <small class="text-muted">(${confidence})</small>
+                <div class="mt-2">
+                    <small>Based on:</small>
+                    <ul class="small text-muted">
+                        <li>Duration: ${features[0].toFixed(1)} hours</li>
+                        <li>Screen time: ${features[1].toFixed(1)} hours before bed</li>
+                        <li>Caffeine: ${features[2].toFixed(1)} hours before bed</li>
+                        <li>Bedtime hour: ${features[3]}</li>
+                    </ul>
+                </div>
+            `;
+            
+        } catch (error) {
+            console.error('Prediction failed:', error);
+            showAlert('Failed to make prediction. Please try again.', 'danger');
+            predictionResult.innerHTML = `
+                <p class="text-danger">Prediction failed</p>
+                <small class="text-muted">Try again later</small>
+            `;
+        } finally {
+            predictBtn.innerHTML = '<i class="bi bi-cpu"></i> Predict Again';
+            predictBtn.disabled = false;
+        }
+    }
+
+    function showLoadingState(isLoading) {
+        const elements = document.querySelectorAll('.loading-spinner');
+        elements.forEach(el => {
+            el.style.visibility = isLoading ? 'visible' : 'hidden';
+        });
+        
+        if (refreshBtn) {
+            refreshBtn.disabled = isLoading;
+        }
+    }
+
+    function showAlert(message, type = "info") {
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} alert-dismissible fade show`;
+        alert.role = "alert";
+        alert.innerHTML = `
+            <i class="bi ${type === 'danger' ? 'bi-exclamation-triangle-fill' : 'bi-info-circle-fill'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        const container = document.querySelector('.content');
+        container.insertBefore(alert, container.firstChild);
+        
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }, 5000);
+    }
+
+    sleepForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const user = auth.currentUser;
+        if (!user) {
+            showAlert("You need to be logged in to save entries.", "danger");
+            return;
+        }
+
+        try {
+            const bedtime = document.getElementById('bedtime').value;
+            const wakeupTime = document.getElementById('wakeup-time').value;
+            const quality = document.getElementById('sleep-quality-input').value;
+            const screenTime = document.getElementById('screen-time').value;
+            const caffeineTime = document.getElementById('caffeine-time').value;
+
+            if (!bedtime || !wakeupTime || !quality || !screenTime || !caffeineTime) {
+                showAlert("Please fill in all fields.", "danger");
+                return;
+            }
+
+            const bedtimeDate = new Date(bedtime);
+            const screenHoursBeforeBed = calculateHoursBeforeBed(bedtimeDate, screenTime);
+            const caffeineHoursBeforeBed = calculateHoursBeforeBed(bedtimeDate, caffeineTime);
+
+            const entryData = {
+                userId: user.uid,
+                bedtime: firebase.firestore.Timestamp.fromDate(new Date(bedtime)),
+                wakeupTime: firebase.firestore.Timestamp.fromDate(new Date(wakeupTime)),
+                quality: quality,
+                screenHoursBeforeBed: screenHoursBeforeBed,
+                caffeineHoursBeforeBed: caffeineHoursBeforeBed
+            };
+
+            const submitBtn = sleepForm.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<span class="loading-spinner"></span> Saving...';
+            submitBtn.disabled = true;
+
+            try {
+                await saveSleepEntry(entryData);
+                showAlert("Sleep entry saved successfully!", "success");
+                sleepForm.reset();
+                await loadUserData(user.uid);
+            } finally {
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+            }
+
+        } catch (error) {
+            console.error("Form submission error:", error);
+            
+            let errorMessage = "An error occurred. Please try again.";
+            if (error.message.includes("permission-denied")) {
+                errorMessage = "You don't have permission to save entries.";
+            } else if (error.message.includes("invalid-argument")) {
+                errorMessage = "Invalid data format. Please check your inputs.";
+            } else if (error.message.includes("unavailable")) {
+                errorMessage = "Network error. Please check your internet connection.";
+            }
+            
+            showAlert(errorMessage, "danger");
+        }
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+        try {
+            await auth.signOut();
+            window.location.href = '/';
+        } catch (error) {
+            console.error("Logout error:", error);
+            showAlert("Logout failed. Please try again.", "danger");
+        }
+    });
+
+    refreshBtn.addEventListener('click', () => {
+        const user = auth.currentUser;
+        if (user) {
+            loadUserData(user.uid);
+        }
+    });
+
+    predictBtn.addEventListener('click', predictSleepQuality);
+
+    periodButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            periodButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            
+            currentPeriod = button.dataset.period;
+            const user = auth.currentUser;
             if (user) {
                 loadUserData(user.uid);
             }
         });
+    });
 
-        sleepForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            alert("Sleep entry saved! (This would connect to your backend in production)");
-            sleepForm.reset();
-        });
-
-        showLoadingState(true);
+    showLoadingState(true);
+    console.log("Dashboard initialized");
     </script>
 </body>
 </html>

@@ -63,6 +63,14 @@ def dashboard():
     except Exception as e:
         return redirect(url_for('home'))
 
+@app.route('/sleepanalysis')
+def sleep_analysis():
+    return render_template('sleepanalysis.html')
+
+@app.route('/recommendations')
+def recommendations():
+    return render_template('recommendations.html')
+
 @app.route("/signup", methods=["POST"])
 @limiter.limit("5 per minute")
 @handle_errors

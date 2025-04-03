@@ -438,17 +438,26 @@
                         data: JSON.stringify(formData)
                     })
                     .done(function(response) {
-                        firebase.auth().createUserWithEmailAndPassword(formData.email, formData.password)
-                            .then(() => {
+                        firebase.auth().createUserWithEmailAndPassword(email, password)
+                            .then((userCredential) => {
+                                // Update user profile with display name
+                                return userCredential.user.updateProfile({
+                                    displayName: `${firstName} ${lastName}`
+                                });
+                            })
+                            then(() => {
                                 $('#signupModal').modal('hide');
                                 window.location.href = "/dashboard.html";
                             })
                             .catch((error) => {
-                                console.error("Firebase account creation failed:", error);
-                                alert("Account created but login failed. Please sign in manually.");
+                                console.error("Firebase error:", error);
+                                alert(error.message);
+                            })
+                            .finally(() => {
+                                submitBtn.prop('disabled', false).text('Create Account');
                             });
-                    })
-                    .fail(function(xhr) {
+                    });
+                    fail(function(xhr) {
                         let errorMsg = "Account creation failed";
                         try {
                             const errorData = JSON.parse(xhr.responseText);
@@ -505,7 +514,7 @@
                 const modal = bootstrap.Modal.getInstance(document.getElementById('signinModal'));
                 modal.hide();
                 
-                window.location.href = data.redirect || "/dashboard.html";
+                window.location.href = "/dashboard.html";
                 
             } catch (error) {
                 console.error("Login error:", error);
