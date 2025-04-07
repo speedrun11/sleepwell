@@ -11,15 +11,16 @@
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
         
         :root {
-        --primary: #6d28d9;
-        --primary-hover: #7c3aed;
-        --accent: #10b981;
-        --bg: #121212;
-        --surface: #1e1e1e;
-        --surface-hover: rgba(255,255,255,0.05);
-        --surface-light: #2a2a2a;
-        --text: #e0e0e0;
-        --text-muted: #a0a0a0;
+            --primary: #6d28d9;
+            --primary-hover: #7c3aed;
+            --accent: #10b981;
+            --bg: #121212;
+            --surface: #1e1e1e;
+            --surface-hover: rgba(255,255,255,0.05);
+            --surface-light: #2a2a2a;
+            --text: #e0e0e0;
+            --text-muted: #a0a0a0;
+        }
 
         .user-info h5,
         .user-info small,
@@ -314,6 +315,36 @@
         .prediction-poor {
             color: #ef4444;
         }
+
+        .stat-card {
+            background: linear-gradient(145deg, var(--surface-light), var(--surface)) !important;
+            border-left: 4px solid var(--primary) !important;
+        }
+
+        .recommendation-item {
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .recommendation-item:hover {
+            transform: translateY(-3px);
+        }
+
+        .chart-tooltip {
+            background: var(--surface-light) !important;
+            border: 1px solid var(--primary) !important;
+            border-radius: 8px !important;
+        }
+
+        .chart-empty-state {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
     </style>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -354,15 +385,15 @@
             
             <nav class="nav flex-column">
                 <a class="nav-link" href="{{ url_for('dashboard') }}">
-                    <i class="bi bi-graph-up"></i> Overview
+                    <i class="bi bi-speedometer2"></i> Overview
                 </a>
                 <a class="nav-link" href="{{ url_for('sleep_analysis') }}">
                     <i class="bi bi-graph-up"></i> Sleep Analysis
                 </a>
                 <a class="nav-link" href="{{ url_for('recommendations') }}">
-                    <i class="bi bi-graph-up"></i> Recommendations
+                    <i class="bi bi-lightbulb"></i> Recommendations
                 </a>
-                <a class="nav-link" href="#settings">
+                <a class="nav-link" href="#">
                     <i class="bi bi-gear"></i> Settings
                 </a>
             </nav>
@@ -389,7 +420,7 @@
 
             <div class="row">
                 <div class="col-md-6">
-                    <div class="card">
+                    <div class="card stat-card">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <div class="d-flex align-items-center">
                                 <i class="bi bi-moon-stars"></i>
@@ -426,20 +457,23 @@
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="card">
+                    <div class="card stat-card">
                         <div class="card-header d-flex align-items-center">
                             <i class="bi bi-lightbulb"></i>
                             <span>Personalized Recommendations</span>
                         </div>
                         <div class="card-body">
                             <div id="recommendations-list">
+                                <div class="text-center text-muted py-3">
+                                    Loading recommendations...
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="card mt-4">
+            <div class="card mt-4 stat-card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center">
                         <i class="bi bi-calendar-week"></i>
@@ -456,7 +490,7 @@
                 </div>
             </div>
 
-            <div class="card mt-4">
+            <div class="card mt-4 stat-card">
                 <div class="card-header d-flex align-items-center">
                     <i class="bi bi-robot"></i>
                     <span>Sleep Quality Predictor</span>
@@ -471,7 +505,7 @@
                 </div>
             </div>
 
-            <div class="card mt-4">
+            <div class="card mt-4 stat-card">
                 <div class="card-header d-flex align-items-center">
                     <i class="bi bi-plus-circle"></i>
                     <span>Add Sleep Entry</span>
@@ -593,7 +627,7 @@
     let predictionModel = null;
     let featureScaler = null;
     let labelScaler = null;
-    const PREDICTION_THRESHOLD = 0.8; // Confidence threshold
+    const PREDICTION_THRESHOLD = 0.8;
 
     async function saveSleepEntry(entryData, retries = 3) {
         try {
@@ -655,16 +689,22 @@
         }
     }
 
-    auth.onAuthStateChanged(user => {
+        auth.onAuthStateChanged(user => {
         if (!user) {
-            window.location.href = "/index.html";
+            window.location.href = "/";
             return;
         }
         
         console.log("User authenticated:", user.uid);
         updateGreeting(user);
         updateUserInfo(user);
-        loadUserData(user.uid);
+        
+        db.collection('test').limit(1).get()
+            .then(() => loadUserData(user.uid))
+            .catch(error => {
+                console.error("Firestore connection test failed:", error);
+                showAlert("Failed to connect to database. Error: " + error.message, "danger");
+            });
     });
 
     function updateGreeting(user) {
@@ -918,6 +958,16 @@
     function updateChart(data) {
         if (sleepChart) {
             sleepChart.destroy();
+        }
+        
+        if (data.length === 0 || data.every(v => v === 0)) {
+            document.getElementById('sleepChart').innerHTML = `
+                <div class="chart-empty-state">
+                    <i class="bi bi-moon fs-4 me-2"></i>
+                    No sleep data available for this period
+                </div>
+            `;
+            return;
         }
         
         let labels, datasetLabel;
