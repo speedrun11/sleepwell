@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -735,4 +736,743 @@
     console.log("Recommendations page initialized");
     </script>
 </body>
+=======
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SLEEPWELL - RECOMMENDATIONS</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary: #6d28d9;
+            --primary-hover: #7c3aed;
+            --accent: #10b981;
+            --bg: #121212;
+            --surface: #1e1e1e;
+            --surface-hover: rgba(255,255,255,0.05);
+            --surface-light: #2a2a2a;
+            --text: #e0e0e0;
+            --text-muted: #a0a0a0;
+        }
+        
+        * {
+            font-family: 'Montserrat', sans-serif;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: var(--bg);
+            color: var(--text);
+            padding-top: 56px;
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 600;
+            letter-spacing: -0.025em;
+        }
+
+        .navbar {
+            background: var(--surface) !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--primary) !important;
+        }
+
+        .sidebar {
+            height: 100vh;
+            background: var(--surface);
+            padding: 20px;
+            position: fixed;
+            width: 280px;
+            overflow-y: auto;
+            border-right: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 4px 0 12px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .sidebar a {
+            color: var(--text);
+            text-decoration: none;
+            display: block;
+            padding: 12px 16px;
+            margin: 4px 0;
+            border-radius: 6px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar a:hover {
+            background: var(--surface-hover);
+            transform: translateX(4px);
+            border-left-color: var(--primary);
+        }
+
+        .sidebar a.active {
+            background: linear-gradient(90deg, rgba(16,185,129,0.1) 0%, transparent 100%);
+            border-left-color: var(--accent);
+        }
+
+        .sidebar a i {
+            width: 20px;
+            text-align: center;
+            margin-right: 12px;
+            font-size: 1.1rem;
+        }
+
+        .content {
+            padding: 24px;
+            margin-left: 280px;
+            flex-grow: 1;
+        }
+
+        .user-info {
+            background: var(--surface-light);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(241, 229, 229, 0.1)
+        }
+
+        .user-info small.text-muted {
+            color: #fff !important;
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            margin-bottom: 24px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+
+        .card-header {
+            background: rgba(255,255,255,0.03);
+            color: var(--text);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 16px 20px;
+            border-radius: 12px 12px 0 0 !important;
+            font-weight: 600;
+        }
+
+        .card-header i {
+            margin-right: 8px;
+            color: var(--primary);
+        }
+
+        .card-body {
+            color: var(--text-muted);
+            padding: 20px;
+        }
+
+        .recommendation-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            background: var(--surface-light);
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .recommendation-item:hover {
+            background: rgba(255,255,255,0.05);
+            border-left-color: var(--accent);
+            transform: translateX(4px);
+        }
+
+        .recommendation-priority {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .priority-high {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 2px solid #ef4444;
+        }
+
+        .priority-medium {
+            background: rgba(234, 179, 8, 0.2);
+            color: #eab308;
+            border: 2px solid #eab308;
+        }
+
+        .priority-low {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 2px solid #10b981;
+        }
+
+        .recommendation-content {
+            flex: 1;
+        }
+
+        .recommendation-title {
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .recommendation-description {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .recommendation-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 0.8rem;
+        }
+
+        .recommendation-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .recommendation-meta i {
+            font-size: 0.9rem;
+        }
+
+        .progress-tracker {
+            background: var(--surface-light);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .progress-tracker h5 {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .progress-tracker h5 i {
+            color: var(--accent);
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 100%;
+                position: relative;
+                height: auto;
+                box-shadow: none;
+                border-right: none;
+            }
+            
+            .content {
+                margin-left: 0;
+                padding: 16px;
+            }
+            
+            .card {
+                margin-bottom: 16px;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 16px;
+        }
+
+        .category-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .category-routine {
+            background: rgba(109, 40, 217, 0.2);
+            color: #6d28d9;
+        }
+
+        .category-environment {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .category-nutrition {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .category-activity {
+            background: rgba(234, 179, 8, 0.2);
+            color: #eab308;
+        }
+
+.content h2 + small.text-muted {
+    color: #e0e0e0 !important;
+    font-size: 1rem;
+    opacity: 0.9;
+}
+    </style>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark px-4 fixed-top">
+        <a class="navbar-brand" href="#">SleepWell</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="bi bi-house-door"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <button id="logout-btn" class="btn btn-outline-danger ms-2">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="d-flex">
+        <div class="sidebar">
+            <div class="user-info">
+                <h5 id="sidebar-username">Loading user...</h5>
+                <small class="text-muted" id="sidebar-email">Loading email...</small>
+            </div>
+            
+            <nav class="nav flex-column">
+                <a class="nav-link" href="{{ url_for('dashboard') }}">
+                    <i class="bi bi-speedometer2"></i> Overview
+                </a>
+                <a class="nav-link" href="{{ url_for('sleep_analysis') }}">
+                    <i class="bi bi-graph-up"></i> Sleep Analysis
+                </a>
+                <a class="nav-link" href="{{ url_for('recommendations') }}">
+                    <i class="bi bi-lightbulb"></i> Recommendations
+                </a>
+                <a class="nav-link" href="#settings">
+                    <i class="bi bi-gear"></i> Settings
+                </a>
+            </nav>
+        </div>
+
+        <div class="content">
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <div class="bg-primary rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                    <i class="bi bi-lightbulb fs-4"></i>
+                </div>
+                <div>
+                    <h2 class="mb-0">Sleep Recommendations</h2>
+                    <small class="text-muted">Personalized suggestions to improve your sleep quality</small>
+                </div>
+            </div>
+            
+            <div class="alert alert-info d-flex align-items-center">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                <div>These recommendations are tailored based on your sleep patterns and habits.</div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="bi bi-list-check"></i> Your Action Plan
+                        </div>
+                        <div class="card-body">
+                            <div id="recommendations-list">
+                                <div class="recommendation-item">
+                                    <div class="recommendation-priority priority-high">1</div>
+                                    <div class="recommendation-content">
+                                        <div class="recommendation-title">Establish a Consistent Bedtime</div>
+                                        <span class="category-badge category-routine">Routine</span>
+                                        <div class="recommendation-description">
+                                            Going to bed at the same time each night helps regulate your body's internal clock.
+                                        </div>
+                                        <div class="recommendation-meta">
+                                            <span><i class="bi bi-clock"></i> 5 min/day</span>
+                                            <span><i class="bi bi-calendar"></i> Start tonight</span>
+                                            <span><i class="bi bi-star"></i> High impact</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="recommendation-item">
+                                    <div class="recommendation-priority priority-medium">2</div>
+                                    <div class="recommendation-content">
+                                        <div class="recommendation-title">Reduce Screen Time Before Bed</div>
+                                        <span class="category-badge category-environment">Environment</span>
+                                        <div class="recommendation-description">
+                                            Blue light from devices can disrupt melatonin production. Try stopping screen use 1 hour before bedtime.
+                                        </div>
+                                        <div class="recommendation-meta">
+                                            <span><i class="bi bi-clock"></i> 60 min/day</span>
+                                            <span><i class="bi bi-calendar"></i> Start tonight</span>
+                                            <span><i class="bi bi-star"></i> Medium impact</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="recommendation-item">
+                                    <div class="recommendation-priority priority-medium">3</div>
+                                    <div class="recommendation-content">
+                                        <div class="recommendation-title">Limit Caffeine After 2PM</div>
+                                        <span class="category-badge category-nutrition">Nutrition</span>
+                                        <div class="recommendation-description">
+                                            Caffeine can stay in your system for 6-8 hours. Cutting it earlier may help you fall asleep easier.
+                                        </div>
+                                        <div class="recommendation-meta">
+                                            <span><i class="bi bi-clock"></i> 0 min/day</span>
+                                            <span><i class="bi bi-calendar"></i> Start tomorrow</span>
+                                            <span><i class="bi bi-star"></i> Medium impact</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="recommendation-item">
+                                    <div class="recommendation-priority priority-low">4</div>
+                                    <div class="recommendation-content">
+                                        <div class="recommendation-title">Try Relaxation Techniques</div>
+                                        <span class="category-badge category-routine">Routine</span>
+                                        <div class="recommendation-description">
+                                            Deep breathing or meditation before bed can help calm your mind and prepare for sleep.
+                                        </div>
+                                        <div class="recommendation-meta">
+                                            <span><i class="bi bi-clock"></i> 10 min/day</span>
+                                            <span><i class="bi bi-calendar"></i> Anytime</span>
+                                            <span><i class="bi bi-star"></i> Low impact</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <i class="bi bi-journal-text"></i> Sleep Tips
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="progress-tracker">
+                                        <h5><i class="bi bi-moon"></i> Bedtime Routine</h5>
+                                        <ul class="list-unstyled">
+                                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> Dim lights 1 hour before bed</li>
+                                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> Read a book (non-digital)</li>
+                                            <li class="mb-2"><i class="bi bi-circle text-muted me-2"></i> Try light stretching</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="progress-tracker">
+                                        <h5><i class="bi bi-sun"></i> Morning Routine</h5>
+                                        <ul class="list-unstyled">
+                                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> Get sunlight within 30 min of waking</li>
+                                            <li class="mb-2"><i class="bi bi-circle text-muted me-2"></i> Avoid checking phone first thing</li>
+                                            <li class="mb-2"><i class="bi bi-circle text-muted me-2"></i> Hydrate with water</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="bi bi-award"></i> Your Progress
+                        </div>
+                        <div class="card-body">
+                            <div class="text-center mb-4">
+                                <div class="display-4">3</div>
+                                <small class="text-muted">Recommendations implemented</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Routine Changes</span>
+                                    <span>2/3</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-success" style="width: 66%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Environment</span>
+                                    <span>1/2</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-warning" style="width: 50%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Nutrition</span>
+                                    <span>0/1</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-danger" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <i class="bi bi-collection"></i> Resources
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group list-group-flush">
+                                <a href="#" class="list-group-item list-group-item-action bg-transparent text-white border-0 border-bottom border-secondary">
+                                    <i class="bi bi-book me-2"></i> Sleep Hygiene Guide
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action bg-transparent text-white border-0 border-bottom border-secondary">
+                                    <i class="bi bi-headphones me-2"></i> Meditation Exercises
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action bg-transparent text-white border-0 border-bottom border-secondary">
+                                    <i class="bi bi-film me-2"></i> Relaxation Techniques
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action bg-transparent text-white border-0">
+                                    <i class="bi bi-phone me-2"></i> Blue Light Filters
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+    function initializeFirebase() {
+        try {
+            const firebaseConfig = {
+                apiKey: "AIzaSyDSKYsYwvM-0zof2rHtiKodp4z0HUTNiI4",
+                authDomain: "sleepwell-7ec3a.firebaseapp.com",
+                projectId: "sleepwell-7ec3a",
+                storageBucket: "sleepwell-7ec3a.appspot.com",
+                messagingSenderId: "37760004376",
+                appId: "1:37760004376:web:87a663c13995e6f02c6e6d"
+            };
+
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            } else {
+                firebase.app();
+            }
+
+            return {
+                auth: firebase.auth(),
+                db: firebase.firestore()
+            };
+        } catch (error) {
+            console.error("Firebase initialization failed:", error);
+            throw new Error("Failed to initialize Firebase services");
+        }
+    }
+
+    let db, auth;
+    try {
+        const firebaseServices = initializeFirebase();
+        db = firebaseServices.db;
+        auth = firebaseServices.auth;
+    } catch (error) {
+        console.error("Critical Firebase error:", error);
+        document.body.innerHTML = `
+            <div class="alert alert-danger m-4">
+                <h4>Application Error</h4>
+                <p>Failed to initialize required services. Please refresh the page.</p>
+                <p><small>${error.message}</small></p>
+            </div>
+        `;
+    }
+
+    const sidebarUsername = document.getElementById('sidebar-username');
+    const sidebarEmail = document.getElementById('sidebar-email');
+    const logoutBtn = document.getElementById('logout-btn');
+    const recommendationsList = document.getElementById('recommendations-list');
+
+    auth.onAuthStateChanged(user => {
+        if (!user) {
+            window.location.href = "/index.html";
+            return;
+        }
+        
+        console.log("User authenticated:", user.uid);
+        updateUserInfo(user);
+        loadRecommendations(user.uid);
+    });
+
+    function updateUserInfo(user) {
+        const displayName = user.displayName || "User";
+        const email = user.email || "No email";
+
+        document.getElementById('sidebar-username').textContent = displayName;
+        document.getElementById('sidebar-email').textContent = email;
+    }
+
+    async function loadRecommendations(uid) {
+        try {
+            const sampleRecommendations = [
+                {
+                    title: "Establish a Consistent Bedtime",
+                    description: "Going to bed at the same time each night helps regulate your body's internal clock.",
+                    category: "routine",
+                    priority: "high",
+                    timeRequired: "5 min/day",
+                    startTime: "Start tonight",
+                    impact: "High impact"
+                },
+                {
+                    title: "Reduce Screen Time Before Bed",
+                    description: "Blue light from devices can disrupt melatonin production. Try stopping screen use 1 hour before bedtime.",
+                    category: "environment",
+                    priority: "medium",
+                    timeRequired: "60 min/day",
+                    startTime: "Start tonight",
+                    impact: "Medium impact"
+                },
+                {
+                    title: "Limit Caffeine After 2PM",
+                    description: "Caffeine can stay in your system for 6-8 hours. Cutting it earlier may help you fall asleep easier.",
+                    category: "nutrition",
+                    priority: "medium",
+                    timeRequired: "0 min/day",
+                    startTime: "Start tomorrow",
+                    impact: "Medium impact"
+                },
+                {
+                    title: "Try Relaxation Techniques",
+                    description: "Deep breathing or meditation before bed can help calm your mind and prepare for sleep.",
+                    category: "routine",
+                    priority: "low",
+                    timeRequired: "10 min/day",
+                    startTime: "Anytime",
+                    impact: "Low impact"
+                }
+            ];
+
+            updateRecommendationsUI(sampleRecommendations);
+            
+        } catch (error) {
+            console.error("Error loading recommendations:", error);
+            showAlert("Failed to load recommendations. Please try again.", "danger");
+        }
+    }
+
+    function updateRecommendationsUI(recommendations) {
+        if (!recommendations || recommendations.length === 0) {
+            recommendationsList.innerHTML = `
+                <div class="empty-state">
+                    <i class="bi bi-emoji-frown"></i>
+                    <h5>No recommendations yet</h5>
+                    <p class="text-muted">Complete your sleep analysis to get personalized suggestions</p>
+                </div>
+            `;
+            return;
+        }
+        
+        recommendationsList.innerHTML = recommendations.map((rec, index) => `
+            <div class="recommendation-item">
+                <div class="recommendation-priority priority-${rec.priority}">${index + 1}</div>
+                <div class="recommendation-content">
+                    <div class="recommendation-title">${rec.title}</div>
+                    <span class="category-badge category-${rec.category}">${
+                        rec.category === 'routine' ? 'Routine' : 
+                        rec.category === 'environment' ? 'Environment' :
+                        rec.category === 'nutrition' ? 'Nutrition' : 'Activity'
+                    }</span>
+                    <div class="recommendation-description">
+                        ${rec.description}
+                    </div>
+                    <div class="recommendation-meta">
+                        <span><i class="bi bi-clock"></i> ${rec.timeRequired}</span>
+                        <span><i class="bi bi-calendar"></i> ${rec.startTime}</span>
+                        <span><i class="bi bi-star"></i> ${rec.impact}</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function showAlert(message, type = "info") {
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} alert-dismissible fade show`;
+        alert.role = "alert";
+        alert.innerHTML = `
+            <i class="bi ${type === 'danger' ? 'bi-exclamation-triangle-fill' : 'bi-info-circle-fill'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        const container = document.querySelector('.content');
+        container.insertBefore(alert, container.firstChild);
+        
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }, 5000);
+    }
+
+    logoutBtn.addEventListener('click', async () => {
+        try {
+            await auth.signOut();
+            window.location.href = '/';
+        } catch (error) {
+            console.error("Logout error:", error);
+            showAlert("Logout failed. Please try again.", "danger");
+        }
+    });
+
+    console.log("Recommendations page initialized");
+    </script>
+</body>
+>>>>>>> d3dcd04d0112e884ffc6770bffa8e53c56127741
 </html>
