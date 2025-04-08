@@ -15,29 +15,28 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
 async function login(event) {
-    event.preventDefault(); // Prevent form refresh
+    event.preventDefault();
 
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
 
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const idToken = await userCredential.user.getIdToken(); // Get Firebase ID token
+        const idToken = await userCredential.user.getIdToken();
 
-        // Send the token to the backend for verification
         const response = await fetch("/login", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ idToken }) // Send the token instead of email/password
+            body: JSON.stringify({ idToken })
         });
 
         const result = await response.json();
 
         if (response.ok) {
             alert("Login successful!");
-            window.location.href = "/dashboard"; // Redirect on success
+            window.location.href = "/dashboard";
         } else {
             alert(result.error || "Login failed.");
         }
