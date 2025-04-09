@@ -10,7 +10,7 @@ import os
 app = Flask(__name__)
 
 if not firebase_admin._apps:
-    cred_path = os.path.join(os.path.dirname(__file__), 'sleepwell-7ec3a-firebase-adminsdk-fbsvc-a3ab147fc6.json')
+    cred_path = os.path.join(os.path.dirname(__file__), 'sleepwell-7ec3a-firebase-adminsdk-fbsvc-0d2a905bbb.json')
     cred = credentials.Certificate(cred_path)
     firebase_admin.initialize_app(cred)
 
@@ -70,6 +70,10 @@ def sleep_analysis():
 @app.route('/recommendations')
 def recommendations():
     return render_template('recommendations.html')
+
+@app.route('/settings')
+def settings():
+    return render_template('settings.html')
 
 @app.route("/signup", methods=["POST"])
 @limiter.limit("5 per minute")

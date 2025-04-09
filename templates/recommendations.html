@@ -299,6 +299,48 @@
             color: #eab308;
         }
 
+        .category-ai {
+            background: rgba(139, 92, 246, 0.2);
+            color: #8b5cf6;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 3px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            background: var(--surface-light);
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: var(--accent);
+            transition: width 0.5s ease;
+        }
+
+        .refreshing {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            50% { opacity: 0.6; }
+        }
+
 .content h2 + small.text-muted {
     color: #e0e0e0 !important;
     font-size: 1rem;
@@ -347,10 +389,10 @@
                 <a class="nav-link" href="{{ url_for('sleep_analysis') }}">
                     <i class="bi bi-graph-up"></i> Sleep Analysis
                 </a>
-                <a class="nav-link" href="{{ url_for('recommendations') }}">
+                <a class="nav-link active" href="{{ url_for('recommendations') }}">
                     <i class="bi bi-lightbulb"></i> Recommendations
                 </a>
-                <a class="nav-link" href="#settings">
+                <a class="nav-link" href="{{ url_for('settings') }}">
                     <i class="bi bi-gear"></i> Settings
                 </a>
             </nav>
@@ -375,73 +417,19 @@
             <div class="row">
                 <div class="col-md-8">
                     <div class="card">
-                        <div class="card-header">
-                            <i class="bi bi-list-check"></i> Your Action Plan
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-list-check"></i> Your Personalized Action Plan
+                            </div>
+                            <button id="refresh-recommendations" class="btn btn-sm btn-outline-light">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
                         </div>
                         <div class="card-body">
                             <div id="recommendations-list">
-                                <div class="recommendation-item">
-                                    <div class="recommendation-priority priority-high">1</div>
-                                    <div class="recommendation-content">
-                                        <div class="recommendation-title">Establish a Consistent Bedtime</div>
-                                        <span class="category-badge category-routine">Routine</span>
-                                        <div class="recommendation-description">
-                                            Going to bed at the same time each night helps regulate your body's internal clock.
-                                        </div>
-                                        <div class="recommendation-meta">
-                                            <span><i class="bi bi-clock"></i> 5 min/day</span>
-                                            <span><i class="bi bi-calendar"></i> Start tonight</span>
-                                            <span><i class="bi bi-star"></i> High impact</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="recommendation-item">
-                                    <div class="recommendation-priority priority-medium">2</div>
-                                    <div class="recommendation-content">
-                                        <div class="recommendation-title">Reduce Screen Time Before Bed</div>
-                                        <span class="category-badge category-environment">Environment</span>
-                                        <div class="recommendation-description">
-                                            Blue light from devices can disrupt melatonin production. Try stopping screen use 1 hour before bedtime.
-                                        </div>
-                                        <div class="recommendation-meta">
-                                            <span><i class="bi bi-clock"></i> 60 min/day</span>
-                                            <span><i class="bi bi-calendar"></i> Start tonight</span>
-                                            <span><i class="bi bi-star"></i> Medium impact</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="recommendation-item">
-                                    <div class="recommendation-priority priority-medium">3</div>
-                                    <div class="recommendation-content">
-                                        <div class="recommendation-title">Limit Caffeine After 2PM</div>
-                                        <span class="category-badge category-nutrition">Nutrition</span>
-                                        <div class="recommendation-description">
-                                            Caffeine can stay in your system for 6-8 hours. Cutting it earlier may help you fall asleep easier.
-                                        </div>
-                                        <div class="recommendation-meta">
-                                            <span><i class="bi bi-clock"></i> 0 min/day</span>
-                                            <span><i class="bi bi-calendar"></i> Start tomorrow</span>
-                                            <span><i class="bi bi-star"></i> Medium impact</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="recommendation-item">
-                                    <div class="recommendation-priority priority-low">4</div>
-                                    <div class="recommendation-content">
-                                        <div class="recommendation-title">Try Relaxation Techniques</div>
-                                        <span class="category-badge category-routine">Routine</span>
-                                        <div class="recommendation-description">
-                                            Deep breathing or meditation before bed can help calm your mind and prepare for sleep.
-                                        </div>
-                                        <div class="recommendation-meta">
-                                            <span><i class="bi bi-clock"></i> 10 min/day</span>
-                                            <span><i class="bi bi-calendar"></i> Anytime</span>
-                                            <span><i class="bi bi-star"></i> Low impact</span>
-                                        </div>
-                                    </div>
+                                <div class="text-center py-4">
+                                    <div class="loading-spinner"></div>
+                                    <p class="mt-2">Loading your personalized recommendations...</p>
                                 </div>
                             </div>
                         </div>
@@ -485,37 +473,47 @@
                         </div>
                         <div class="card-body">
                             <div class="text-center mb-4">
-                                <div class="display-4">3</div>
+                                <div class="display-4" id="implemented-count">0</div>
                                 <small class="text-muted">Recommendations implemented</small>
                             </div>
                             
                             <div class="mb-3">
                                 <div class="d-flex justify-content-between mb-1">
                                     <span>Routine Changes</span>
-                                    <span>2/3</span>
+                                    <span id="routine-progress-text">0/0</span>
                                 </div>
-                                <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar bg-success" style="width: 66%"></div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="routine-progress" style="width: 0%"></div>
                                 </div>
                             </div>
                             
                             <div class="mb-3">
                                 <div class="d-flex justify-content-between mb-1">
                                     <span>Environment</span>
-                                    <span>1/2</span>
+                                    <span id="environment-progress-text">0/0</span>
                                 </div>
-                                <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar bg-warning" style="width: 50%"></div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="environment-progress" style="width: 0%"></div>
                                 </div>
                             </div>
                             
                             <div class="mb-3">
                                 <div class="d-flex justify-content-between mb-1">
                                     <span>Nutrition</span>
-                                    <span>0/1</span>
+                                    <span id="nutrition-progress-text">0/0</span>
                                 </div>
-                                <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar bg-danger" style="width: 0%"></div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="nutrition-progress" style="width: 0%"></div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Activity</span>
+                                    <span id="activity-progress-text">0/0</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="activity-progress" style="width: 0%"></div>
                                 </div>
                             </div>
                         </div>
@@ -598,6 +596,7 @@
     const sidebarUsername = document.getElementById('sidebar-username');
     const sidebarEmail = document.getElementById('sidebar-email');
     const logoutBtn = document.getElementById('logout-btn');
+    const refreshBtn = document.getElementById('refresh-recommendations');
     const recommendationsList = document.getElementById('recommendations-list');
 
     auth.onAuthStateChanged(user => {
@@ -621,51 +620,319 @@
 
     async function loadRecommendations(uid) {
         try {
-            const sampleRecommendations = [
-                {
-                    title: "Establish a Consistent Bedtime",
-                    description: "Going to bed at the same time each night helps regulate your body's internal clock.",
-                    category: "routine",
-                    priority: "high",
-                    timeRequired: "5 min/day",
-                    startTime: "Start tonight",
-                    impact: "High impact"
-                },
-                {
-                    title: "Reduce Screen Time Before Bed",
-                    description: "Blue light from devices can disrupt melatonin production. Try stopping screen use 1 hour before bedtime.",
-                    category: "environment",
-                    priority: "medium",
-                    timeRequired: "60 min/day",
-                    startTime: "Start tonight",
-                    impact: "Medium impact"
-                },
-                {
-                    title: "Limit Caffeine After 2PM",
-                    description: "Caffeine can stay in your system for 6-8 hours. Cutting it earlier may help you fall asleep easier.",
-                    category: "nutrition",
-                    priority: "medium",
-                    timeRequired: "0 min/day",
-                    startTime: "Start tomorrow",
-                    impact: "Medium impact"
-                },
-                {
-                    title: "Try Relaxation Techniques",
-                    description: "Deep breathing or meditation before bed can help calm your mind and prepare for sleep.",
-                    category: "routine",
-                    priority: "low",
-                    timeRequired: "10 min/day",
-                    startTime: "Anytime",
-                    impact: "Low impact"
-                }
-            ];
-
-            updateRecommendationsUI(sampleRecommendations);
+            refreshBtn.classList.add('refreshing');
+            
+            const entries = await getSleepEntries(uid);
+            
+            const stats = calculateSleepStats(entries);
+            
+            const recommendations = generateRecommendations(entries);
+            
+            updateRecommendationsUI(recommendations);
+            
+            updateProgressTracking(recommendations);
             
         } catch (error) {
             console.error("Error loading recommendations:", error);
             showAlert("Failed to load recommendations. Please try again.", "danger");
+            
+            recommendationsList.innerHTML = `
+                <div class="empty-state">
+                    <i class="bi bi-emoji-frown"></i>
+                    <h5>Couldn't load recommendations</h5>
+                    <p class="text-muted">${error.message || 'Please try refreshing the page'}</p>
+                </div>
+            `;
+        } finally {
+            refreshBtn.classList.remove('refreshing');
         }
+    }
+
+    async function getSleepEntries(uid) {
+        try {
+            const snapshot = await db.collection('sleepEntries')
+                .where('userId', '==', uid)
+                .orderBy('date', 'desc')
+                .limit(30)
+                .get();
+            
+            if (snapshot.empty) {
+                console.log("No sleep entries found for this user");
+                return [];
+            }
+            
+            return snapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    userId: data.userId,
+                    quality: parseInt(data.quality) || 3,
+                    duration: parseFloat(data.duration) || 0,
+                    screenHoursBeforeBed: parseFloat(data.screenHoursBeforeBed) || 0,
+                    caffeineHoursBeforeBed: parseFloat(data.caffeineHoursBeforeBed) || 0,
+                    date: safeConvertToDate(data.date),
+                    bedtime: safeConvertToDate(data.bedtime),
+                    wakeupTime: safeConvertToDate(data.wakeupTime)
+                };
+            });
+        } catch (error) {
+            console.error("Error getting sleep entries:", error);
+            throw error;
+        }
+    }
+
+    function safeConvertToDate(timestamp) {
+        try {
+            return timestamp?.toDate?.() || new Date();
+        } catch (e) {
+            console.warn("Invalid date conversion, using current date");
+            return new Date();
+        }
+    }
+
+    function calculateSleepStats(entries) {
+        if (entries.length === 0) {
+            return {
+                avgDuration: 0,
+                quality: 'N/A',
+                consistency: '0%',
+                avgScreenTime: 0,
+                lateScreenPercentage: 0,
+                avgCaffeineTime: 0,
+                lateCaffeinePercentage: 0
+            };
+        }
+        
+        const totalDuration = entries.reduce((sum, entry) => sum + entry.duration, 0);
+        const avgDuration = (totalDuration / entries.length).toFixed(1);
+        
+        const qualityMap = {
+            '5': 'Excellent',
+            '4': 'Good',
+            '3': 'Average',
+            '2': 'Poor',
+            '1': 'Very Poor'
+        };
+        const totalQuality = entries.reduce((sum, entry) => sum + parseInt(entry.quality), 0);
+        const avgQuality = Math.round(totalQuality / entries.length);
+        const quality = qualityMap[avgQuality] || 'N/A';
+        
+        const consistentNights = entries.filter(entry => 
+            entry.duration >= 7 && entry.duration <= 9
+        ).length;
+        const consistency = Math.round((consistentNights / entries.length) * 100) + '%';
+        
+        const screenStats = entries.reduce((acc, entry) => {
+            const screenTime = entry.screenHoursBeforeBed || 0;
+            acc.total += screenTime;
+            if (screenTime < 2) acc.lateCount++;
+            return acc;
+        }, { total: 0, lateCount: 0 });
+        
+        const caffeineStats = entries.reduce((acc, entry) => {
+            const caffeineTime = entry.caffeineHoursBeforeBed || 0;
+            acc.total += caffeineTime;
+            if (caffeineTime < 6) acc.lateCount++;
+            return acc;
+        }, { total: 0, lateCount: 0 });
+        
+        return {
+            avgDuration,
+            quality,
+            consistency,
+            avgScreenTime: (screenStats.total / entries.length).toFixed(1),
+            lateScreenPercentage: Math.round((screenStats.lateCount / entries.length) * 100),
+            avgCaffeineTime: (caffeineStats.total / entries.length).toFixed(1),
+            lateCaffeinePercentage: Math.round((caffeineStats.lateCount / entries.length) * 100)
+        };
+    }
+
+    function generateRecommendations(entries) {
+        const stats = calculateSleepStats(entries);
+        const recommendations = [];
+        
+        if (stats.avgDuration < 6) {
+            recommendations.push({
+                title: "Prioritize More Sleep",
+                description: `Your average sleep duration is only ${stats.avgDuration} hours, which is significantly below the recommended 7-9 hours. Try gradually increasing your sleep time by 15-30 minutes each night.`,
+                category: "routine",
+                priority: "high",
+                timeRequired: "30 min/day",
+                startTime: "Start tonight",
+                impact: "High impact"
+            });
+        } else if (stats.avgDuration < 7) {
+            recommendations.push({
+                title: "Increase Sleep Duration",
+                description: `Your average of ${stats.avgDuration} hours is slightly below the optimal range. Consider going to bed 30 minutes earlier or sleeping in a bit longer when possible.`,
+                category: "routine",
+                priority: "medium",
+                timeRequired: "30 min/day",
+                startTime: "Start tonight",
+                impact: "Medium impact"
+            });
+        } else if (stats.avgDuration > 9.5) {
+            recommendations.push({
+                title: "Evaluate Oversleeping",
+                description: `Your average ${stats.avgDuration} hours might be excessive. Oversleeping can sometimes indicate underlying health issues or poor sleep quality. Consider tracking how you feel upon waking.`,
+                category: "routine",
+                priority: "medium",
+                timeRequired: "0 min/day",
+                startTime: "Start tomorrow",
+                impact: "Medium impact"
+            });
+        }
+
+        const consistencyPercent = parseInt(stats.consistency);
+        if (consistencyPercent < 30) {
+            recommendations.push({
+                title: "Establish a Sleep Routine",
+                description: `Your sleep schedule varies significantly (only ${consistencyPercent}% consistency). Try setting a fixed bedtime and wake-up time, even on weekends, to regulate your body's internal clock.`,
+                category: "routine",
+                priority: "high",
+                timeRequired: "5 min/day",
+                startTime: "Start tonight",
+                impact: "High impact"
+            });
+        } else if (consistencyPercent < 50) {
+            recommendations.push({
+                title: "Improve Schedule Consistency",
+                description: `Your sleep schedule could be more regular (${consistencyPercent}% consistency). Aim for bedtime variations of no more than 1 hour for better sleep quality.`,
+                category: "routine",
+                priority: "medium",
+                timeRequired: "5 min/day",
+                startTime: "Start tonight",
+                impact: "Medium impact"
+            });
+        }
+
+        if (stats.quality === 'Very Poor') {
+            recommendations.push({
+                title: "Address Sleep Quality Issues",
+                description: "Your sleep quality is rated as very poor. Consider evaluating your sleep environment (darkness, noise, temperature), stress levels, and potential sleep disorders.",
+                category: "environment",
+                priority: "high",
+                timeRequired: "15 min/day",
+                startTime: "Start tonight",
+                impact: "High impact"
+            });
+        } else if (stats.quality === 'Poor') {
+            recommendations.push({
+                title: "Improve Sleep Quality",
+                description: "Your sleep could be more restorative. Try relaxation techniques before bed, ensure your mattress/pillows are comfortable, and avoid alcohol before sleep.",
+                category: "environment",
+                priority: "medium",
+                timeRequired: "10 min/day",
+                startTime: "Start tonight",
+                impact: "Medium impact"
+            });
+        }
+
+        if (stats.lateScreenPercentage > 70) {
+            recommendations.push({
+                title: "Digital Sunset",
+                description: `You use screens within 2 hours of bedtime ${stats.lateScreenPercentage}% of nights. Try implementing a "digital sunset" 1-2 hours before bed to reduce blue light exposure.`,
+                category: "environment",
+                priority: "high",
+                timeRequired: "60 min/day",
+                startTime: "Start tonight",
+                impact: "High impact"
+            });
+        } else if (stats.lateScreenPercentage > 50) {
+            recommendations.push({
+                title: "Reduce Evening Screen Time",
+                description: `You're on screens before bed ${stats.lateScreenPercentage}% of nights. Consider using blue light filters or switching to reading a book instead.`,
+                category: "environment",
+                priority: "medium",
+                timeRequired: "60 min/day",
+                startTime: "Start tonight",
+                impact: "Medium impact"
+            });
+        }
+
+        if (stats.lateCaffeinePercentage > 70) {
+            recommendations.push({
+                title: "Earlier Caffeine Cut-off",
+                description: `You consume caffeine within 6 hours of bedtime ${stats.lateCaffeinePercentage}% of nights. Try moving your last caffeine intake to at least 8 hours before bed.`,
+                category: "nutrition",
+                priority: "high",
+                timeRequired: "0 min/day",
+                startTime: "Start tomorrow",
+                impact: "High impact"
+            });
+        } else if (stats.lateCaffeinePercentage > 50) {
+            recommendations.push({
+                title: "Monitor Caffeine Timing",
+                description: `You have caffeine relatively late ${stats.lateCaffeinePercentage}% of nights. Consider tracking how late caffeine affects your sleep quality.`,
+                category: "nutrition",
+                priority: "medium",
+                timeRequired: "0 min/day",
+                startTime: "Start tomorrow",
+                impact: "Medium impact"
+            });
+        }
+
+        const avgBedtimeHour = entries.reduce((sum, entry) => sum + entry.bedtime.getHours(), 0) / entries.length;
+        if (avgBedtimeHour >= 23) { // 11pm or later
+            recommendations.push({
+                title: "Earlier Bedtime",
+                description: `Your average bedtime is after 11pm. Research suggests earlier bedtimes (10pm-11pm) may correlate with better sleep quality.`,
+                category: "routine",
+                priority: "medium",
+                timeRequired: "0 min/day",
+                startTime: "Start tonight",
+                impact: "Medium impact"
+            });
+        }
+
+        const weekdayEntries = entries.filter(e => e.date.getDay() >= 1 && e.date.getDay() <= 5);
+        const weekendEntries = entries.filter(e => e.date.getDay() === 0 || e.date.getDay() === 6);
+        
+        if (weekdayEntries.length > 3 && weekendEntries.length > 3) {
+            const weekdayAvg = weekdayEntries.reduce((sum, e) => sum + e.duration, 0) / weekdayEntries.length;
+            const weekendAvg = weekendEntries.reduce((sum, e) => sum + e.duration, 0) / weekendEntries.length;
+            
+            if (Math.abs(weekdayAvg - weekendAvg) > 2) {
+                recommendations.push({
+                    title: "Balance Sleep Schedule",
+                    description: `Your sleep duration differs significantly between weekdays (${weekdayAvg.toFixed(1)}h) and weekends (${weekendAvg.toFixed(1)}h). Try to minimize this "social jetlag".`,
+                    category: "routine",
+                    priority: "medium",
+                    timeRequired: "0 min/day",
+                    startTime: "This weekend",
+                    impact: "Medium impact"
+                });
+            }
+        }
+
+        if (entries.length >= 20) {
+            recommendations.push({
+                title: "AI-Powered Insights Available",
+                description: "Our machine learning model can predict how different habits affect your sleep. Try adjusting variables in the predictor to see recommendations!",
+                category: "ai",
+                priority: "low",
+                timeRequired: "5 min/day",
+                startTime: "Anytime",
+                impact: "Low impact"
+            });
+        }
+
+        if (recommendations.length === 0) {
+            recommendations.push({
+                title: "Maintain Your Healthy Habits",
+                description: "Your sleep patterns are excellent! Keep up your consistent routine and good sleep hygiene practices.",
+                category: "routine",
+                priority: "low",
+                timeRequired: "0 min/day",
+                startTime: "Continue",
+                impact: "Low impact"
+            });
+        }
+
+        const priorityOrder = { high: 1, medium: 2, low: 3 };
+        recommendations.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+
+        return recommendations;
     }
 
     function updateRecommendationsUI(recommendations) {
@@ -688,7 +955,8 @@
                     <span class="category-badge category-${rec.category}">${
                         rec.category === 'routine' ? 'Routine' : 
                         rec.category === 'environment' ? 'Environment' :
-                        rec.category === 'nutrition' ? 'Nutrition' : 'Activity'
+                        rec.category === 'nutrition' ? 'Nutrition' : 
+                        rec.category === 'ai' ? 'AI Insights' : 'Activity'
                     }</span>
                     <div class="recommendation-description">
                         ${rec.description}
@@ -701,6 +969,61 @@
                 </div>
             </div>
         `).join('');
+    }
+
+    function updateProgressTracking(recommendations) {
+        if (!recommendations || recommendations.length === 0) return;
+        
+        const categoryCounts = {
+            routine: 0,
+            environment: 0,
+            nutrition: 0,
+            activity: 0,
+            ai: 0
+        };
+        
+        recommendations.forEach(rec => {
+            if (categoryCounts.hasOwnProperty(rec.category)) {
+                categoryCounts[rec.category]++;
+            }
+        });
+        
+        const implementedCounts = {
+            routine: Math.min(2, categoryCounts.routine),
+            environment: Math.min(1, categoryCounts.environment),
+            nutrition: 0,
+            activity: 0,
+            ai: 0
+        };
+        
+        const totalImplemented = Object.values(implementedCounts).reduce((a, b) => a + b, 0);
+        document.getElementById('implemented-count').textContent = totalImplemented;
+        
+        updateCategoryProgress('routine', implementedCounts.routine, categoryCounts.routine);
+        updateCategoryProgress('environment', implementedCounts.environment, categoryCounts.environment);
+        updateCategoryProgress('nutrition', implementedCounts.nutrition, categoryCounts.nutrition);
+        updateCategoryProgress('activity', implementedCounts.activity, categoryCounts.activity);
+    }
+
+    function updateCategoryProgress(category, implemented, total) {
+        if (total === 0) {
+            document.getElementById(`${category}-progress-text`).textContent = "N/A";
+            document.getElementById(`${category}-progress`).style.width = "0%";
+            return;
+        }
+        
+        const percentage = Math.round((implemented / total) * 100);
+        document.getElementById(`${category}-progress-text`).textContent = `${implemented}/${total}`;
+        document.getElementById(`${category}-progress`).style.width = `${percentage}%`;
+        
+        const progressFill = document.getElementById(`${category}-progress`);
+        if (percentage >= 75) {
+            progressFill.style.background = "#10b981"; // Green
+        } else if (percentage >= 50) {
+            progressFill.style.background = "#eab308"; // Yellow
+        } else {
+            progressFill.style.background = "#ef4444"; // Red
+        }
     }
 
     function showAlert(message, type = "info") {
@@ -729,6 +1052,13 @@
         } catch (error) {
             console.error("Logout error:", error);
             showAlert("Logout failed. Please try again.", "danger");
+        }
+    });
+
+    refreshBtn.addEventListener('click', () => {
+        const user = auth.currentUser;
+        if (user) {
+            loadRecommendations(user.uid);
         }
     });
 

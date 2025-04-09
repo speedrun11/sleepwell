@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SLEEPWELL - SETTINGS</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary: #6d28d9;
+            --primary-hover: #7c3aed;
+            --accent: #10b981;
+            --bg: #121212;
+            --surface: #1e1e1e;
+            --surface-hover: rgba(255,255,255,0.05);
+            --surface-light: #2a2a2a;
+            --text: #e0e0e0;
+            --text-muted: #a0a0a0;
+        }
+
+        .user-info h5,
+        .user-info small,
+        #last-login,
+        .stat-value,
+        .stat-value i,
+        .stat-value small {
+            color: #fff !important;
+        }
+        
+        * {
+            font-family: 'Montserrat', sans-serif;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: var(--bg);
+            color: var(--text);
+            padding-top: 56px;
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 600;
+            letter-spacing: -0.025em;
+        }
+
+        .navbar {
+            background: var(--surface) !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--primary) !important;
+        }
+
+        .sidebar {
+            height: 100vh;
+            background: var(--surface);
+            padding: 20px;
+            position: fixed;
+            width: 280px;
+            overflow-y: auto;
+            border-right: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 4px 0 12px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .sidebar a {
+            color: var(--text);
+            text-decoration: none;
+            display: block;
+            padding: 12px 16px;
+            margin: 4px 0;
+            border-radius: 6px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar a:hover {
+            background: var(--surface-hover);
+            transform: translateX(4px);
+            border-left-color: var(--primary);
+        }
+
+        .sidebar a.active {
+            background: linear-gradient(90deg, rgba(16,185,129,0.1) 0%, transparent 100%);
+            border-left-color: var(--accent);
+        }
+
+        .sidebar a i {
+            width: 20px;
+            text-align: center;
+            margin-right: 12px;
+            font-size: 1.1rem;
+        }
+
+        .content {
+            padding: 24px;
+            margin-left: 280px;
+            flex-grow: 1;
+        }
+
+        .user-info {
+            background: var(--surface-light);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(241, 229, 229, 0.1)
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            margin-bottom: 24px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+
+        .card-header {
+            background: rgba(255,255,255,0.03);
+            color: var(--text);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 16px 20px;
+            border-radius: 12px 12px 0 0 !important;
+            font-weight: 600;
+        }
+
+        .card-header i {
+            margin-right: 8px;
+            color: var(--primary);
+        }
+
+        .card-body {
+            color: var(--text-muted);
+            padding: 20px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: scale(1.02);
+        }
+
+        .btn-outline-light {
+            border-color: rgba(255,255,255,0.2);
+            color: var(--text);
+            transition: all 0.3s;
+        }
+
+        .btn-outline-light:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .form-control, .form-select {
+            background: rgba(255,255,255,0.05) !important;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text);
+            border-radius: 8px;
+            padding: 10px 16px;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(109,40,217,0.25);
+            background: rgba(255,255,255,0.08) !important;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 3px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .alert-info {
+            background: linear-gradient(45deg, rgba(146, 185, 172, 0.1), transparent);
+            border: 1px solid rgba(16,185,129,0.2);
+            backdrop-filter: blur(4px);
+            color: var(--text);
+            border-radius: 10px;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-info {
+            flex: 1;
+        }
+
+        .setting-info h6 {
+            margin-bottom: 2px;
+            color: var(--text);
+        }
+
+        .setting-info small {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .setting-control {
+            margin-left: 16px;
+        }
+
+        .form-switch .form-check-input {
+            background-color: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .form-switch .form-check-input:checked {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .form-switch .form-check-input:focus {
+            box-shadow: 0 0 0 0.25rem rgba(109, 40, 217, 0.25);
+        }
+
+        .danger-zone {
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .danger-zone .btn-danger {
+            background: #ef4444;
+            border: none;
+        }
+
+        .danger-zone .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .profile-pic {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--primary);
+            background: var(--surface-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 2rem;
+            margin-right: 20px;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .profile-details h3 {
+            margin-bottom: 4px;
+        }
+
+        .profile-details small {
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 100%;
+                position: relative;
+                height: auto;
+                box-shadow: none;
+                border-right: none;
+            }
+            
+            .content {
+                margin-left: 0;
+                padding: 16px;
+            }
+            
+            .card {
+                margin-bottom: 16px;
+            }
+        }
+    </style>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark px-4 fixed-top">
+        <a class="navbar-brand" href="#">SleepWell</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="bi bi-house-door"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <button id="logout-btn" class="btn btn-outline-danger ms-2">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="user-info">
+                <h5 id="sidebar-username">Loading user...</h5>
+                <small class="text-muted" id="sidebar-email">Loading email...</small>
+            </div>
+            
+            <nav class="nav flex-column">
+                <a class="nav-link" href="{{ url_for('dashboard') }}">
+                    <i class="bi bi-speedometer2"></i> Overview
+                </a>
+                <a class="nav-link" href="{{ url_for('sleep_analysis') }}">
+                    <i class="bi bi-graph-up"></i> Sleep Analysis
+                </a>
+                <a class="nav-link" href="{{ url_for('recommendations') }}">
+                    <i class="bi bi-lightbulb"></i> Recommendations
+                </a>
+                <a class="nav-link active" href="{{ url_for('settings') }}">
+                    <i class="bi bi-gear"></i> Settings
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <div class="profile-header">
+                <div class="profile-pic" id="profile-pic">
+                    <i class="bi bi-person-fill"></i>
+                </div>
+                <div class="profile-details">
+                    <h3 id="profile-name">Loading...</h3>
+                    <small id="profile-email">Loading email...</small>
+                </div>
+            </div>
+
+            <div class="alert alert-info d-flex align-items-center">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                <div>Manage your account settings and preferences here.</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-person"></i>
+                    <span>Profile Settings</span>
+                </div>
+                <div class="card-body">
+                    <form id="profile-form">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">First Name</label>
+                                <input type="text" class="form-control" id="first-name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Last Name</label>
+                                <input type="text" class="form-control" id="last-name" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="email" required>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save"></i> Update Profile
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-bell"></i>
+                    <span>Notification Preferences</span>
+                </div>
+                <div class="card-body">
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h6 class="mb-0">Sleep Reminders</h6>
+                            <small>Receive bedtime reminders based on your sleep schedule</small>
+                        </div>
+                        <div class="setting-control">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="sleep-reminders" checked>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h6 class="mb-0">Weekly Reports</h6>
+                            <small>Get a weekly summary of your sleep patterns</small>
+                        </div>
+                        <div class="setting-control">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="weekly-reports" checked>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h6 class="mb-0">Recommendation Alerts</h6>
+                            <small>Get notified when new sleep recommendations are available</small>
+                        </div>
+                        <div class="setting-control">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="recommendation-alerts">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h6 class="mb-0">Email Notifications</h6>
+                            <small>Receive important notifications via email</small>
+                        </div>
+                        <div class="setting-control">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="email-notifications" checked>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-moon"></i>
+                    <span>Sleep Preferences</span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Preferred Bedtime</label>
+                            <input type="time" class="form-control" id="preferred-bedtime">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Preferred Wake-up Time</label>
+                            <input type="time" class="form-control" id="preferred-wakeup">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Sleep Goal (hours)</label>
+                            <select class="form-select" id="sleep-goal">
+                                <option value="7">7 hours</option>
+                                <option value="7.5">7.5 hours</option>
+                                <option value="8" selected>8 hours</option>
+                                <option value="8.5">8.5 hours</option>
+                                <option value="9">9 hours</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Sleep Tracking Method</label>
+                            <select class="form-select" id="tracking-method">
+                                <option value="manual">Manual Entry</option>
+                                <option value="auto">Auto-detect (if available)</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <button id="save-sleep-prefs" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Save Preferences
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-shield-lock"></i>
+                    <span>Security</span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Change Password</label>
+                            <input type="password" class="form-control" id="new-password" placeholder="New password">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control" id="confirm-password" placeholder="Confirm new password">
+                        </div>
+                        <div class="col-12">
+                            <button id="change-password" class="btn btn-primary">
+                                <i class="bi bi-key"></i> Update Password
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card danger-zone">
+                <div class="card-header text-danger">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <span>Danger Zone</span>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5 class="mb-2 text-white">Export Data</h5>
+                        <p class="small text-white">Download all your sleep data in CSV format for backup or analysis.</p>
+                        <button id="export-data" class="btn btn-outline-light">
+                            <i class="bi bi-download"></i> Export Sleep Data
+                        </button>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5 class="mb-2 text-white">Delete Account</h5>
+                        <p class="small text-white">Permanently delete your account and all associated data. This action cannot be undone.</p>
+                        <button id="delete-account" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Delete Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+    function initializeFirebase() {
+        try {
+            const firebaseConfig = {
+                apiKey: "AIzaSyDSKYsYwvM-0zof2rHtiKodp4z0HUTNiI4",
+                authDomain: "sleepwell-7ec3a.firebaseapp.com",
+                projectId: "sleepwell-7ec3a",
+                storageBucket: "sleepwell-7ec3a.appspot.com",
+                messagingSenderId: "37760004376",
+                appId: "1:37760004376:web:87a663c13995e6f02c6e6d"
+            };
+
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            } else {
+                firebase.app();
+            }
+
+            const settings = {
+                cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED
+            };
+
+            const db = firebase.firestore();
+            db.settings(settings);
+
+            return {
+                auth: firebase.auth(),
+                db: db
+            };
+        } catch (error) {
+            console.error("Firebase initialization failed:", error);
+            throw new Error("Failed to initialize Firebase services");
+        }
+    }
+
+    let db, auth;
+    try {
+        const firebaseServices = initializeFirebase();
+        db = firebaseServices.db;
+        auth = firebaseServices.auth;
+    } catch (error) {
+        console.error("Critical Firebase error:", error);
+        document.body.innerHTML = `
+            <div class="alert alert-danger m-4">
+                <h4>Application Error</h4>
+                <p>Failed to initialize required services. Please refresh the page.</p>
+                <p><small>${error.message}</small></p>
+            </div>
+        `;
+    }
+
+    const sidebarUsername = document.getElementById('sidebar-username');
+    const sidebarEmail = document.getElementById('sidebar-email');
+    const profileName = document.getElementById('profile-name');
+    const profileEmail = document.getElementById('profile-email');
+    const profilePic = document.getElementById('profile-pic');
+    const firstNameInput = document.getElementById('first-name');
+    const lastNameInput = document.getElementById('last-name');
+    const emailInput = document.getElementById('email');
+    const logoutBtn = document.getElementById('logout-btn');
+    const profileForm = document.getElementById('profile-form');
+    const changePasswordBtn = document.getElementById('change-password');
+    const exportDataBtn = document.getElementById('export-data');
+    const deleteAccountBtn = document.getElementById('delete-account');
+    const saveSleepPrefsBtn = document.getElementById('save-sleep-prefs');
+
+    auth.onAuthStateChanged(async user => {
+        if (!user) {
+            window.location.href = "/";
+            return;
+        }
+        
+        console.log("User authenticated:", user.uid);
+        updateUserInfo(user);
+        loadUserSettings(user.uid);
+    });
+
+    function updateUserInfo(user) {
+        const displayName = user.displayName || "User";
+        const email = user.email || "No email";
+        const [firstName, lastName] = displayName.split(' ');
+
+        sidebarUsername.textContent = displayName;
+        sidebarEmail.textContent = email;
+
+        profileName.textContent = displayName;
+        profileEmail.textContent = email;
+        
+        firstNameInput.value = firstName || '';
+        lastNameInput.value = lastName || '';
+        emailInput.value = email;
+
+        if (user.photoURL) {
+            profilePic.innerHTML = `<img src="${user.photoURL}" alt="Profile" style="width:100%;height:100%;border-radius:50%;">`;
+        } else {
+            const initials = (firstName?.[0] || '') + (lastName?.[0] || '');
+            profilePic.textContent = initials || 'U';
+        }
+    }
+
+    async function loadUserSettings(uid) {
+        try {
+            const doc = await db.collection('userSettings').doc(uid).get();
+            
+            if (doc.exists) {
+                const settings = doc.data();
+                
+                document.getElementById('sleep-reminders').checked = settings.notifications?.sleepReminders ?? true;
+                document.getElementById('weekly-reports').checked = settings.notifications?.weeklyReports ?? true;
+                document.getElementById('recommendation-alerts').checked = settings.notifications?.recommendationAlerts ?? false;
+                document.getElementById('email-notifications').checked = settings.notifications?.email ?? true;
+                
+                if (settings.sleepPreferences?.preferredBedtime) {
+                    document.getElementById('preferred-bedtime').value = settings.sleepPreferences.preferredBedtime;
+                }
+                if (settings.sleepPreferences?.preferredWakeup) {
+                    document.getElementById('preferred-wakeup').value = settings.sleepPreferences.preferredWakeup;
+                }
+                if (settings.sleepPreferences?.sleepGoal) {
+                    document.getElementById('sleep-goal').value = settings.sleepPreferences.sleepGoal;
+                }
+                if (settings.sleepPreferences?.trackingMethod) {
+                    document.getElementById('tracking-method').value = settings.sleepPreferences.trackingMethod;
+                }
+            }
+        } catch (error) {
+            console.error("Error loading settings:", error);
+            showAlert("Failed to load settings. Please try again.", "danger");
+        }
+    }
+
+    async function saveUserSettings(uid, settings) {
+        try {
+            await db.collection('userSettings').doc(uid).set(settings, { merge: true });
+            showAlert("Settings saved successfully!", "success");
+        } catch (error) {
+            console.error("Error saving settings:", error);
+            showAlert("Failed to save settings. Please try again.", "danger");
+        }
+    }
+
+    profileForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const user = auth.currentUser;
+        if (!user) {
+            showAlert("You need to be logged in to update your profile.", "danger");
+            return;
+        }
+
+        const firstName = firstNameInput.value.trim();
+        const lastName = lastNameInput.value.trim();
+        const email = emailInput.value.trim();
+        const displayName = `${firstName} ${lastName}`.trim();
+
+        if (!firstName || !lastName || !email) {
+            showAlert("Please fill in all fields.", "warning");
+            return;
+        }
+
+        try {
+            const submitBtn = profileForm.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<span class="loading-spinner"></span> Saving...';
+            submitBtn.disabled = true;
+
+            await user.updateProfile({
+                displayName: displayName
+            });
+
+            if (email !== user.email) {
+                await user.updateEmail(email);
+            }
+
+            await db.collection('users').doc(user.uid).set({
+                displayName: displayName,
+                email: email,
+                firstName: firstName,
+                lastName: lastName,
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+
+            updateUserInfo(user);
+            showAlert("Profile updated successfully!", "success");
+            
+        } catch (error) {
+            console.error("Error updating profile:", error);
+            
+            let errorMessage = "Failed to update profile. Please try again.";
+            if (error.code === 'auth/requires-recent-login') {
+                errorMessage = "For security, please reauthenticate to change your email.";
+            } else if (error.code === 'auth/email-already-in-use') {
+                errorMessage = "This email is already in use by another account.";
+            }
+            
+            showAlert(errorMessage, "danger");
+        } finally {
+            const submitBtn = profileForm.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = '<i class="bi bi-save"></i> Update Profile';
+            submitBtn.disabled = false;
+        }
+    });
+
+    changePasswordBtn.addEventListener('click', async () => {
+        const user = auth.currentUser;
+        if (!user) {
+            showAlert("You need to be logged in to change your password.", "danger");
+            return;
+        }
+
+        const newPassword = document.getElementById('new-password').value;
+        const confirmPassword = document.getElementById('confirm-password').value;
+
+        if (!newPassword || !confirmPassword) {
+            showAlert("Please enter and confirm your new password.", "warning");
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            showAlert("Passwords don't match. Please try again.", "warning");
+            return;
+        }
+
+        if (newPassword.length < 6) {
+            showAlert("Password must be at least 6 characters.", "warning");
+            return;
+        }
+
+        try {
+            changePasswordBtn.innerHTML = '<span class="loading-spinner"></span> Updating...';
+            changePasswordBtn.disabled = true;
+
+            await user.updatePassword(newPassword);
+            showAlert("Password changed successfully!", "success");
+            
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-password').value = '';
+            
+        } catch (error) {
+            console.error("Error changing password:", error);
+            
+            let errorMessage = "Failed to change password. Please try again.";
+            if (error.code === 'auth/requires-recent-login') {
+                errorMessage = "For security, please reauthenticate to change your password.";
+            } else if (error.code === 'auth/weak-password') {
+                errorMessage = "Password is too weak. Please choose a stronger password.";
+            }
+            
+            showAlert(errorMessage, "danger");
+        } finally {
+            changePasswordBtn.innerHTML = '<i class="bi bi-key"></i> Update Password';
+            changePasswordBtn.disabled = false;
+        }
+    });
+
+    saveSleepPrefsBtn.addEventListener('click', async () => {
+        const user = auth.currentUser;
+        if (!user) {
+            showAlert("You need to be logged in to save preferences.", "danger");
+            return;
+        }
+
+        try {
+            saveSleepPrefsBtn.innerHTML = '<span class="loading-spinner"></span> Saving...';
+            saveSleepPrefsBtn.disabled = true;
+
+            const settings = {
+                notifications: {
+                    sleepReminders: document.getElementById('sleep-reminders').checked,
+                    weeklyReports: document.getElementById('weekly-reports').checked,
+                    recommendationAlerts: document.getElementById('recommendation-alerts').checked,
+                    email: document.getElementById('email-notifications').checked
+                },
+                sleepPreferences: {
+                    preferredBedtime: document.getElementById('preferred-bedtime').value,
+                    preferredWakeup: document.getElementById('preferred-wakeup').value,
+                    sleepGoal: document.getElementById('sleep-goal').value,
+                    trackingMethod: document.getElementById('tracking-method').value
+                }
+            };
+
+            await saveUserSettings(user.uid, settings);
+            
+        } catch (error) {
+            console.error("Error saving sleep preferences:", error);
+            showAlert("Failed to save preferences. Please try again.", "danger");
+        } finally {
+            saveSleepPrefsBtn.innerHTML = '<i class="bi bi-save"></i> Save Preferences';
+            saveSleepPrefsBtn.disabled = false;
+        }
+    });
+
+    exportDataBtn.addEventListener('click', async () => {
+        const user = auth.currentUser;
+        if (!user) {
+            showAlert("You need to be logged in to export data.", "danger");
+            return;
+        }
+
+        try {
+            exportDataBtn.innerHTML = '<span class="loading-spinner"></span> Preparing...';
+            exportDataBtn.disabled = true;
+
+            const entries = await db.collection('sleepEntries')
+                .where('userId', '==', user.uid)
+                .orderBy('date', 'desc')
+                .get();
+
+            if (entries.empty) {
+                showAlert("No sleep data available to export.", "info");
+                return;
+            }
+
+            let csv = 'Date,Bedtime,Wakeup,Duration (hours),Quality,Screen Time Before Bed,Caffeine Before Bed\n';
+            
+            entries.forEach(doc => {
+                const data = doc.data();
+                const date = data.date.toDate().toISOString().split('T')[0];
+                const bedtime = data.bedtime.toDate().toLocaleTimeString();
+                const wakeup = data.wakeupTime.toDate().toLocaleTimeString();
+                
+                csv += `${date},${bedtime},${wakeup},${data.duration},${data.quality},${data.screenHoursBeforeBed},${data.caffeineHoursBeforeBed}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `sleepwell-data-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showAlert("Data exported successfully!", "success");
+            
+        } catch (error) {
+            console.error("Error exporting data:", error);
+            showAlert("Failed to export data. Please try again.", "danger");
+        } finally {
+            exportDataBtn.innerHTML = '<i class="bi bi-download"></i> Export Sleep Data';
+            exportDataBtn.disabled = false;
+        }
+    });
+
+    deleteAccountBtn.addEventListener('click', async () => {
+        const user = auth.currentUser;
+        if (!user) {
+            showAlert("You need to be logged in to delete your account.", "danger");
+            return;
+        }
+
+        if (!confirm("Are you sure you want to delete your account? This will permanently erase all your data and cannot be undone.")) {
+            return;
+        }
+
+        try {
+            deleteAccountBtn.innerHTML = '<span class="loading-spinner"></span> Deleting...';
+            deleteAccountBtn.disabled = true;
+
+            await db.collection('users').doc(user.uid).delete();
+            await db.collection('userSettings').doc(user.uid).delete();
+            
+            const entries = await db.collection('sleepEntries')
+                .where('userId', '==', user.uid)
+                .get();
+
+            const batch = db.batch();
+            entries.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+            await batch.commit();
+
+            await user.delete();
+            
+            window.location.href = "/";
+            
+        } catch (error) {
+            console.error("Error deleting account:", error);
+            
+            let errorMessage = "Failed to delete account. Please try again.";
+            if (error.code === 'auth/requires-recent-login') {
+                errorMessage = "For security, please reauthenticate to delete your account.";
+            }
+            
+            showAlert(errorMessage, "danger");
+        } finally {
+            deleteAccountBtn.innerHTML = '<i class="bi bi-trash"></i> Delete Account';
+            deleteAccountBtn.disabled = false;
+        }
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+        try {
+            await auth.signOut();
+            window.location.href = '/';
+        } catch (error) {
+            console.error("Logout error:", error);
+            showAlert("Logout failed. Please try again.", "danger");
+        }
+    });
+
+    function showAlert(message, type = "info") {
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} alert-dismissible fade show`;
+        alert.role = "alert";
+        alert.innerHTML = `
+            <i class="bi ${type === 'danger' ? 'bi-exclamation-triangle-fill' : 'bi-info-circle-fill'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        const container = document.querySelector('.content');
+        container.insertBefore(alert, container.firstChild);
+        
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }, 5000);
+    }
+    </script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 import firebase_admin
 from firebase_admin import credentials, auth
 
-cred = credentials.Certificate("sleepwell-7ec3a-firebase-adminsdk-fbsvc-a3ab147fc6.json")
+cred = credentials.Certificate("sleepwell-7ec3a-firebase-adminsdk-fbsvc-0d2a905bbb.json")
 firebase_admin.initialize_app(cred)
 
 def create_user(email, password, first_name, last_name):

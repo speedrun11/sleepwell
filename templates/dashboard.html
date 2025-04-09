@@ -384,7 +384,7 @@
             </div>
             
             <nav class="nav flex-column">
-                <a class="nav-link" href="{{ url_for('dashboard') }}">
+                <a class="nav-link active" href="{{ url_for('dashboard') }}">
                     <i class="bi bi-speedometer2"></i> Overview
                 </a>
                 <a class="nav-link" href="{{ url_for('sleep_analysis') }}">
@@ -393,7 +393,7 @@
                 <a class="nav-link" href="{{ url_for('recommendations') }}">
                     <i class="bi bi-lightbulb"></i> Recommendations
                 </a>
-                <a class="nav-link" href="#">
+                <a class="nav-link" href="{{ url_for('settings') }}">
                     <i class="bi bi-gear"></i> Settings
                 </a>
             </nav>
@@ -496,12 +496,15 @@
                     <span>Sleep Quality Predictor</span>
                 </div>
                 <div class="card-body">
-                    <div id="prediction-result" class="text-center mb-3">
-                        <p class="text-muted">Enter your sleep details to get a prediction</p>
+                    <div id="prediction-result" class="mb-3">
+                        <p class="text-muted small">Fill in bedtime and wake-up time (required), and optionally add screen/caffeine times for more accurate predictions.</p>
                     </div>
                     <button id="predict-quality" class="btn btn-primary w-100" disabled>
                         <span class="loading-spinner"></span> Training Model...
                     </button>
+                    <div class="mt-2 text-center small text-muted">
+                        <i class="bi bi-info-circle"></i> Empty fields will use your historical averages
+                    </div>
                 </div>
             </div>
 
@@ -577,14 +580,16 @@
                 firebase.app();
             }
 
-            firebase.firestore().enablePersistence()
-                .catch(err => {
-                    console.error("Firestore offline persistence failed:", err);
-                });
+            const settings = {
+                cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED
+            };
+
+            const db = firebase.firestore();
+            db.settings(settings);
 
             return {
                 auth: firebase.auth(),
-                db: firebase.firestore()
+                db: db
             };
         } catch (error) {
             console.error("Firebase initialization failed:", error);
@@ -689,7 +694,7 @@
         }
     }
 
-        auth.onAuthStateChanged(user => {
+    auth.onAuthStateChanged(user => {
         if (!user) {
             window.location.href = "/";
             return;
@@ -699,11 +704,13 @@
         updateGreeting(user);
         updateUserInfo(user);
         
-        db.collection('test').limit(1).get()
-            .then(() => loadUserData(user.uid))
+        db.collection('test').doc('test').get()
+            .then(() => {
+                loadUserData(user.uid);
+            })
             .catch(error => {
                 console.error("Firestore connection test failed:", error);
-                showAlert("Failed to connect to database. Error: " + error.message, "danger");
+                showAlert("Failed to connect to database. Please refresh the page or contact support if this continues.", "danger");
             });
     });
 
@@ -721,7 +728,7 @@
         document.getElementById('sidebar-email').textContent = email;
     }
 
-    async function getSleepEntries(uid) {
+        async function getSleepEntries(uid) {
         try {
             console.log("Fetching sleep entries for user:", uid);
             const snapshot = await db.collection('sleepEntries')
@@ -734,154 +741,257 @@
                 return [];
             }
             
-            const entries = snapshot.docs.map(doc => {
+            return snapshot.docs.map(doc => {
                 const data = doc.data();
                 return {
                     id: doc.id,
-                    ...data,
-                    date: data.date.toDate(),
-                    bedtime: data.bedtime.toDate(),
-                    wakeupTime: data.wakeupTime.toDate()
+                    userId: data.userId,
+                    quality: parseInt(data.quality) || 3,
+                    duration: parseFloat(data.duration) || 0,
+                    screenHoursBeforeBed: parseFloat(data.screenHoursBeforeBed) || 0,
+                    caffeineHoursBeforeBed: parseFloat(data.caffeineHoursBeforeBed) || 0,
+                    date: convertToDate(data.date),
+                    bedtime: convertToDate(data.bedtime),
+                    wakeupTime: convertToDate(data.wakeupTime)
                 };
             });
-            
-            console.log("Retrieved entries:", entries);
-            return entries;
         } catch (error) {
             console.error("Error getting sleep entries:", error);
+            if (error.code === 'permission-denied') {
+                showAlert("You don't have permission to access sleep data. Please log out and log back in.", "danger");
+            }
             throw error;
         }
     }
 
-    async function loadUserData(uid) {
-        try {
-            console.log("Loading data for user:", uid);
-            showLoadingState(true);
-            refreshBtn.classList.add('refreshing');
-            
-            let sleepEntries = [];
-            try {
-                sleepEntries = await getSleepEntries(uid);
-                console.log("Raw sleep entries:", sleepEntries);
-            } catch (error) {
-                console.error("Database error:", error);
-                showAlert("Failed to connect to database. Please check your internet connection.", "danger");
-                return;
+        function convertToDate(timestamp) {
+            if (timestamp?.toDate) {
+                return timestamp.toDate();
             }
-            
-            if (sleepEntries.length === 0) {
-                console.log("No entries found, showing empty state");
-                showAlert("No sleep entries found. Add your first entry to see statistics.", "info");
-                updateStats({ 
-                    avgDuration: 0, 
-                    quality: 'N/A', 
-                    consistency: '0%',
-                    avgScreenTime: 0,
-                    lateScreenPercentage: 0,
-                    avgCaffeineTime: 0,
-                    lateCaffeinePercentage: 0
-                });
-                updateChart([]);
-                updateRecommendations([]);
-                return;
+            if (typeof timestamp === 'string') {
+                return new Date(timestamp);
             }
-            
-            console.log("Calculating statistics for", sleepEntries.length, "entries");
-            const stats = calculateSleepStats(sleepEntries);
-            updateStats(stats);
-            
-            const chartData = getChartData(sleepEntries, currentPeriod);
-            updateChart(chartData);
-            
-            updateRecommendations(sleepEntries);
-            
-            if (sleepEntries.length >= 20) {
-                try {
-                    predictBtn.innerHTML = '<i class="bi bi-cpu"></i> Train Prediction Model';
-                    predictBtn.disabled = false;
-                    
-                    showAlert("Training AI model with your sleep data...", "info");
-                    await trainModel(sleepEntries);
-                    console.log('Model training complete');
-                    showAlert("AI model trained successfully! Try predicting sleep quality.", "success");
-                    
-                    predictBtn.innerHTML = '<i class="bi bi-cpu"></i> Predict Sleep Quality';
-                    predictBtn.disabled = false;
-                } catch (error) {
-                    console.error('Model training failed:', error);
-                    showAlert("AI model training failed. Trying again later.", "warning");
-                }
-            } else {
-                predictBtn.innerHTML = '<i class="bi bi-info-circle"></i> Need more data (20+ entries)';
-                predictBtn.disabled = true;
-            }
-            
-        } catch (error) {
-            console.error("Error in loadUserData:", error);
-            showAlert("Failed to load sleep data. Please try again.", "danger");
-        } finally {
-            showLoadingState(false);
-            refreshBtn.classList.remove('refreshing');
+            return new Date();
         }
-    }
 
-    function calculateSleepStats(entries) {
-        console.log("Calculating stats for entries:", entries);
-        if (entries.length === 0) {
-            return {
-                avgDuration: 0,
-                quality: 'N/A',
+        async function loadUserData(uid) {
+            try {
+                console.log("[DEBUG] Starting data load for user:", uid);
+                showLoadingState(true);
+                refreshBtn.classList.add('refreshing');
+
+                if (!db || !auth.currentUser) {
+                    throw new Error("Firebase not properly initialized");
+                }
+
+                try {
+                    console.log("[DEBUG] Testing Firestore connection...");
+                    const testDoc = await db.collection('test').doc('connection-test').get();
+                    if (!testDoc.exists) {
+                        console.warn("[DEBUG] Test document doesn't exist - creating one");
+                        await db.collection('test').doc('connection-test').set({
+                            test: true,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                } catch (testError) {
+                    console.error("[ERROR] Firestore connection test failed:", testError);
+                    throw new Error("Database connection failed. Please refresh the page.");
+                }
+
+                let sleepEntries = [];
+                try {
+                    console.log("[DEBUG] Querying sleep entries for user:", uid);
+                    const querySnapshot = await db.collection('sleepEntries')
+                        .where('userId', '==', uid)
+                        .orderBy('date', 'desc')
+                        .get();
+                    
+                    console.log("[DEBUG] Found", querySnapshot.size, "entries");
+
+                    sleepEntries = querySnapshot.docs.map(doc => {
+                        const data = doc.data();
+                        if (!data.userId || data.userId !== uid) {
+                            console.warn("[WARNING] Document with mismatched userId:", doc.id);
+                        }
+                        
+                        return {
+                            id: doc.id,
+                            userId: data.userId || uid,
+                            quality: parseInt(data.quality) || 3,
+                            duration: parseFloat(data.duration) || 0,
+                            screenHoursBeforeBed: parseFloat(data.screenHoursBeforeBed) || 0,
+                            caffeineHoursBeforeBed: parseFloat(data.caffeineHoursBeforeBed) || 0,
+                            date: safeConvertToDate(data.date),
+                            bedtime: safeConvertToDate(data.bedtime),
+                            wakeupTime: safeConvertToDate(data.wakeupTime)
+                        };
+                    });
+                } catch (queryError) {
+                    console.error("[ERROR] Sleep entries query failed:", queryError);
+                    if (queryError.code === 'permission-denied') {
+                        throw new Error("Access denied. Please log out and log back in.");
+                    } else if (queryError.code === 'failed-precondition') {
+                        console.log("Attempting to update local cache...");
+                        await db.terminate();
+                        await db.clearPersistence();
+                        
+                        const firebaseServices = initializeFirebase();
+                        db = firebaseServices.db;
+                        auth = firebaseServices.auth;
+                        
+                        const retrySnapshot = await db.collection('sleepEntries')
+                            .where('userId', '==', uid)
+                            .orderBy('date', 'desc')
+                            .get();
+                        
+                        sleepEntries = retrySnapshot.docs.map(doc => doc.data());
+                    } else if (queryError.code === 'unavailable') {
+                        throw new Error("Network issue. Please check your connection.");
+                    } else {
+                        throw new Error("Failed to load sleep data. Please try again.");
+                    }
+                }
+
+                if (sleepEntries.length === 0) {
+                    console.log("[DEBUG] No entries found - showing empty state");
+                    showAlert("No sleep entries found. Add your first entry to see statistics.", "info");
+                    updateEmptyState();
+                    return;
+                }
+
+                console.log("[DEBUG] Processing", sleepEntries.length, "entries");
+                try {
+                    const stats = calculateSleepStats(sleepEntries);
+                    updateStats(stats);
+                    
+                    const chartData = getChartData(sleepEntries, currentPeriod);
+                    updateChart(chartData);
+                    
+                    updateRecommendations(sleepEntries);
+                    
+                    if (sleepEntries.length >= 20) {
+                        await handleModelTraining(sleepEntries);
+                    } else {
+                        predictBtn.innerHTML = '<i class="bi bi-info-circle"></i> Need more data (20+ entries)';
+                        predictBtn.disabled = true;
+                    }
+                    
+                } catch (processingError) {
+                    console.error("[ERROR] Data processing failed:", processingError);
+                    throw new Error("Couldn't process your sleep data. We're working on a fix.");
+                }
+                
+            } catch (error) {
+                console.error("[ERROR] loadUserData failed:", error);
+                showAlert(error.message || "Failed to load sleep data. Please try again.", "danger");
+            } finally {
+                console.log("[DEBUG] Finished loading data");
+                showLoadingState(false);
+                refreshBtn.classList.remove('refreshing');
+            }
+        }
+
+        function safeConvertToDate(timestamp) {
+            try {
+                return timestamp?.toDate?.() || new Date();
+            } catch (e) {
+                console.warn("[WARNING] Invalid date conversion, using current date");
+                return new Date();
+            }
+        }
+
+        function updateEmptyState() {
+            updateStats({ 
+                avgDuration: 0, 
+                quality: 'N/A', 
                 consistency: '0%',
                 avgScreenTime: 0,
                 lateScreenPercentage: 0,
                 avgCaffeineTime: 0,
                 lateCaffeinePercentage: 0
+            });
+            updateChart([]);
+            updateRecommendations([]);
+        }
+
+        async function handleModelTraining(entries) {
+            try {
+                predictBtn.innerHTML = '<span class="loading-spinner"></span> Training...';
+                predictBtn.disabled = true;
+                
+                showAlert("Training AI model with your sleep data...", "info");
+                await trainModel(entries);
+                
+                console.log("[DEBUG] Model training complete");
+                showAlert("AI model trained successfully! Try predicting sleep quality.", "success");
+                
+                predictBtn.innerHTML = '<i class="bi bi-cpu"></i> Predict Sleep Quality';
+                predictBtn.disabled = false;
+            } catch (error) {
+                console.error("[ERROR] Model training failed:", error);
+                predictBtn.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Training Failed';
+                showAlert("AI model training failed. Trying again later.", "warning");
+            }
+        }
+
+        function calculateSleepStats(entries) {
+            console.log("Calculating stats for entries:", entries);
+            if (entries.length === 0) {
+                return {
+                    avgDuration: 0,
+                    quality: 'N/A',
+                    consistency: '0%',
+                    avgScreenTime: 0,
+                    lateScreenPercentage: 0,
+                    avgCaffeineTime: 0,
+                    lateCaffeinePercentage: 0
+                };
+            }
+            
+            const totalDuration = entries.reduce((sum, entry) => sum + entry.duration, 0);
+            const avgDuration = (totalDuration / entries.length).toFixed(1);
+            
+            const qualityMap = {
+                '5': 'Excellent',
+                '4': 'Good',
+                '3': 'Average',
+                '2': 'Poor',
+                '1': 'Very Poor'
+            };
+            const totalQuality = entries.reduce((sum, entry) => sum + parseInt(entry.quality), 0);
+            const avgQuality = Math.round(totalQuality / entries.length);
+            const quality = qualityMap[avgQuality] || 'N/A';
+            
+            const consistentNights = entries.filter(entry => 
+                entry.duration >= 7 && entry.duration <= 9
+            ).length;
+            const consistency = Math.round((consistentNights / entries.length) * 100) + '%';
+            
+            const screenStats = entries.reduce((acc, entry) => {
+                const screenTime = entry.screenHoursBeforeBed || 0;
+                acc.total += screenTime;
+                if (screenTime < 2) acc.lateCount++;
+                return acc;
+            }, { total: 0, lateCount: 0 });
+            
+            const caffeineStats = entries.reduce((acc, entry) => {
+                const caffeineTime = entry.caffeineHoursBeforeBed || 0;
+                acc.total += caffeineTime;
+                if (caffeineTime < 6) acc.lateCount++;
+                return acc;
+            }, { total: 0, lateCount: 0 });
+            
+            return {
+                avgDuration,
+                quality,
+                consistency,
+                avgScreenTime: (screenStats.total / entries.length).toFixed(1),
+                lateScreenPercentage: Math.round((screenStats.lateCount / entries.length) * 100),
+                avgCaffeineTime: (caffeineStats.total / entries.length).toFixed(1),
+                lateCaffeinePercentage: Math.round((caffeineStats.lateCount / entries.length) * 100)
             };
         }
-        
-        const totalDuration = entries.reduce((sum, entry) => sum + entry.duration, 0);
-        const avgDuration = (totalDuration / entries.length).toFixed(1);
-        
-        const qualityMap = {
-            '5': 'Excellent',
-            '4': 'Good',
-            '3': 'Average',
-            '2': 'Poor',
-            '1': 'Very Poor'
-        };
-        const totalQuality = entries.reduce((sum, entry) => sum + parseInt(entry.quality), 0);
-        const avgQuality = Math.round(totalQuality / entries.length);
-        const quality = qualityMap[avgQuality] || 'N/A';
-        
-        const consistentNights = entries.filter(entry => 
-            entry.duration >= 7 && entry.duration <= 9
-        ).length;
-        const consistency = Math.round((consistentNights / entries.length) * 100) + '%';
-        
-        const screenStats = entries.reduce((acc, entry) => {
-            const screenTime = entry.screenHoursBeforeBed || 0;
-            acc.total += screenTime;
-            if (screenTime < 2) acc.lateCount++;
-            return acc;
-        }, { total: 0, lateCount: 0 });
-        
-        const caffeineStats = entries.reduce((acc, entry) => {
-            const caffeineTime = entry.caffeineHoursBeforeBed || 0;
-            acc.total += caffeineTime;
-            if (caffeineTime < 6) acc.lateCount++;
-            return acc;
-        }, { total: 0, lateCount: 0 });
-        
-        return {
-            avgDuration,
-            quality,
-            consistency,
-            avgScreenTime: (screenStats.total / entries.length).toFixed(1),
-            lateScreenPercentage: Math.round((screenStats.lateCount / entries.length) * 100),
-            avgCaffeineTime: (caffeineStats.total / entries.length).toFixed(1),
-            lateCaffeinePercentage: Math.round((caffeineStats.lateCount / entries.length) * 100)
-        };
-    }
 
     function getChartData(entries, period) {
         const now = new Date();
@@ -1070,66 +1180,151 @@
         `).join('');
     }
 
-    function generateRecommendations(entries) {
-        const stats = calculateSleepStats(entries);
-        const recommendations = [];
-        
-        if (stats.avgDuration < 7) {
-            recommendations.push({
-                title: "Increase your sleep duration",
-                description: "Your average sleep duration is below the recommended 7-9 hours for adults."
-            });
-        } else if (stats.avgDuration > 9) {
-            recommendations.push({
-                title: "Check for oversleeping",
-                description: "Your average sleep duration is above the recommended range, which can sometimes indicate health issues."
-            });
+        function generateRecommendations(entries) {
+            const stats = calculateSleepStats(entries);
+            const recommendations = [];
+            
+            if (stats.avgDuration < 6) {
+                recommendations.push({
+                    title: "Prioritize More Sleep",
+                    description: `Your average sleep duration is only ${stats.avgDuration} hours, which is significantly below the recommended 7-9 hours. Try gradually increasing your sleep time by 15-30 minutes each night.`,
+                    priority: 1,
+                    icon: "bi-alarm"
+                });
+            } else if (stats.avgDuration < 7) {
+                recommendations.push({
+                    title: "Increase Sleep Duration",
+                    description: `Your average of ${stats.avgDuration} hours is slightly below the optimal range. Consider going to bed 30 minutes earlier or sleeping in a bit longer when possible.`,
+                    priority: 2,
+                    icon: "bi-clock"
+                });
+            } else if (stats.avgDuration > 9.5) {
+                recommendations.push({
+                    title: "Evaluate Oversleeping",
+                    description: `Your average ${stats.avgDuration} hours might be excessive. Oversleeping can sometimes indicate underlying health issues or poor sleep quality. Consider tracking how you feel upon waking.`,
+                    priority: 2,
+                    icon: "bi-clipboard2-pulse"
+                });
+            }
+
+            const consistencyPercent = parseInt(stats.consistency);
+            if (consistencyPercent < 30) {
+                recommendations.push({
+                    title: "Establish a Sleep Routine",
+                    description: `Your sleep schedule varies significantly (only ${consistencyPercent}% consistency). Try setting a fixed bedtime and wake-up time, even on weekends, to regulate your body's internal clock.`,
+                    priority: 1,
+                    icon: "bi-calendar-event"
+                });
+            } else if (consistencyPercent < 50) {
+                recommendations.push({
+                    title: "Improve Schedule Consistency",
+                    description: `Your sleep schedule could be more regular (${consistencyPercent}% consistency). Aim for bedtime variations of no more than 1 hour for better sleep quality.`,
+                    priority: 2,
+                    icon: "bi-watch"
+                });
+            }
+
+            if (stats.quality === 'Very Poor') {
+                recommendations.push({
+                    title: "Address Sleep Quality Issues",
+                    description: "Your sleep quality is rated as very poor. Consider evaluating your sleep environment (darkness, noise, temperature), stress levels, and potential sleep disorders.",
+                    priority: 1,
+                    icon: "bi-heartbreak"
+                });
+            } else if (stats.quality === 'Poor') {
+                recommendations.push({
+                    title: "Improve Sleep Quality",
+                    description: "Your sleep could be more restorative. Try relaxation techniques before bed, ensure your mattress/pillows are comfortable, and avoid alcohol before sleep.",
+                    priority: 2,
+                    icon: "bi-moon-stars"
+                });
+            }
+
+            if (stats.lateScreenPercentage > 70) {
+                recommendations.push({
+                    title: "Digital Sunset",
+                    description: `You use screens within 2 hours of bedtime ${stats.lateScreenPercentage}% of nights. Try implementing a "digital sunset" 1-2 hours before bed to reduce blue light exposure.`,
+                    priority: 1,
+                    icon: "bi-phone"
+                });
+            } else if (stats.lateScreenPercentage > 50) {
+                recommendations.push({
+                    title: "Reduce Evening Screen Time",
+                    description: `You're on screens before bed ${stats.lateScreenPercentage}% of nights. Consider using blue light filters or switching to reading a book instead.`,
+                    priority: 2,
+                    icon: "bi-tablet"
+                });
+            }
+
+            if (stats.lateCaffeinePercentage > 70) {
+                recommendations.push({
+                    title: "Earlier Caffeine Cut-off",
+                    description: `You consume caffeine within 6 hours of bedtime ${stats.lateCaffeinePercentage}% of nights. Try moving your last caffeine intake to at least 8 hours before bed.`,
+                    priority: 1,
+                    icon: "bi-cup-hot"
+                });
+            } else if (stats.lateCaffeinePercentage > 50) {
+                recommendations.push({
+                    title: "Monitor Caffeine Timing",
+                    description: `You have caffeine relatively late ${stats.lateCaffeinePercentage}% of nights. Consider tracking how late caffeine affects your sleep quality.`,
+                    priority: 2,
+                    icon: "bi-cup-straw"
+                });
+            }
+
+            const avgBedtimeHour = entries.reduce((sum, entry) => sum + entry.bedtime.getHours(), 0) / entries.length;
+            if (avgBedtimeHour >= 23) { 
+                recommendations.push({
+                    title: "Earlier Bedtime",
+                    description: `Your average bedtime is after 11pm. Research suggests earlier bedtimes (10pm-11pm) may correlate with better sleep quality.`,
+                    priority: 2,
+                    icon: "bi-moon"
+                });
+            }
+
+            const weekdayEntries = entries.filter(e => e.date.getDay() >= 1 && e.date.getDay() <= 5);
+            const weekendEntries = entries.filter(e => e.date.getDay() === 0 || e.date.getDay() === 6);
+            
+            if (weekdayEntries.length > 3 && weekendEntries.length > 3) {
+                const weekdayAvg = weekdayEntries.reduce((sum, e) => sum + e.duration, 0) / weekdayEntries.length;
+                const weekendAvg = weekendEntries.reduce((sum, e) => sum + e.duration, 0) / weekendEntries.length;
+                
+                if (Math.abs(weekdayAvg - weekendAvg) > 2) {
+                    recommendations.push({
+                        title: "Balance Sleep Schedule",
+                        description: `Your sleep duration differs significantly between weekdays (${weekdayAvg.toFixed(1)}h) and weekends (${weekendAvg.toFixed(1)}h). Try to minimize this "social jetlag".`,
+                        priority: 2,
+                        icon: "bi-calendar-week"
+                    });
+                }
+            }
+
+            if (predictionModel) {
+                recommendations.push({
+                    title: "AI-Powered Insights Available",
+                    description: "Our machine learning model can predict how different habits affect your sleep. Try adjusting variables in the predictor to see recommendations!",
+                    priority: 3,
+                    icon: "bi-robot"
+                });
+            }
+
+            if (recommendations.length === 0) {
+                recommendations.push({
+                    title: "Maintain Your Healthy Habits",
+                    description: "Your sleep patterns are excellent! Keep up your consistent routine and good sleep hygiene practices.",
+                    priority: 3,
+                    icon: "bi-check-circle"
+                });
+            }
+
+            recommendations.sort((a, b) => a.priority - b.priority);
+
+            return recommendations.slice(0, 5).map(rec => ({
+                title: rec.title,
+                description: rec.description,
+                icon: rec.icon || "bi-lightbulb"
+            }));
         }
-        
-        if (stats.consistency === '0%' || parseInt(stats.consistency) < 50) {
-            recommendations.push({
-                title: "Maintain consistent bedtimes",
-                description: "Try to go to bed and wake up at the same time each day, even on weekends."
-            });
-        }
-        
-        if (stats.quality === 'Poor' || stats.quality === 'Very Poor') {
-            recommendations.push({
-                title: "Improve sleep environment",
-                description: "Consider reducing screen time before bed, keeping your bedroom cool and dark, and avoiding caffeine late in the day."
-            });
-        }
-        
-        if (stats.lateScreenPercentage > 50) {
-            recommendations.push({
-                title: "Reduce late screen time",
-                description: `You're using screens within 2 hours of bedtime ${stats.lateScreenPercentage}% of the time. Try stopping screen use earlier.`
-            });
-        }
-        
-        if (stats.lateCaffeinePercentage > 50) {
-            recommendations.push({
-                title: "Avoid late caffeine",
-                description: `You're consuming caffeine within 6 hours of bedtime ${stats.lateCaffeinePercentage}% of the time. Try cutting off caffeine earlier.`
-            });
-        }
-        
-        if (predictionModel) {
-            recommendations.push({
-                title: "AI-Powered Insights",
-                description: "Our machine learning model can predict your sleep quality based on your habits. Try the prediction feature!"
-            });
-        }
-        
-        if (recommendations.length === 0) {
-            recommendations.push({
-                title: "Maintain your good habits",
-                description: "Your sleep patterns look healthy. Keep up the good work!"
-            });
-        }
-        
-        return recommendations;
-    }
 
     function createScaler(data, featureRange = [0, 1]) {
         const scaler = {};
@@ -1241,68 +1436,111 @@
         return predictionModel;
     }
 
-    async function predictSleepQuality() {
-        const bedtime = document.getElementById('bedtime').value;
-        const wakeup = document.getElementById('wakeup-time').value;
-        const screenTime = document.getElementById('screen-time').value;
-        const caffeineTime = document.getElementById('caffeine-time').value;
+        async function predictSleepQuality() {
+            const bedtime = document.getElementById('bedtime').value;
+            const wakeup = document.getElementById('wakeup-time').value;
+            const screenTime = document.getElementById('screen-time').value;
+            const caffeineTime = document.getElementById('caffeine-time').value;
 
-        if (!bedtime || !wakeup || !screenTime || !caffeineTime) {
-            showAlert('Please fill all fields to get prediction', 'warning');
-            return;
+            const user = auth.currentUser;
+            if (!user) {
+                showAlert('Please log in to use predictions', 'warning');
+                return;
+            }
+
+            try {
+                predictBtn.innerHTML = '<span class="loading-spinner"></span> Predicting...';
+                predictBtn.disabled = true;
+                
+                const entries = await getSleepEntries(user.uid);
+                const stats = calculateSleepStats(entries);
+                
+                const defaults = {
+                    screenTime: stats.avgScreenTime || 1.5,
+                    caffeineTime: stats.avgCaffeineTime || 4, 
+                    quality: 3 
+                };
+
+                if (!bedtime || !wakeup) {
+                    showAlert('Bedtime and wake-up time are required for prediction', 'warning');
+                    return;
+                }
+
+                const bedtimeDate = new Date(bedtime);
+                const wakeupDate = new Date(wakeup);
+                
+                const durationHours = (wakeupDate - bedtimeDate) / (1000 * 60 * 60);
+                if (durationHours <= 0) {
+                    showAlert('Wake-up time must be after bedtime', 'warning');
+                    return;
+                }
+
+                const features = [
+                    durationHours,
+                    screenTime ? calculateHoursBeforeBed(bedtimeDate, screenTime) : defaults.screenTime,
+                    caffeineTime ? calculateHoursBeforeBed(bedtimeDate, caffeineTime) : defaults.caffeineTime,
+                    bedtimeDate.getHours()
+                ];
+
+                predictionResult.innerHTML = `
+                    <div class="mb-3">
+                        <small class="text-muted">Using values:</small>
+                        <ul class="small text-muted">
+                            <li>Duration: ${features[0].toFixed(1)} hours</li>
+                            <li>Screen time: ${features[1].toFixed(1)} hours before bed ${!screenTime ? '(historical average)' : ''}</li>
+                            <li>Caffeine: ${features[2].toFixed(1)} hours before bed ${!caffeineTime ? '(historical average)' : ''}</li>
+                            <li>Bedtime hour: ${features[3]}</li>
+                        </ul>
+                    </div>
+                    <div class="text-center">
+                        <span class="loading-spinner"></span> Calculating prediction...
+                    </div>
+                `;
+
+                const scaledFeatures = featureScaler.scale(features);
+                const tensor = tf.tensor2d([scaledFeatures]);
+                const prediction = await predictionModel.predict(tensor).data();
+                const quality = Math.round(labelScaler.descale(prediction[0], 0));
+                
+                const confidence = prediction[0] > PREDICTION_THRESHOLD ? 
+                    'high confidence' : 'moderate confidence';
+                
+                let predictionClass = '';
+                if (quality >= 4) predictionClass = 'prediction-good';
+                else if (quality >= 3) predictionClass = 'prediction-average';
+                else predictionClass = 'prediction-poor';
+                
+                predictionResult.innerHTML = `
+                    <h4 class="${predictionClass}">Predicted Quality: ${quality}/5</h4>
+                    <small class="text-muted">(${confidence})</small>
+                    <div class="mt-3">
+                        <small>Based on:</small>
+                        <ul class="small text-muted">
+                            <li>Duration: ${features[0].toFixed(1)} hours</li>
+                            <li>Screen time: ${features[1].toFixed(1)} hours before bed ${!screenTime ? '(historical average)' : ''}</li>
+                            <li>Caffeine: ${features[2].toFixed(1)} hours before bed ${!caffeineTime ? '(historical average)' : ''}</li>
+                            <li>Bedtime hour: ${features[3]}</li>
+                        </ul>
+                    </div>
+                    ${!screenTime || !caffeineTime ? `
+                    <div class="alert alert-info mt-3 small">
+                        <i class="bi bi-info-circle"></i> For more accurate predictions, please fill all fields.
+                    </div>
+                    ` : ''}
+                `;
+                
+            } catch (error) {
+                console.error('Prediction failed:', error);
+                showAlert('Failed to make prediction. Please try again.', 'danger');
+                predictionResult.innerHTML = `
+                    <p class="text-danger">Prediction failed</p>
+                    <small class="text-muted">${error.message || 'Try again later'}</small>
+                `;
+            } finally {
+                predictBtn.innerHTML = '<i class="bi bi-cpu"></i> Predict Again';
+                predictBtn.disabled = false;
+            }
         }
-
-        try {
-            predictBtn.innerHTML = '<span class="loading-spinner"></span> Predicting...';
-            predictBtn.disabled = true;
-            
-            const bedtimeDate = new Date(bedtime);
-            const features = [
-                (new Date(wakeup) - bedtimeDate) / (1000 * 60 * 60),
-                calculateHoursBeforeBed(bedtimeDate, screenTime),
-                calculateHoursBeforeBed(bedtimeDate, caffeineTime),
-                bedtimeDate.getHours()
-            ];
-
-            const scaledFeatures = featureScaler.scale(features);
-            const tensor = tf.tensor2d([scaledFeatures]);
-            const prediction = await predictionModel.predict(tensor).data();
-            const quality = Math.round(labelScaler.descale(prediction[0], 0));
-            
-            const confidence = prediction[0] > PREDICTION_THRESHOLD ? 
-                'high confidence' : 'low confidence';
-            
-            let predictionClass = '';
-            if (quality >= 4) predictionClass = 'prediction-good';
-            else if (quality >= 3) predictionClass = 'prediction-average';
-            else predictionClass = 'prediction-poor';
-            
-            predictionResult.innerHTML = `
-                <h4 class="${predictionClass}">Predicted Quality: ${quality}/5</h4>
-                <small class="text-muted">(${confidence})</small>
-                <div class="mt-2">
-                    <small>Based on:</small>
-                    <ul class="small text-muted">
-                        <li>Duration: ${features[0].toFixed(1)} hours</li>
-                        <li>Screen time: ${features[1].toFixed(1)} hours before bed</li>
-                        <li>Caffeine: ${features[2].toFixed(1)} hours before bed</li>
-                        <li>Bedtime hour: ${features[3]}</li>
-                    </ul>
-                </div>
-            `;
-            
-        } catch (error) {
-            console.error('Prediction failed:', error);
-            showAlert('Failed to make prediction. Please try again.', 'danger');
-            predictionResult.innerHTML = `
-                <p class="text-danger">Prediction failed</p>
-                <small class="text-muted">Try again later</small>
-            `;
-        } finally {
-            predictBtn.innerHTML = '<i class="bi bi-cpu"></i> Predict Again';
-            predictBtn.disabled = false;
-        }
-    }
 
     function showLoadingState(isLoading) {
         const elements = document.querySelectorAll('.loading-spinner');
@@ -1335,70 +1573,94 @@
     }
 
     sleepForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const user = auth.currentUser;
-        if (!user) {
-            showAlert("You need to be logged in to save entries.", "danger");
+    e.preventDefault();
+    
+    const user = auth.currentUser;
+    if (!user) {
+        showAlert("You need to be logged in to save entries. Redirecting to login...", "danger");
+        setTimeout(() => window.location.href = "/login", 2000);
+        return;
+    }
+
+    try {
+        const bedtime = document.getElementById('bedtime').value;
+        const wakeupTime = document.getElementById('wakeup-time').value;
+        const quality = document.getElementById('sleep-quality-input').value;
+        const screenTime = document.getElementById('screen-time').value;
+        const caffeineTime = document.getElementById('caffeine-time').value;
+
+        if (!bedtime || !wakeupTime || !quality || !screenTime || !caffeineTime) {
+            showAlert("Please fill in all fields.", "warning");
             return;
         }
 
+        const bedtimeDate = new Date(bedtime);
+        const wakeupTimeDate = new Date(wakeupTime);
+        
+        if (isNaN(bedtimeDate.getTime()) || isNaN(wakeupTimeDate.getTime())) {
+            showAlert("Invalid date format. Please check your inputs.", "warning");
+            return;
+        }
+
+        const durationHours = (wakeupTimeDate - bedtimeDate) / (1000 * 60 * 60);
+        if (durationHours <= 0) {
+            showAlert("Wake-up time must be after bedtime.", "warning");
+            return;
+        }
+
+        const screenHoursBeforeBed = calculateHoursBeforeBed(bedtimeDate, screenTime);
+        const caffeineHoursBeforeBed = calculateHoursBeforeBed(bedtimeDate, caffeineTime);
+
+        const entryData = {
+            userId: user.uid,
+            bedtime: firebase.firestore.Timestamp.fromDate(bedtimeDate),
+            wakeupTime: firebase.firestore.Timestamp.fromDate(wakeupTimeDate),
+            quality: parseInt(quality),
+            duration: parseFloat(durationHours.toFixed(2)),
+            screenHoursBeforeBed: parseFloat(screenHoursBeforeBed.toFixed(1)),
+            caffeineHoursBeforeBed: parseFloat(caffeineHoursBeforeBed.toFixed(1)),
+            date: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        if (entryData.quality < 1 || entryData.quality > 5) {
+            showAlert("Sleep quality must be between 1 (Very Poor) and 5 (Excellent).", "warning");
+            return;
+        }
+
+        const submitBtn = sleepForm.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<span class="loading-spinner"></span> Saving...';
+        submitBtn.disabled = true;
+
         try {
-            const bedtime = document.getElementById('bedtime').value;
-            const wakeupTime = document.getElementById('wakeup-time').value;
-            const quality = document.getElementById('sleep-quality-input').value;
-            const screenTime = document.getElementById('screen-time').value;
-            const caffeineTime = document.getElementById('caffeine-time').value;
-
-            if (!bedtime || !wakeupTime || !quality || !screenTime || !caffeineTime) {
-                showAlert("Please fill in all fields.", "danger");
-                return;
-            }
-
-            const bedtimeDate = new Date(bedtime);
-            const screenHoursBeforeBed = calculateHoursBeforeBed(bedtimeDate, screenTime);
-            const caffeineHoursBeforeBed = calculateHoursBeforeBed(bedtimeDate, caffeineTime);
-
-            const entryData = {
-                userId: user.uid,
-                bedtime: firebase.firestore.Timestamp.fromDate(new Date(bedtime)),
-                wakeupTime: firebase.firestore.Timestamp.fromDate(new Date(wakeupTime)),
-                quality: quality,
-                screenHoursBeforeBed: screenHoursBeforeBed,
-                caffeineHoursBeforeBed: caffeineHoursBeforeBed
-            };
-
-            const submitBtn = sleepForm.querySelector('button[type="submit"]');
-            const originalBtnText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<span class="loading-spinner"></span> Saving...';
-            submitBtn.disabled = true;
-
-            try {
-                await saveSleepEntry(entryData);
-                showAlert("Sleep entry saved successfully!", "success");
-                sleepForm.reset();
-                await loadUserData(user.uid);
-            } finally {
-                submitBtn.innerHTML = originalBtnText;
-                submitBtn.disabled = false;
-            }
-
+            await saveSleepEntry(entryData);
+            showAlert("Sleep entry saved successfully!", "success");
+            sleepForm.reset();
+            await loadUserData(user.uid);
         } catch (error) {
-            console.error("Form submission error:", error);
+            console.error("Save error:", error);
+            showAlert(`Save failed: ${error.message}`, "danger");
             
-            let errorMessage = "An error occurred. Please try again.";
-            if (error.message.includes("permission-denied")) {
+            let errorMessage = "Failed to save entry. Please try again.";
+            if (error.code === 'permission-denied') {
                 errorMessage = "You don't have permission to save entries.";
-            } else if (error.message.includes("invalid-argument")) {
+            } else if (error.code === 'invalid-argument') {
                 errorMessage = "Invalid data format. Please check your inputs.";
-            } else if (error.message.includes("unavailable")) {
+            } else if (error.code === 'unavailable') {
                 errorMessage = "Network error. Please check your internet connection.";
             }
             
             showAlert(errorMessage, "danger");
+        } finally {
+            submitBtn.innerHTML = originalBtnText;
+            submitBtn.disabled = false;
         }
-    });
 
+    } catch (error) {
+        console.error("Unexpected form error:", error);
+        showAlert("An unexpected error occurred. Please try again.", "danger");
+    }
+});
     logoutBtn.addEventListener('click', async () => {
         try {
             await auth.signOut();
