@@ -71,6 +71,10 @@ def dashboard():
 def sleep_analysis():
     return render_template('sleepanalysis.html')
 
+@app.route('/decisiontree')
+def decision_tree():
+    return render_template('decisiontree.html')
+
 @app.route('/recommendations')
 def recommendations():
     return render_template('recommendations.html')

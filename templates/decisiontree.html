@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SLEEPWELL - DECISION TREE</title>
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary: #6d28d9;
+            --primary-hover: #7c3aed;
+            --accent: #10b981;
+            --bg: #121212;
+            --surface: #1e1e1e;
+            --surface-hover: rgba(255,255,255,0.05);
+            --surface-light: #2a2a2a;
+            --text: #e0e0e0;
+            --text-muted: #a0a0a0;
+        }
+
+        .user-info h5,
+        .user-info small,
+        #last-login,
+        .stat-value,
+        .stat-value i,
+        .stat-value small {
+            color: #fff !important;
+        }
+        
+        * {
+            font-family: 'Montserrat', sans-serif;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: var(--bg);
+            color: var(--text);
+            padding-top: 56px;
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 600;
+            letter-spacing: -0.025em;
+        }
+
+        .navbar {
+            background: var(--surface) !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--primary) !important;
+        }
+
+        .sidebar {
+            height: 100vh;
+            background: var(--surface);
+            padding: 20px;
+            position: fixed;
+            width: 280px;
+            overflow-y: auto;
+            border-right: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 4px 0 12px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .sidebar a {
+            color: var(--text);
+            text-decoration: none;
+            display: block;
+            padding: 12px 16px;
+            margin: 4px 0;
+            border-radius: 6px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar a:hover {
+            background: var(--surface-hover);
+            transform: translateX(4px);
+            border-left-color: var(--primary);
+        }
+
+        .sidebar a.active {
+            background: linear-gradient(90deg, rgba(16,185,129,0.1) 0%, transparent 100%);
+            border-left-color: var(--accent);
+        }
+
+        .sidebar a i {
+            width: 20px;
+            text-align: center;
+            margin-right: 12px;
+            font-size: 1.1rem;
+        }
+
+        .content {
+            padding: 24px;
+            margin-left: 280px;
+            flex-grow: 1;
+        }
+
+        .user-info {
+            background: var(--surface-light);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(241, 229, 229, 0.1)
+        }
+
+        .user-info h5 {
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .user-info small {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            margin-bottom: 24px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+
+        .card-header {
+            background: rgba(255,255,255,0.03);
+            color: var(--text);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 16px 20px;
+            border-radius: 12px 12px 0 0 !important;
+            font-weight: 600;
+        }
+
+        .card-header i {
+            margin-right: 8px;
+            color: var(--primary);
+        }
+
+        .card-body {
+            color: var(--text-muted);
+            padding: 20px;
+        }
+
+        .card-body .text-muted {
+            color: #fff !important;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: scale(1.02);
+        }
+
+        .btn-outline-light {
+            border-color: rgba(255,255,255,0.2);
+            color: var(--text);
+            transition: all 0.3s;
+        }
+
+        .btn-outline-light:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .form-control, .form-select {
+            background: rgba(255,255,255,0.05) !important;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text);
+            border-radius: 8px;
+            padding: 10px 16px;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(109,40,217,0.25);
+            background: rgba(255,255,255,0.08) !important;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 3px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+
+        .drop-zone {
+            border: 2px dashed var(--primary);
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .drop-zone.dragover {
+            border-color: var(--accent);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        #tree-container {
+            width: 100%;
+            height: 600px;
+            background: var(--surface-light);
+            border-radius: 8px;
+            margin-top: 1rem;
+            overflow: auto;
+        }
+
+        .node circle {
+            fill: var(--primary);
+            stroke: var(--accent);
+            stroke-width: 2px;
+        }
+
+        .node text {
+            fill: var(--text);
+            font-size: 12px;
+        }
+
+        .link {
+            fill: none;
+            stroke: var(--text-muted);
+            stroke-width: 1.5px;
+        }
+
+        .tooltip {
+            position: absolute;
+            padding: 10px;
+            background: var(--surface);
+            border: 1px solid var(--primary);
+            border-radius: 4px;
+            pointer-events: none;
+            color: var(--text);
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .spinner-border {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            vertical-align: text-bottom;
+            border: 0.2em solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.75s linear infinite;
+            margin-right: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark px-4 fixed-top">
+        <a class="navbar-brand" href="#">SleepWell</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="bi bi-house-door"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <button id="logout-btn" class="btn btn-outline-danger ms-2">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="d-flex">
+        <div class="sidebar">
+            <div class="user-info">
+                <h5 id="sidebar-username">Loading user...</h5>
+                <small class="text-muted" id="sidebar-email">Loading email...</small>
+            </div>
+            
+            <nav class="nav flex-column">
+                <a class="nav-link" href="dashboard.html">
+                    <i class="bi bi-speedometer2"></i> Overview
+                </a>
+                <a class="nav-link" href="sleep_analysis.html">
+                    <i class="bi bi-graph-up"></i> Sleep Analysis
+                </a>
+                <a class="nav-link" href="{{ url_for('recommendations') }}">
+                    <i class="bi bi-lightbulb"></i> Recommendations
+                </a>
+                <a class="nav-link" href="{{ url_for('decision_tree') }}">
+                    <i class="bi bi-tree"></i> Decision Tree
+                </a>
+                <a class="nav-link" href="{{ url_for('feedback') }}">
+                    <i class="bi bi-chat-left-text"></i> Feedback
+                </a>
+                <a class="nav-link" href="settings.html">
+                    <i class="bi bi-gear"></i> Settings
+                </a>
+            </nav>
+        </div>
+
+        <div class="content">
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <div class="bg-primary rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                    <i class="bi bi-diagram-3 fs-4"></i>
+                </div>
+                <div>
+                    <h2 class="mb-0">Sleep Decision Tree</h2>
+                    <small class="text-muted">Upload CSV data to visualize sleep patterns</small>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Upload Sleep Data
+                </div>
+                <div class="card-body">
+                    <div class="drop-zone" id="dropZone">
+                        <p>Drag and drop your CSV file here<br>or click to browse</p>
+                        <input type="file" id="csvInput" hidden accept=".csv">
+                    </div>
+                    <button id="showResults" class="btn btn-primary mt-3" disabled>
+                        <i class="bi bi-diagram-3"></i> Generate Decision Tree
+                    </button>
+                    <div id="tree-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <script>
+const firebaseConfig = {
+        apiKey: "AIzaSyDSKYsYwvM-0zof2rHtiKodp4z0HUTNiI4",
+        authDomain: "sleepwell-7ec3a.firebaseapp.com",
+        projectId: "sleepwell-7ec3a",
+        storageBucket: "sleepwell-7ec3a.appspot.com",
+        messagingSenderId: "37760004376",
+        appId: "1:37760004376:web:87a663c13995e6f02c6e6d"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Handle auth state changes
+    auth.onAuthStateChanged(user => {
+        if (!user) {
+            window.location.href = "/";
+            return;
+        }
+        
+        // Update sidebar user info immediately with auth data
+        const usernameElement = document.getElementById('sidebar-username');
+        const emailElement = document.getElementById('sidebar-email');
+        
+        // Set default values from auth first
+        usernameElement.textContent = user.displayName || "User";
+        emailElement.textContent = user.email || "No email available";
+        
+        // Then try to get more complete info from Firestore
+        db.collection("users").doc(user.uid).get()
+            .then(doc => {
+                if (doc.exists) {
+                    const userData = doc.data();
+                    // Update name if available in Firestore
+                    if (userData.fullName) {
+                        usernameElement.textContent = userData.fullName;
+                    }
+                    // Update email if different in Firestore
+                    if (userData.email) {
+                        emailElement.textContent = userData.email;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching user data:", error);
+            });
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const dropZone = document.getElementById('dropZone');
+        const csvInput = document.getElementById('csvInput');
+        const showResults = document.getElementById('showResults');
+        let csvData = null;
+
+        dropZone.addEventListener('click', () => csvInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', handleFileDrop);
+
+        csvInput.addEventListener('change', handleFileSelect);
+        showResults.addEventListener('click', visualizeDecisionTree);
+
+        // Logout Handler
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            auth.signOut().then(() => window.location.href = "/");
+        });
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            processCSV(file);
+        }
+
+        function handleFileDrop(e) {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            processCSV(file);
+        }
+
+        function processCSV(file) {
+            Papa.parse(file, {
+                complete: (results) => {
+                    csvData = results.data;
+                    showResults.disabled = false;
+                    dropZone.innerHTML = `<p>${file.name} loaded successfully!</p>`;
+                },
+                error: (error) => {
+                    console.error('CSV parsing error:', error);
+                    alert('Error loading CSV file');
+                }
+            });
+        }
+
+        function visualizeDecisionTree() {
+            if (!csvData || csvData.length < 2) {
+                alert('Please upload a valid CSV file first');
+                return;
+            }
+
+            const root = d3.stratify()
+                .id(d => d[0])  // Node ID
+                .parentId(d => d[1])  // Parent ID
+                (csvData.slice(1));  // Skip header row
+
+            // Set up tree layout
+            const treeLayout = d3.tree()
+                .size([800, 600])
+                .separation(() => 1);
+
+            const treeData = treeLayout(root);
+            
+            // Create SVG container
+            const svg = d3.select("#tree-container")
+                .html('')
+                .append("svg")
+                .attr("width", 1000)
+                .attr("height", 800)
+                .append("g")
+                .attr("transform", "translate(50,50)");
+
+            // Create links
+            const links = svg.selectAll(".link")
+                .data(treeData.links())
+                .enter()
+                .append("path")
+                .attr("class", "link")
+                .attr("d", d3.linkVertical()
+                    .x(d => d.x)
+                    .y(d => d.y));
+
+            // Create nodes
+            const nodes = svg.selectAll(".node")
+                .data(treeData.descendants())
+                .enter()
+                .append("g")
+                .attr("class", "node")
+                .attr("transform", d => `translate(${d.x},${d.y})`);
+
+            // Add circles to nodes
+            nodes.append("circle")
+                .attr("r", 10)
+                .on('mouseover', showTooltip)
+                .on('mouseout', hideTooltip);
+
+            // Add labels to nodes
+            nodes.append("text")
+                .attr("dy", "0.31em")
+                .attr("x", d => d.children ? -13 : 13)
+                .style("text-anchor", d => d.children ? "end" : "start")
+                .text(d => d.data[2]);  // Display feature name
+        }
+
+        function showTooltip(event, d) {
+            d3.select("body")
+                .append("div")
+                .attr("class", "tooltip")
+                .html(`
+                    <strong>${d.data[2]}</strong><br>
+                    Samples: ${d.data[3]}<br>
+                    Value: ${d.data[4]}
+                `)
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
+        }
+
+        function hideTooltip() {
+            d3.select(".tooltip").remove();
+        }
+    });
+    </script>
+</body>
+</html>
