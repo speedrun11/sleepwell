@@ -20,7 +20,7 @@
             --surface-light: #2a2a2a;
             --text: #e0e0e0;
             --text-muted: #a0a0a0;
-
+        }
         * {
             font-family: 'Montserrat', sans-serif;
             box-sizing: border-box;
@@ -440,9 +440,12 @@
                 <a class="nav-link" href="{{ url_for('recommendations') }}">
                     <i class="bi bi-lightbulb"></i> Recommendations
                 </a>
+                <a class="nav-link" href="{{ url_for('feedback') }}">
+                    <i class="bi bi-chat-left-text"></i> Feedback
+                </a>
                 <a class="nav-link" href="{{ url_for('settings') }}">
                     <i class="bi bi-gear"></i> Settings
-                </a>
+            </nav>
             </nav>
         </div>
 

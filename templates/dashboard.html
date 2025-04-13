@@ -378,7 +378,7 @@
     <div class="d-flex">
         <!-- Sidebar -->
         <div class="sidebar">
-            <div class="user-info">
+            <div class="-userinfo">
                 <h5 id="sidebar-username">Loading user...</h5>
                 <small class="text-muted" id="sidebar-email">Loading email...</small>
             </div>
@@ -392,6 +392,9 @@
                 </a>
                 <a class="nav-link" href="{{ url_for('recommendations') }}">
                     <i class="bi bi-lightbulb"></i> Recommendations
+                </a>
+                <a class="nav-link" href="{{ url_for('feedback') }}">
+                    <i class="bi bi-chat-left-text"></i> Feedback
                 </a>
                 <a class="nav-link" href="{{ url_for('settings') }}">
                     <i class="bi bi-gear"></i> Settings

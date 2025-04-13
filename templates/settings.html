@@ -366,6 +366,9 @@
                 <a class="nav-link" href="{{ url_for('recommendations') }}">
                     <i class="bi bi-lightbulb"></i> Recommendations
                 </a>
+                <a class="nav-link" href="{{ url_for('feedback') }}">
+                    <i class="bi bi-chat-left-text"></i> Feedback
+                </a>
                 <a class="nav-link active" href="{{ url_for('settings') }}">
                     <i class="bi bi-gear"></i> Settings
                 </a>
@@ -644,6 +647,7 @@
     });
 
     function updateUserInfo(user) {
+        console.log("Update called with:", user.email);
         const displayName = user.displayName || "User";
         const email = user.email || "No email";
         const [firstName, lastName] = displayName.split(' ');
@@ -708,66 +712,71 @@
     }
 
     profileForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const user = auth.currentUser;
-        if (!user) {
-            showAlert("You need to be logged in to update your profile.", "danger");
-            return;
-        }
+    e.preventDefault();
 
-        const firstName = firstNameInput.value.trim();
-        const lastName = lastNameInput.value.trim();
-        const email = emailInput.value.trim();
-        const displayName = `${firstName} ${lastName}`.trim();
+    const user = auth.currentUser;
+    if (!user) {
+        showAlert("You need to be logged in to update your profile.", "danger");
+        return;
+    }
 
-        if (!firstName || !lastName || !email) {
-            showAlert("Please fill in all fields.", "warning");
-            return;
-        }
+    const firstName = firstNameInput.value.trim();
+    const lastName = lastNameInput.value.trim();
+    const email = emailInput.value.trim();
+    const displayName = `${firstName} ${lastName}`.trim();
 
-        try {
-            const submitBtn = profileForm.querySelector('button[type="submit"]');
-            const originalBtnText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<span class="loading-spinner"></span> Saving...';
-            submitBtn.disabled = true;
+    if (!firstName || !lastName || !email) {
+        showAlert("Please fill in all fields.", "warning");
+        return;
+    }
 
-            await user.updateProfile({
-                displayName: displayName
-            });
+    const submitBtn = profileForm.querySelector('button[type="submit"]');
+    const originalBtnText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<span class="loading-spinner"></span> Saving...';
+    submitBtn.disabled = true;
 
-            if (email !== user.email) {
+    try {
+        await user.updateProfile({ displayName });
+
+        // Separate try for email
+        if (email !== user.email) {
+            try {
                 await user.updateEmail(email);
+            } catch (emailError) {
+                console.warn("Email update failed:", emailError);
+                if (emailError.code === 'auth/requires-recent-login') {
+                    showAlert("To change your email, please re-authenticate.", "warning");
+                    return;
+                } else if (emailError.code === 'auth/email-already-in-use') {
+                    showAlert("That email is already in use.", "warning");
+                    return;
+                } else {
+                    showAlert("Couldn't update email. Other changes were saved.", "warning");
+                }
             }
-
-            await db.collection('users').doc(user.uid).set({
-                displayName: displayName,
-                email: email,
-                firstName: firstName,
-                lastName: lastName,
-                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-            }, { merge: true });
-
-            updateUserInfo(user);
-            showAlert("Profile updated successfully!", "success");
-            
-        } catch (error) {
-            console.error("Error updating profile:", error);
-            
-            let errorMessage = "Failed to update profile. Please try again.";
-            if (error.code === 'auth/requires-recent-login') {
-                errorMessage = "For security, please reauthenticate to change your email.";
-            } else if (error.code === 'auth/email-already-in-use') {
-                errorMessage = "This email is already in use by another account.";
-            }
-            
-            showAlert(errorMessage, "danger");
-        } finally {
-            const submitBtn = profileForm.querySelector('button[type="submit"]');
-            submitBtn.innerHTML = '<i class="bi bi-save"></i> Update Profile';
-            submitBtn.disabled = false;
         }
-    });
+
+        await db.collection('users').doc(user.uid).set({
+            displayName,
+            email,
+            firstName,
+            lastName,
+            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
+        await user.reload();
+        updateUserInfo(auth.currentUser);
+
+        showAlert("Profile updated successfully!", "success");
+    } catch (error) {
+        console.error("Unexpected error:", error);
+        showAlert("Failed to update profile. Please try again.", "success");
+    } finally {
+        submitBtn.innerHTML = originalBtnText;
+        submitBtn.disabled = false;
+    }
+});
+
 
     changePasswordBtn.addEventListener('click', async () => {
         const user = auth.currentUser;

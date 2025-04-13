@@ -52,15 +52,19 @@ def home():
 def dashboard():
     try:
         session_cookie = request.cookies.get('session')
+        if not session_cookie:
+            return redirect(url_for('home'))
+            
         decoded_claims = auth.verify_session_cookie(session_cookie)
-        
         user = auth.get_user(decoded_claims['uid'])
+        
         return render_template("dashboard.html", user={
             'email': user.email,
             'name': user.display_name
         })
         
     except Exception as e:
+        app.logger.error(f"Dashboard error: {str(e)}")
         return redirect(url_for('home'))
 
 @app.route('/sleepanalysis')
@@ -70,6 +74,10 @@ def sleep_analysis():
 @app.route('/recommendations')
 def recommendations():
     return render_template('recommendations.html')
+
+@app.route('/feedback')
+def feedback():
+    return render_template('feedback.html')
 
 @app.route('/settings')
 def settings():
@@ -104,12 +112,30 @@ def signup():
             display_name=f"{first_name} {last_name}"
         )
         
-        return jsonify({
+        id_token = data.get('idToken')
+        if not id_token:
+            return jsonify({"error": "Missing ID token"}), 400
+            
+        session_cookie = auth.create_session_cookie(
+            id_token, 
+            expires_in=3600
+        )
+        
+        response = jsonify({
             "message": "User created successfully",
-            "redirect": "/dashboard.html",
-            "uid": user.uid,
-            "email": user.email
-        }), 201
+            "redirect": "/dashboard.html"
+        })
+        
+        response.set_cookie(
+            'session',
+            session_cookie,
+            httponly=True,
+            secure=False, 
+            samesite='Lax',
+            max_age=3600
+        )
+        
+        return response
         
     except auth.EmailAlreadyExistsError:
         return jsonify({"error": "Email already in use"}), 400
@@ -126,9 +152,10 @@ def login():
         return jsonify({"error": "Missing ID token"}), 400
     
     try:
+        # Verify the ID token first
         decoded_token = auth.verify_id_token(data["idToken"])
-        user_id = decoded_token['uid']
         
+        # Then create session cookie
         session_cookie = auth.create_session_cookie(
             data["idToken"], 
             expires_in=3600
@@ -136,15 +163,14 @@ def login():
         
         response = jsonify({
             "status": "success",
-            "redirect": "/dashboard.html",
-            "uid": user_id
+            "redirect": "/dashboard.html"
         })
         
         response.set_cookie(
             'session',
             session_cookie,
             httponly=True,
-            secure=False,
+            secure=False,  # Change to True in production with HTTPS
             samesite='Lax',
             max_age=3600
         )
