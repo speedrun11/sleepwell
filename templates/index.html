@@ -251,6 +251,37 @@
                         </div>
 
                         <button type="submit" class="btn btn-primary w-100 py-2">Sign In</button>
+                        <div class="text-center mt-3">
+                            <a href="#" class="text-primary" data-bs-toggle="modal" data-bs-target="#adminSigninModal" data-bs-dismiss="modal">Admin Sign In</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Sign In Modal -->
+    <div class="modal fade" id="adminSigninModal" tabindex="-1" aria-labelledby="adminSigninModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark text-white rounded-4 shadow-lg">
+                <div class="modal-body p-5">
+                    <h3 class="fw-bold text-center">Admin Portal</h3>
+                    <p class="text-center">Sign in to access the admin dashboard</p>
+
+                    <form id="adminSigninForm">
+                        <div class="mb-3">
+                            <input type="email" class="form-control bg-secondary text-white" name="adminEmail" placeholder="Admin Email" required>
+                        </div>
+                        
+                        <div class="mb-3 position-relative">
+                            <input type="password" class="form-control bg-secondary text-white" name="adminPassword" id="adminPassword" placeholder="Enter your password" required>
+                            <i class="bi bi-eye position-absolute end-10 top-50 translate-middle-y" style="cursor: pointer; right: 15px;" onclick="togglePassword('adminPassword')"></i>
+                        </div>
+
+                        <button type="submit" class="btn btn-warning w-100 py-2">Admin Sign In</button>
+                        <div class="text-center mt-3">
+                            <a href="#" class="text-primary" data-bs-toggle="modal" data-bs-target="#signinModal" data-bs-dismiss="modal">Regular User Sign In</a>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -652,6 +683,65 @@
                 submitBtn.textContent = "Sign In";
             }
         });
+
+// Admin Sign In Form Handling
+document.getElementById("adminSigninForm").addEventListener("submit", async function(event) {
+    event.preventDefault();
+    
+    const email = this.elements['adminEmail'].value;
+    const password = this.elements['adminPassword'].value;
+    const submitBtn = this.querySelector('button[type="submit"]');
+    
+    try {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Signing in...';
+
+        // Sign in with Firebase
+        const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+        const idToken = await userCredential.user.getIdToken();
+        
+        // Send to backend admin login endpoint
+        const response = await fetch("/admin/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ idToken }),
+            credentials: 'include'
+        });
+
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || "Admin verification failed");
+        }
+        
+        // Close the modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('adminSigninModal'));
+        if (modal) modal.hide();
+        
+        // Wait a brief moment to ensure cookie is set
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Use the redirect URL from the backend or fallback to /admin.html
+        window.location.href = data.redirect || "/admin.html";
+        
+    } catch (error) {
+        console.error("Admin login error:", error);
+        
+        // Sign out from Firebase if admin verification failed
+        try {
+            await firebase.auth().signOut();
+        } catch (signOutError) {
+            console.error("Sign out error:", signOutError);
+        }
+        
+        alert(error.message || "Admin login failed. Please check your credentials.");
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Admin Sign In";
+    }
+});
     </script>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

@@ -790,20 +790,6 @@
                     throw new Error("Firebase not properly initialized");
                 }
 
-                try {
-                    console.log("[DEBUG] Testing Firestore connection...");
-                    const testDoc = await db.collection('test').doc('connection-test').get();
-                    if (!testDoc.exists) {
-                        console.warn("[DEBUG] Test document doesn't exist - creating one");
-                        await db.collection('test').doc('connection-test').set({
-                            test: true,
-                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                    }
-                } catch (testError) {
-                    console.error("[ERROR] Firestore connection test failed:", testError);
-                    throw new Error("Database connection failed. Please refresh the page.");
-                }
 
                 let sleepEntries = [];
                 try {

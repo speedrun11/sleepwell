@@ -27,10 +27,27 @@ def auth_required(f):
         if not token:
             return redirect(url_for('home'))
         try:
-            auth.verify_session_cookie(token)
+            decoded_claims = auth.verify_session_cookie(token)
             return f(*args, **kwargs)
         except:
             return redirect(url_for('home'))
+    return decorated_function
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        token = request.cookies.get('session')
+        if not token:
+            return redirect(url_for('home'))
+        try:
+            decoded_claims = auth.verify_session_cookie(token)
+            # Verify admin status through claims
+            if not decoded_claims.get('admin'):
+                return redirect(url_for('dashboard'))
+            return f(*args, **kwargs)
+        except Exception as e:
+            app.logger.error(f"Admin verification failed: {str(e)}")
+            return redirect(url_for('dashboard'))
     return decorated_function
 
 def handle_errors(f):
@@ -66,6 +83,25 @@ def dashboard():
     except Exception as e:
         app.logger.error(f"Dashboard error: {str(e)}")
         return redirect(url_for('home'))
+
+# Add this with your other routes
+@app.route("/admin.html")
+@admin_required  # Use the new decorator
+def admin_dashboard():
+    try:
+        session_cookie = request.cookies.get('session')
+        decoded_claims = auth.verify_session_cookie(session_cookie)
+        user = auth.get_user(decoded_claims['uid'])
+        
+        return render_template("admin.html", user={
+            'email': user.email,
+            'name': user.display_name or "Admin",
+            'is_admin': True  # Explicitly pass admin status
+        })
+        
+    except Exception as e:
+        app.logger.error(f"Admin dashboard error: {str(e)}")
+        return redirect(url_for('dashboard'))
 
 @app.route('/sleepanalysis')
 def sleep_analysis():
@@ -183,6 +219,51 @@ def login():
         
     except auth.InvalidIdTokenError:
         return jsonify({"error": "Invalid credentials"}), 401
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/admin/login", methods=["POST"])
+def admin_login():
+    data = request.get_json()
+    
+    try:
+        # Verify the ID token
+        decoded_token = auth.verify_id_token(data["idToken"])
+        user = auth.get_user(decoded_token['uid'])
+        
+        # Check if this is an admin user (by email or existing claims)
+        is_admin = decoded_token.get('admin') or user.email == "admin@sleepwell.com"
+        
+        if not is_admin:
+            return jsonify({"error": "Admin access only"}), 403
+        
+        # Set custom claims if not already set
+        if not decoded_token.get('admin'):
+            auth.set_custom_user_claims(decoded_token['uid'], {'admin': True})
+        
+        # Create session cookie
+        session_cookie = auth.create_session_cookie(
+            data["idToken"], 
+            expires_in=3600
+        )
+        
+        response = jsonify({
+            "status": "success",
+            "redirect": "/admin.html",
+            "is_admin": True
+        })
+        
+        response.set_cookie(
+            'session',
+            session_cookie,
+            httponly=True,
+            secure=False,
+            samesite='Lax',
+            max_age=3600
+        )
+        
+        return response
+        
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

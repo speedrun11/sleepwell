@@ -5,104 +5,404 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SLEEPWELL - ADMIN DASHBOARD</title>
     
-    <!-- Styles -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+        
         :root {
-            --primary: #4a90e2;
-            --surface: #1a1a1a;
-            --surface-light: #2d2d2d;
+            --primary: #6d28d9;
+            --primary-hover: #7c3aed;
+            --accent: #10b981;
+            --bg: #121212;
+            --surface: #1e1e1e;
+            --surface-hover: rgba(255,255,255,0.05);
+            --surface-light: #2a2a2a;
+            --text: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --admin-accent: #f59e0b;
         }
 
+        .user-info h5,
+        .user-info small,
+        #last-login,
+        .stat-value,
+        .stat-value i,
+        .stat-value small {
+            color: #fff !important;
+        }
+        
+        * {
+            font-family: 'Montserrat', sans-serif;
+            box-sizing: border-box;
+        }
+        
         body {
-            background: #121212;
-            color: white;
+            background: var(--bg);
+            color: var(--text);
+            padding-top: 56px;
             min-height: 100vh;
         }
 
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 600;
+            letter-spacing: -0.025em;
+        }
+
         .navbar {
-            background: var(--surface);
-            height: 60px;
+            background: var(--surface) !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--admin-accent) !important;
         }
 
         .sidebar {
-            width: 300px;
+            height: 100vh;
             background: var(--surface);
-            height: calc(100vh - 60px);
             padding: 20px;
             position: fixed;
+            width: 280px;
+            overflow-y: auto;
+            border-right: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 4px 0 12px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .sidebar a {
+            color: var(--text);
+            text-decoration: none;
+            display: block;
+            padding: 12px 16px;
+            margin: 4px 0;
+            border-radius: 6px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar a:hover {
+            background: var(--surface-hover);
+            transform: translateX(4px);
+            border-left-color: var(--admin-accent);
+        }
+
+        .sidebar a.active {
+            background: linear-gradient(90deg, rgba(245,158,11,0.1) 0%, transparent 100%);
+            border-left-color: var(--admin-accent);
+        }
+
+        .sidebar a i {
+            width: 20px;
+            text-align: center;
+            margin-right: 12px;
+            font-size: 1.1rem;
         }
 
         .content {
-            margin-left: 300px;
-            padding: 30px;
-            width: calc(100% - 300px);
+            padding: 24px;
+            margin-left: 280px;
+            flex-grow: 1;
         }
 
-        .user-list {
+        .user-info {
             background: var(--surface-light);
-            border-radius: 8px;
-            margin-bottom: 20px;
-            max-height: calc(100vh - 200px);
-            overflow-y: auto;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(241, 229, 229, 0.1)
         }
 
-        .user-list-item {
-            padding: 12px 16px;
+        .user-info h5 {
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .user-info small {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            margin-bottom: 24px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+
+        .card-header {
+            background: rgba(255,255,255,0.03);
+            color: var(--text);
             border-bottom: 1px solid rgba(255,255,255,0.1);
-            cursor: pointer;
-            transition: all 0.2s ease;
+            padding: 16px 20px;
+            border-radius: 12px 12px 0 0 !important;
+            font-weight: 600;
         }
 
-        .user-list-item:hover {
-            background: var(--surface-light);
+        .card-header i {
+            margin-right: 8px;
+            color: var(--admin-accent);
         }
 
-        .user-list-item.active {
-            background: var(--primary);
-            color: white;
+        .card-body {
+            color: var(--text-muted);
+            padding: 20px;
         }
 
-        .admin-actions {
+        .card-body .text-muted {
+            color: #fff !important;
+        }
+
+        .btn-primary {
+            background: var(--admin-accent);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s;
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            background: #fbbf24;
+            transform: scale(1.02);
+            color: #000;
+        }
+
+        .btn-outline-light {
+            border-color: rgba(255,255,255,0.2);
+            color: var(--text);
+            transition: all 0.3s;
+        }
+
+        .btn-outline-light:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .form-control, .form-select {
+            background: rgba(255,255,255,0.05) !important;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text);
+            border-radius: 8px;
+            padding: 10px 16px;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--admin-accent);
+            box-shadow: 0 0 0 3px rgba(245,158,11,0.25);
+            background: rgba(255,255,255,0.08) !important;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 3px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            border-top-color: var(--admin-accent);
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .alert-info {
+            background: linear-gradient(45deg, rgba(146, 185, 172, 0.1), transparent);
+            border: 1px solid rgba(16,185,129,0.2);
+            backdrop-filter: blur(4px);
+            color: var(--text);
+            border-radius: 10px;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .admin-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: rgba(255,255,255,0.03);
+            transition: all 0.3s;
+        }
+
+        .admin-item:hover {
+            background: rgba(255,255,255,0.08);
+        }
+
+        .admin-item i {
+            color: var(--admin-accent);
+            font-size: 1.2rem;
+            margin-top: 2px;
+        }
+
+        .admin-text {
+            flex: 1;
+        }
+
+        .admin-text h6 {
+            margin-bottom: 2px;
+            color: var(--text);
+        }
+
+        .admin-text small {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        #usersChart, #sleepQualityChart {
+            max-height: 400px;
+        }
+
+        @keyframes pulse {
+            50% { opacity: 0.6; }
+        }
+        
+        .refreshing {
+            animation: pulse 1.5s infinite;
+        }
+
+        .badge-admin {
+            background-color: var(--admin-accent);
+            color: #000;
+        }
+
+        .badge-user {
+            background-color: var(--primary);
+        }
+
+        .user-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .user-table th {
+            background: rgba(255,255,255,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .user-table td, .user-table th {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .user-table tr:hover td {
+            background: rgba(255,255,255,0.03);
+        }
+
+        .user-actions {
             display: flex;
             gap: 8px;
         }
 
-        .admin-badge {
-            background: var(--primary);
-            color: white;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            margin-left: 8px;
-        }
-
-        .export-btn {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            z-index: 1000;
-        }
-
-        .chart-container {
-            background: var(--surface);
+        .table-container {
+            max-height: 500px;
+            overflow-y: auto;
             border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 100%;
+                position: relative;
+                height: auto;
+                box-shadow: none;
+                border-right: none;
+            }
+            
+            .content {
+                margin-left: 0;
+                padding: 16px;
+            }
+            
+            .card {
+                margin-bottom: 16px;
+            }
+        }
+
+        .stat-card {
+            background: linear-gradient(145deg, var(--surface-light), var(--surface)) !important;
+            border-left: 4px solid var(--admin-accent) !important;
+        }
+
+        .chart-tooltip {
+            background: var(--surface-light) !important;
+            border: 1px solid var(--admin-accent) !important;
+            border-radius: 8px !important;
+        }
+
+        .chart-empty-state {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .tab-content {
+            padding: 20px 0;
+        }
+
+        .nav-tabs .nav-link {
+            color: var(--text-muted);
+            border: none;
+            padding: 10px 20px;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--admin-accent);
+            background: transparent;
+            border-bottom: 2px solid var(--admin-accent);
+        }
+
+        .nav-tabs .nav-link:hover:not(.active) {
+            color: var(--text);
+            border-bottom: 2px solid rgba(255,255,255,0.1);
         }
     </style>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 </head>
 <body>
+
     <!-- Top Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark px-4 fixed-top">
-        <a class="navbar-brand" href="#">SleepWell Admin</a>
+        <a class="navbar-brand" href="#">SleepWell <span class="badge badge-admin ms-2">ADMIN</span></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
-                    <span class="nav-link">
-                        <i class="bi bi-shield-check"></i> Admin Mode
-                    </span>
+                    <a class="nav-link" href="/">
+                        <i class="bi bi-house-door"></i> Home
+                    </a>
                 </li>
                 <li class="nav-item">
                     <button id="logout-btn" class="btn btn-outline-danger ms-2">
@@ -116,332 +416,1087 @@
     <div class="d-flex">
         <!-- Sidebar -->
         <div class="sidebar">
-            <div class="user-info mb-4">
-                <h5>Administrator Panel</h5>
-                <small class="text-muted" id="admin-email">Loading admin...</small>
-                <span class="admin-badge">Admin</span>
+            <div class="-userinfo">
+                <h5 id="sidebar-username">Loading admin...</h5>
+                <small class="text-muted" id="sidebar-email">Loading email...</small>
             </div>
             
-            <div class="mb-3">
-                <input type="text" class="form-control bg-dark text-light" placeholder="Search users..." id="user-search">
-            </div>
-
-            <div class="user-list" id="user-list">
-                <div class="text-center py-3">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading users...</span>
-                    </div>
-                </div>
-            </div>
+            <nav class="nav flex-column">
+                <a class="nav-link active" href="{{ url_for('admin_dashboard') }}">
+                    <i class="bi bi-speedometer2"></i> Overview
+                </a>
+                <a class="nav-link" href="">
+                    <i class="bi bi-people"></i> User Management
+                </a>
+                <a class="nav-link" href="">
+                    <i class="bi bi-graph-up"></i> Analytics
+                </a>
+                <a class="nav-link" href="">
+                    <i class="bi bi-file-earmark-text"></i> Reports
+                </a>
+                <a class="nav-link" href="">
+                    <i class="bi bi-gear"></i> System Settings
+                </a>
+                <a class="nav-link" href="">
+                    <i class="bi bi-shield-lock"></i> Audit Log
+                </a>
+            </nav>
         </div>
 
         <!-- Main Content -->
         <div class="content">
-            <div class="d-flex align-items-center gap-3 mb-4">
-                <div class="bg-primary rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                    <i class="bi bi-shield-lock fs-4"></i>
-                </div>
-                <div>
-                    <h2 class="mb-0">Admin Dashboard</h2>
-                    <small class="text-muted">User Sleep Analysis Management</small>
+            <div id="user-greeting" class="mb-4">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="bg-warning rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <i class="bi bi-shield-lock fs-4"></i>
+                    </div>
+                    <div>
+                        <h2 class="mb-0" id="greeting-text">Admin Dashboard</h2>
+                        <small class="text-muted" id="last-login">Last login: Today</small>
+                    </div>
                 </div>
             </div>
-
-            <div class="alert alert-info d-flex align-items-center" id="default-message">
+            
+            <div class="alert alert-info d-flex align-items-center">
                 <i class="bi bi-info-circle-fill me-2"></i>
-                <div>Select a user from the sidebar to view their sleep analysis data.</div>
+                <div>Welcome to the SleepWell administration panel. Manage users, view analytics, and configure system settings.</div>
             </div>
 
-            <div id="user-details" style="display: none;">
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <div class="chart-container">
-                            <h5>Sleep Duration Trends</h5>
-                            <canvas id="durationChart"></canvas>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="card stat-card">
+                        <div class="card-header">
+                            <i class="bi bi-people"></i>
+                            <span>Total Users</span>
                         </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="chart-container">
-                            <h5>Sleep Quality Distribution</h5>
-                            <div id="qualityChart"></div>
+                        <div class="card-body">
+                            <p class="stat-value mb-0" id="total-users"><span class="loading-spinner"></span> Loading...</p>
+                            <small class="text-muted">Registered accounts</small>
                         </div>
                     </div>
                 </div>
+                <div class="col-md-3">
+                    <div class="card stat-card">
+                        <div class="card-header">
+                            <i class="bi bi-moon"></i>
+                            <span>Sleep Entries</span>
+                        </div>
+                        <div class="card-body">
+                            <p class="stat-value mb-0" id="total-entries"><span class="loading-spinner"></span> Loading...</p>
+                            <small class="text-muted">Records collected</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card">
+                        <div class="card-header">
+                            <i class="bi bi-star"></i>
+                            <span>Avg. Quality</span>
+                        </div>
+                        <div class="card-body">
+                            <p class="stat-value mb-0" id="avg-quality"><span class="loading-spinner"></span> Loading...</p>
+                            <small class="text-muted">User sleep quality</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card">
+                        <div class="card-header">
+                            <i class="bi bi-clock"></i>
+                            <span>Avg. Duration</span>
+                        </div>
+                        <div class="card-body">
+                            <p class="stat-value mb-0" id="avg-duration"><span class="loading-spinner"></span> Loading...</p>
+                            <small class="text-muted">Hours per night</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                <div class="chart-container">
-                    <h5 class="mb-4">Recent Sleep Entries</h5>
-                    <div class="table-responsive">
-                        <table class="table table-dark">
+            <div class="row mt-4">
+                <div class="col-md-8">
+                    <div class="card stat-card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-graph-up"></i>
+                                <span>User Growth</span>
+                            </div>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-light active" data-period="month">30 Days</button>
+                                <button class="btn btn-sm btn-outline-light" data-period="year">1 Year</button>
+                                <button class="btn btn-sm btn-outline-light" data-period="all">All Time</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="usersChart" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card stat-card">
+                        <div class="card-header d-flex align-items-center">
+                            <i class="bi bi-pie-chart"></i>
+                            <span>Sleep Quality Distribution</span>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="sleepQualityChart" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4 stat-card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="bi bi-people"></i>
+                    <span>Recent User Activity</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-container">
+                        <table class="user-table">
                             <thead>
                                 <tr>
-                                    <th>Date</th>
-                                    <th>Duration</th>
-                                    <th>Quality</th>
-                                    <th>Bedtime</th>
-                                    <th>Wake Time</th>
+                                    <th>User</th>
+                                    <th>Email</th>
+                                    <th>Last Active</th>
+                                    <th>Entries</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="entries-table">
+                            <tbody id="recent-users">
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">Loading user data...</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <button class="btn btn-success export-btn" id="export-data">
-                <i class="bi bi-download"></i> Export Data
-            </button>
+            <div class="card mt-4 stat-card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="bi bi-list-check"></i>
+                    <span>Admin Tasks</span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="admin-item">
+                                <i class="bi bi-person-plus"></i>
+                                <div class="admin-text">
+                                    <h6 class="mb-0">Invite New Admin</h6>
+                                    <small>Send admin invitation to another user</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="admin-item">
+                                <i class="bi bi-database"></i>
+                                <div class="admin-text">
+                                    <h6 class="mb-0">Backup Database</h6>
+                                    <small>Create a backup of all user data</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="admin-item">
+                                <i class="bi bi-bell"></i>
+                                <div class="admin-text">
+                                    <h6 class="mb-0">Send Announcement</h6>
+                                    <small>Notify all users about updates</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="admin-item">
+                                <i class="bi bi-file-earmark-text"></i>
+                                <div class="admin-text">
+                                    <h6 class="mb-0">Generate Report</h6>
+                                    <small>Create monthly usage report</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="admin-item">
+                                <i class="bi bi-shield-check"></i>
+                                <div class="admin-text">
+                                    <h6 class="mb-0">Security Scan</h6>
+                                    <small>Check for vulnerabilities</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="admin-item">
+                                <i class="bi bi-gear"></i>
+                                <div class="admin-text">
+                                    <h6 class="mb-0">System Settings</h6>
+                                    <small>Configure application settings</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/luxon@2.0.2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.0.0"></script>
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
     <script>
-        // Firebase Configuration (Replace with your config)
-        const firebaseConfig = {
-            apiKey: "AIzaSyYOUR_API_KEY",
-            authDomain: "your-project.firebaseapp.com",
-            projectId: "your-project-id",
-            storageBucket: "your-project.appspot.com",
-            messagingSenderId: "1234567890",
-            appId: "1:1234567890:web:abc123yourappid"
-        };
+    function initializeFirebase() {
+        try {
+            const firebaseConfig = {
+                apiKey: "AIzaSyDSKYsYwvM-0zof2rHtiKodp4z0HUTNiI4",
+                authDomain: "sleepwell-7ec3a.firebaseapp.com",
+                projectId: "sleepwell-7ec3a",
+                storageBucket: "sleepwell-7ec3a.appspot.com",
+                messagingSenderId: "37760004376",
+                appId: "1:37760004376:web:87a663c13995e6f02c6e6d"
+            };
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
-        db.settings({ experimentalForceLongPolling: true });
-
-        let durationChartInstance = null;
-        let qualityChartInstance = null;
-        let selectedUserId = null;
-        let usersUnsubscribe = null;
-
-        // Utility functions
-        function showAlert(message, type = "success") {
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type} alert-dismissible fade show fixed-top m-3`;
-            alertDiv.role = 'alert';
-            alertDiv.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-            document.body.prepend(alertDiv);
-            setTimeout(() => alertDiv.remove(), 5000);
-        }
-
-        async function checkAdminStatus(user) {
-            try {
-                const adminDoc = await db.collection('admins').doc(user.uid).get();
-                return adminDoc.exists;
-            } catch (error) {
-                console.error("Admin check error:", error);
-                return false;
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            } else {
+                firebase.app();
             }
+
+            const settings = {
+                cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
+                merge: true
+            };
+
+            const db = firebase.firestore();
+            db.settings(settings);
+
+            return {
+                auth: firebase.auth(),
+                db: db
+            };
+        } catch (error) {
+            console.error("Firebase initialization failed:", error);
+            throw new Error("Failed to initialize Firebase services");
         }
+    }
 
-        // User Management
-        function setupRealTimeUsers() {
-            usersUnsubscribe = db.collection('users').onSnapshot(snapshot => {
-                const userList = document.getElementById('user-list');
-                userList.innerHTML = '';
+    let db, auth;
+    try {
+        const firebaseServices = initializeFirebase();
+        db = firebaseServices.db;
+        auth = firebaseServices.auth;
+    } catch (error) {
+        console.error("Critical Firebase error:", error);
+        document.body.innerHTML = `
+            <div class="alert alert-danger m-4">
+                <h4>Application Error</h4>
+                <p>Failed to initialize required services. Please refresh the page.</p>
+                <p><small>${error.message}</small></p>
+            </div>
+        `;
+    }
 
-                snapshot.forEach(doc => {
-                    const userData = doc.data();
-                    const userElement = document.createElement('div');
-                    userElement.className = 'user-list-item';
-                    userElement.id = `user-${doc.id}`;
-                    userElement.innerHTML = `
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>${userData.displayName || 'Anonymous User'}</strong><br>
-                                <small class="text-muted">${userData.email}</small>
-                            </div>
-                            <div class="admin-actions">
-                                <button class="btn btn-sm btn-outline-danger" onclick="deleteUser('${doc.id}')">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                    userElement.onclick = () => loadUserData(doc.id);
-                    userList.appendChild(userElement);
-                });
-            }, error => {
-                console.error("User list error:", error);
-                showAlert("Failed to load users", "danger");
+    const userGreeting = document.getElementById('user-greeting');
+    const greetingText = document.getElementById('greeting-text');
+    const lastLogin = document.getElementById('last-login');
+    const sidebarUsername = document.getElementById('sidebar-username');
+    const sidebarEmail = document.getElementById('sidebar-email');
+    const logoutBtn = document.getElementById('logout-btn');
+    const recentUsersTable = document.getElementById('recent-users');
+    const periodButtons = document.querySelectorAll('[data-period]');
+
+    let usersChart, qualityChart;
+    const usersCtx = document.getElementById('usersChart').getContext('2d');
+    const qualityCtx = document.getElementById('sleepQualityChart').getContext('2d');
+    let currentPeriod = 'month';
+
+    auth.onAuthStateChanged(user => {
+        if (!user) {
+            window.location.href = "/";
+            return;
+        }
+        
+        // Verify admin status
+        verifyAdminStatus(user.uid);
+        
+        console.log("Admin authenticated:", user.uid);
+        updateGreeting(user);
+        updateUserInfo(user);
+        
+        db.collection('users').get()
+            .then(() => {
+                loadAdminData();
+            })
+            .catch(error => {
+                console.error("Firestore connection test failed:", error);
+                showAlert("Failed to connect to database. Please refresh the page or contact support if this continues.", "danger");
             });
-        }
+    });
 
-        async function deleteUser(userId) {
-            if (!confirm('Are you sure you want to delete this user and all their data?')) return;
+// Update verifyAdminStatus function
+    async function verifyAdminStatus(uid) {
+        try {
+            const user = await auth.currentUser;
+            if (!user) return false;
             
-            try {
-                // Delete user document
-                await db.collection('users').doc(userId).delete();
-                
-                // Delete sleep entries
-                const entries = await db.collection('sleepEntries')
-                    .where('userId', '==', userId)
-                    .get();
-                
-                const batch = db.batch();
-                entries.forEach(doc => batch.delete(doc.ref));
-                await batch.commit();
-                
-                showAlert("User deleted successfully", "success");
-            } catch (error) {
-                console.error("Delete error:", error);
-                showAlert("Failed to delete user", "danger");
+            const idTokenResult = await user.getIdTokenResult();
+            
+            if (idTokenResult.claims.admin) {
+            return true;
             }
+            
+            showAlert("No admin privileges. Redirecting...", "danger");
+            setTimeout(() => window.location.href = "/", 3000);
+            return false;
+        } catch (error) {
+            console.error("Admin verification failed:", error);
+            showAlert("Admin verification error", "danger");
+            return false;
+        }
         }
 
-        // Data Loading
-        async function loadUserData(userId) {
-            try {
-                selectedUserId = userId;
-                document.getElementById('default-message').style.display = 'none';
-                document.getElementById('user-details').style.display = 'block';
+    function updateGreeting(user) {
+        const displayName = user.displayName || "Admin";
+        document.getElementById('greeting-text').textContent = `Welcome, ${displayName}`;
+    }
 
-                // Load user profile
-                const userDoc = await db.collection('users').doc(userId).get();
-                const userData = userDoc.data();
+    function updateUserInfo(user) {
+        const displayName = user.displayName || "Admin User";
+        const email = user.email || "No email";
 
-                // Load sleep entries
-                const entriesSnapshot = await db.collection('sleepEntries')
-                    .where('userId', '==', userId)
-                    .orderBy('date', 'desc')
-                    .get();
+        document.getElementById('sidebar-username').textContent = displayName;
+        document.getElementById('sidebar-email').textContent = email;
+    }
 
-                const entries = entriesSnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                    date: doc.data().date.toDate()
-                }));
-
-                // Update table
-                const tableBody = document.getElementById('entries-table');
-                tableBody.innerHTML = entries.map(entry => `
-                    <tr>
-                        <td>${entry.date.toLocaleDateString()}</td>
-                        <td>${entry.duration} hours</td>
-                        <td>${entry.quality}/5</td>
-                        <td>${entry.bedtime}</td>
-                        <td>${entry.wakeTime}</td>
-                    </tr>
-                `).join('');
-
-                // Update charts
-                updateCharts(entries);
-            } catch (error) {
-                console.error("Load error:", error);
-                showAlert("Failed to load user data", "danger");
-            }
+    async function loadAdminData() {
+    try {
+        showLoadingState(true);
+        
+        // First verify admin status
+        const isAdmin = await verifyAdminStatus(auth.currentUser.uid);
+        if (!isAdmin) return;
+        
+        // Load stats
+        const [usersCount, entriesCount, avgQuality, avgDuration] = await Promise.all([
+            getUsersCount(),
+            getEntriesCount(),
+            getAverageQuality(),
+            getAverageDuration()
+        ]);
+        
+        document.getElementById('total-users').textContent = usersCount;
+        document.getElementById('total-entries').textContent = entriesCount;
+        document.getElementById('avg-quality').textContent = avgQuality;
+        document.getElementById('avg-duration').textContent = avgDuration;
+        
+        // Load recent users
+        const recentUsers = await getRecentUsers();
+        updateRecentUsersTable(recentUsers);
+        
+        // Load charts
+        const usersChartData = await getUsersChartData(currentPeriod);
+        updateUsersChart(usersChartData);
+        
+        const qualityData = await getQualityDistribution();
+        updateQualityChart(qualityData);
+        
+    } catch (error) {
+        console.error("Data load error:", error);
+        showAlert("Data load failed: " + error.message, "danger");
+        document.querySelectorAll('.loading-spinner').forEach(el => el.remove());
         }
+}
 
-        function updateCharts(entries) {
-            // Destroy existing charts
-            if (durationChartInstance) durationChartInstance.destroy();
-            if (qualityChartInstance) qualityChartInstance.destroy();
+// Add debug logging to Firestore rules (temporarily)
+function isAdmin() {
+  return request.auth.token.admin == true;
+  // return true; // TEMPORARY DEBUG - REMOVE AFTER TESTING
+}
 
-            // Duration Chart (Chart.js)
-            const durationCtx = document.getElementById('durationChart').getContext('2d');
-            durationChartInstance = new Chart(durationCtx, {
-                type: 'line',
-                data: {
-                    labels: entries.map(e => e.date.toLocaleDateString()),
-                    datasets: [{
-                        label: 'Sleep Duration (hours)',
-                        data: entries.map(e => e.duration),
-                        borderColor: '#4a90e2',
-                        tension: 0.3
-                    }]
+async function getUsersCount() {
+  try {
+    // Count only non-admin users
+    const snapshot = await db.collection('users')
+      .where('isAdmin', '==', false)
+      .get();
+    
+    return snapshot.size || 0; // Return 0 if empty
+  } catch (error) {
+    console.error("Error getting users count:", error);
+    return "N/A";
+  }
+}
+
+async function getEntriesCount() {
+  try {
+    const snapshot = await db.collection('sleepEntries').get();
+    return snapshot.size;
+  } catch (error) {
+    console.error("Error getting entries count:", error);
+    return "N/A";
+  }
+}
+
+async function getAverageQuality() {
+    try {
+        const snapshot = await db.collection('sleepEntries')
+            .get({ source: 'server' }); // Force server-side query
+        
+        if (snapshot.empty) return "N/A";
+        
+        let total = 0;
+        let count = 0;
+        snapshot.forEach(doc => {
+            const quality = parseInt(doc.data().quality);
+            if (!isNaN(quality)) {
+                total += quality;
+                count++;
+            }
+        });
+        
+        if (count === 0) return "N/A";
+        const avg = total / count;
+        return avg.toFixed(1) + "/5";
+    } catch (error) {
+        console.error("Error getting average quality:", error);
+        return "N/A";
+    }
+}
+
+    async function getAverageDuration() {
+        try {
+            const snapshot = await db.collection('sleepEntries')
+                .select('duration')
+                .get();
+            
+            if (snapshot.empty) return "N/A";
+            
+            let total = 0;
+            snapshot.forEach(doc => {
+                total += parseFloat(doc.data().duration) || 0;
+            });
+            
+            const avg = total / snapshot.size;
+            return avg.toFixed(1) + "h";
+        } catch (error) {
+            console.error("Error getting average duration:", error);
+            return "N/A";
+        }
+    }
+
+    async function getRecentUsers(limit = 10) {
+    try {
+        const snapshot = await db.collection('users')
+            .orderBy('lastLogin', 'desc')
+            .limit(limit)
+            .get({ source: 'server' }); // Force server-side query
+        
+        return snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                name: data.displayName || "Unknown",
+                email: data.email || "No email",
+                lastLogin: data.lastLogin?.toDate() || new Date(0),
+                isAdmin: data.isAdmin || false,
+                entriesCount: data.entriesCount || 0
+            };
+        });
+    } catch (error) {
+        console.error("Error getting recent users:", error);
+        return [];
+    }
+}
+
+    function updateRecentUsersTable(users) {
+    if (users.length === 0) {
+        recentUsersTable.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-4">No users found</td>
+            </tr>
+        `;
+        return;
+    }
+    
+    recentUsersTable.innerHTML = users.map(user => `
+        <tr>
+            <td>
+                <div class="d-flex align-items-center">
+                    <div class="me-2">
+                        ${user.isAdmin ? 
+                            '<span class="badge badge-admin">ADMIN</span>' : 
+                            '<span class="badge badge-user">USER</span>'}
+                    </div>
+                    ${user.name}
+                </div>
+            </td>
+            <td>${user.email}</td>
+            <td>${formatDate(user.lastLogin)}</td>
+            <td>${user.entriesCount}</td>
+            <td>
+                <span class="badge bg-success">Active</span>
+            </td>
+            <td>
+                <div class="user-actions">
+                    <button class="btn btn-sm btn-outline-light" data-user-id="${user.id}">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-light" data-user-id="${user.id}">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" data-user-id="${user.id}">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+    function formatDate(date) {
+        if (date?.toDate) date = date.toDate();
+        
+        const now = new Date();
+        const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) return "Today";
+        if (diffDays === 1) return "Yesterday";
+        if (diffDays < 7) return `${diffDays} days ago`;
+        
+        return date.toLocaleDateString();
+    }
+
+            async function getUsersChartData(period) {
+            try {
+                const now = new Date();
+                let startDate;
+                
+                if (period === 'month') {
+                    startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                } else if (period === 'year') {
+                    startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+                } else {
+                    // All time - get first user creation date (excluding admin)
+                    const firstUser = await db.collection('users')
+                        .where('email', '!=', 'admin@sleepwell.com')
+                        .orderBy('createdAt')
+                        .limit(1)
+                        .get();
+                    
+                    startDate = firstUser.docs[0]?.data()?.createdAt?.toDate() || 
+                            new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
                 }
-            });
-
-            // Quality Chart (ApexCharts)
-            const qualityData = [0, 0, 0, 0, 0];
-            entries.forEach(e => qualityData[e.quality - 1]++);
-            
-            qualityChartInstance = new ApexCharts(document.getElementById('qualityChart'), {
-                series: qualityData,
-                chart: { type: 'donut' },
-                labels: ['1 Star', '2 Stars', '3 Stars', '4 Stars', '5 Stars'],
-                colors: ['#ff4560', '#feb019', '#00e396', '#008ffb', '#775dd0']
-            });
-            qualityChartInstance.render();
+                
+                // For month view, get daily counts
+                if (period === 'month') {
+                    const days = [];
+                    const counts = [];
+                    
+                    for (let i = 0; i < 30; i++) {
+                        const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+                        date.setHours(0, 0, 0, 0);
+                        
+                        const nextDate = new Date(date.getTime() + 24 * 60 * 60 * 1000);
+                        
+                        const snapshot = await db.collection('users')
+                            .where('email', '!=', 'admin@sleepwell.com')
+                            .where('createdAt', '>=', date)
+                            .where('createdAt', '<', nextDate)
+                            .count()
+                            .get();
+                        
+                        days.unshift(date.toLocaleDateString([], { month: 'short', day: 'numeric' }));
+                        counts.unshift(snapshot.data().count);
+                    }
+                    
+                    return { labels: days, data: counts };
+                }
+                // For year view, get monthly counts
+                else if (period === 'year') {
+                    const months = [];
+                    const counts = [];
+                    
+                    for (let i = 0; i < 12; i++) {
+                        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                        const nextDate = new Date(date.getFullYear(), date.getMonth() + 1, 1);
+                        
+                        const snapshot = await db.collection('users')
+                            .where('email', '!=', 'admin@sleepwell.com')
+                            .where('createdAt', '>=', date)
+                            .where('createdAt', '<', nextDate)
+                            .count()
+                            .get();
+                        
+                        months.unshift(date.toLocaleDateString([], { month: 'short' }));
+                        counts.unshift(snapshot.data().count);
+                    }
+                    
+                    return { labels: months, data: counts };
+                }
+                // For all time, get quarterly counts
+                else {
+                    const quarters = [];
+                    const counts = [];
+                    const quarterMonths = 3;
+                    
+                    let currentDate = new Date(startDate);
+                    currentDate.setDate(1);
+                    currentDate.setHours(0, 0, 0, 0);
+                    
+                    while (currentDate <= now) {
+                        const nextDate = new Date(
+                            currentDate.getFullYear(),
+                            currentDate.getMonth() + quarterMonths,
+                            1
+                        );
+                        
+                        const snapshot = await db.collection('users')
+                            .where('email', '!=', 'admin@sleepwell.com')
+                            .where('createdAt', '>=', currentDate)
+                            .where('createdAt', '<', nextDate)
+                            .count()
+                            .get();
+                        
+                        quarters.push(`${currentDate.getFullYear()} Q${Math.floor(currentDate.getMonth() / 3) + 1}`);
+                        counts.push(snapshot.data().count);
+                        
+                        currentDate = nextDate;
+                    }
+                    
+                    return { labels: quarters, data: counts };
+                }
+            } catch (error) {
+                console.error("Error getting users chart data:", error);
+                return { labels: [], data: [] };
+            }
         }
 
-        // Event Listeners
-        document.getElementById('logout-btn').addEventListener('click', () => {
-            auth.signOut();
-            window.location.href = '/admin.html';
-        });
-
-        document.getElementById('export-data').addEventListener('click', async () => {
-            try {
-                const entriesSnapshot = await db.collection('sleepEntries').get();
-                const data = entriesSnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                    date: doc.data().date.toDate().toISOString()
-                }));
-                
-                const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `sleepwell-export-${new Date().toISOString()}.json`;
-                a.click();
-                URL.revokeObjectURL(url);
-            } catch (error) {
-                console.error("Export error:", error);
-                showAlert("Failed to export data", "danger");
-            }
-        });
-
-        document.getElementById('user-search').addEventListener('input', (e) => {
-            const search = e.target.value.toLowerCase();
-            document.querySelectorAll('.user-list-item').forEach(item => {
-                const text = item.textContent.toLowerCase();
-                item.style.display = text.includes(search) ? 'block' : 'none';
+    async function getQualityDistribution() {
+        try {
+            const snapshot = await db.collection('sleepEntries')
+                .select('quality')
+                .get();
+            
+            if (snapshot.empty) return { labels: [], data: [] };
+            
+            const distribution = {
+                'Excellent (5)': 0,
+                'Good (4)': 0,
+                'Average (3)': 0,
+                'Poor (2)': 0,
+                'Very Poor (1)': 0
+            };
+            
+            snapshot.forEach(doc => {
+                const quality = parseInt(doc.data().quality) || 3;
+                if (quality === 5) distribution['Excellent (5)']++;
+                else if (quality === 4) distribution['Good (4)']++;
+                else if (quality === 3) distribution['Average (3)']++;
+                else if (quality === 2) distribution['Poor (2)']++;
+                else if (quality === 1) distribution['Very Poor (1)']++;
             });
-        });
+            
+            return {
+                labels: Object.keys(distribution),
+                data: Object.values(distribution),
+                colors: ['#10b981', '#34d399', '#f59e0b', '#f97316', '#ef4444']
+            };
+        } catch (error) {
+            console.error("Error getting quality distribution:", error);
+            return { labels: [], data: [] };
+        }
+    }
 
-        // Auth State Listener
-        auth.onAuthStateChanged(async user => {
-            if (!user) {
-                window.location.href = '/admin.html';
-                return;
+    function updateUsersChart(chartData) {
+        if (usersChart) {
+            usersChart.destroy();
+        }
+        
+        if (chartData.labels.length === 0 || chartData.data.every(v => v === 0)) {
+            document.getElementById('usersChart').innerHTML = `
+                <div class="chart-empty-state">
+                    <i class="bi bi-people fs-4 me-2"></i>
+                    No user data available for this period
+                </div>
+            `;
+            return;
+        }
+        
+        usersChart = new Chart(usersCtx, {
+            type: 'line',
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    label: 'New Users',
+                    data: chartData.data,
+                    backgroundColor: 'rgba(245, 158, 11, 0.2)',
+                    borderColor: 'rgba(245, 158, 11, 1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: 'rgba(245, 158, 11, 1)',
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(30,30,30,0.9)',
+                        titleColor: '#fff',
+                        bodyColor: '#e0e0e0',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1,
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                return `Users: ${context.raw}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#a0a0a0',
+                            precision: 0
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#a0a0a0'
+                        }
+                    }
+                }
             }
+        });
+    }
 
-            const isAdmin = await checkAdminStatus(user);
-            if (!isAdmin) {
-                auth.signOut();
-                window.location.href = '/admin.html';
-                return;
+    function updateQualityChart(chartData) {
+        if (qualityChart) {
+            qualityChart.destroy();
+        }
+        
+        if (chartData.labels.length === 0 || chartData.data.every(v => v === 0)) {
+            document.getElementById('sleepQualityChart').innerHTML = `
+                <div class="chart-empty-state">
+                    <i class="bi bi-moon fs-4 me-2"></i>
+                    No sleep quality data available
+                </div>
+            `;
+            return;
+        }
+        
+        qualityChart = new Chart(qualityCtx, {
+            type: 'doughnut',
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    data: chartData.data,
+                    backgroundColor: chartData.colors || [
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(52, 211, 153, 0.8)',
+                        'rgba(245, 158, 11, 0.8)',
+                        'rgba(249, 115, 22, 0.8)',
+                        'rgba(239, 68, 68, 0.8)'
+                    ],
+                    borderColor: 'rgba(30,30,30,0.8)',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            color: '#e0e0e0',
+                            padding: 20,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(30,30,30,0.9)',
+                        titleColor: '#fff',
+                        bodyColor: '#e0e0e0',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1,
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const value = context.raw;
+                                const percentage = Math.round((value / total) * 100);
+                                return `${context.label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                },
+                cutout: '70%'
             }
-
-            document.getElementById('admin-email').textContent = user.email;
-            setupRealTimeUsers();
         });
+    }
 
-        // Cleanup
-        window.addEventListener('beforeunload', () => {
-            if (usersUnsubscribe) usersUnsubscribe();
-            if (qualityChartInstance) qualityChartInstance.destroy();
-            if (durationChartInstance) durationChartInstance.destroy();
+    function showLoadingState(isLoading) {
+        const elements = document.querySelectorAll('.loading-spinner');
+        elements.forEach(el => {
+            el.style.visibility = isLoading ? 'visible' : 'hidden';
         });
+    }
+
+    function showAlert(message, type = "info") {
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} alert-dismissible fade show`;
+        alert.role = "alert";
+        alert.innerHTML = `
+            <i class="bi ${type === 'danger' ? 'bi-exclamation-triangle-fill' : 'bi-info-circle-fill'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        const container = document.querySelector('.content');
+        container.insertBefore(alert, container.firstChild);
+        
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }, 5000);
+    }
+
+    logoutBtn.addEventListener('click', async () => {
+        try {
+            await auth.signOut();
+            window.location.href = '/';
+        } catch (error) {
+            console.error("Logout error:", error);
+            showAlert("Logout failed. Please try again.", "danger");
+        }
+    });
+
+    periodButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            periodButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            
+            currentPeriod = button.dataset.period;
+            loadAdminData();
+        });
+    });
+
+// Add to your existing event listener for user actions
+document.addEventListener('click', async (e) => {
+    if (e.target.closest('[data-user-id]')) {
+        const userId = e.target.closest('[data-user-id]').getAttribute('data-user-id');
+        const action = e.target.closest('button').querySelector('i').className;
+        
+        if (action.includes('bi-eye')) {
+            // View user details
+            await viewUserDetails(userId);
+        } else if (action.includes('bi-pencil')) {
+            // Edit user
+            await editUser(userId);
+        } else if (action.includes('bi-trash')) {
+            // Delete user
+            await deleteUser(userId);
+        }
+    }
+});
+
+async function viewUserDetails(userId) {
+    try {
+        const userDoc = await db.collection('users').doc(userId).get();
+        if (!userDoc.exists) {
+            showAlert("User not found", "danger");
+            return;
+        }
+        
+        const userData = userDoc.data();
+        // Display user details in a modal or dedicated section
+        showUserModal(userData);
+    } catch (error) {
+        console.error("Error viewing user:", error);
+        showAlert("Failed to load user details", "danger");
+    }
+}
+
+async function editUser(userId) {
+    try {
+        const userDoc = await db.collection('users').doc(userId).get();
+        if (!userDoc.exists) {
+            showAlert("User not found", "danger");
+            return;
+        }
+        
+        const userData = userDoc.data();
+        // Show edit form with user data
+        showEditForm(userData);
+    } catch (error) {
+        console.error("Error editing user:", error);
+        showAlert("Failed to load user for editing", "danger");
+    }
+}
+
+async function deleteUser(userId) {
+    try {
+        if (!confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
+            return;
+        }
+        
+        // First delete all sleep entries for this user
+        const entriesSnapshot = await db.collection('sleepEntries')
+            .where('userId', '==', userId)
+            .get();
+        
+        const batch = db.batch();
+        entriesSnapshot.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+        
+        // Then delete the user
+        batch.delete(db.collection('users').doc(userId));
+        await batch.commit();
+        
+        showAlert("User deleted successfully", "success");
+        loadAdminData(); // Refresh the data
+    } catch (error) {
+        console.error("Error deleting user:", error);
+        showAlert("Failed to delete user", "danger");
+    }
+}
+
+function showUserModal(userData) {
+    // Create and show a modal with user details
+    const modalHtml = `
+        <div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" style="background: var(--surface); color: var(--text);">
+                    <div class="modal-header">
+                        <h5 class="modal-title">User Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <h6>Name</h6>
+                            <p>${userData.displayName || 'Not provided'}</p>
+                        </div>
+                        <div class="mb-3">
+                            <h6>Email</h6>
+                            <p>${userData.email || 'Not provided'}</p>
+                        </div>
+                        <div class="mb-3">
+                            <h6>Account Created</h6>
+                            <p>${userData.createdAt?.toDate().toLocaleString() || 'Unknown'}</p>
+                        </div>
+                        <div class="mb-3">
+                            <h6>Last Login</h6>
+                            <p>${userData.lastLogin?.toDate().toLocaleString() || 'Never'}</p>
+                        </div>
+                        <div class="mb-3">
+                            <h6>Sleep Entries</h6>
+                            <p>${userData.entriesCount || 0}</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('userModal'));
+    modal.show();
+    
+    // Remove modal when closed
+    document.getElementById('userModal').addEventListener('hidden.bs.modal', () => {
+        document.getElementById('userModal').remove();
+    });
+}
+
+function showEditForm(userData) {
+    // Create and show a modal with edit form
+    const modalHtml = `
+        <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" style="background: var(--surface); color: var(--text);">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit User</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editUserForm">
+                            <div class="mb-3">
+                                <label for="editDisplayName" class="form-label">Display Name</label>
+                                <input type="text" class="form-control" id="editDisplayName" value="${userData.displayName || ''}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="editEmail" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="editEmail" value="${userData.email || ''}">
+                            </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="editIsAdmin" ${userData.isAdmin ? 'checked' : ''}>
+                                <label class="form-check-label" for="editIsAdmin">Admin User</label>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="saveUserChanges">Save Changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+    modal.show();
+    
+    // Handle save changes
+    document.getElementById('saveUserChanges').addEventListener('click', async () => {
+        try {
+            const newData = {
+                displayName: document.getElementById('editDisplayName').value,
+                email: document.getElementById('editEmail').value,
+                isAdmin: document.getElementById('editIsAdmin').checked,
+                updatedAt: new Date()
+            };
+            
+            await db.collection('users').doc(userData.id).update(newData);
+            showAlert("User updated successfully", "success");
+            modal.hide();
+            loadAdminData(); // Refresh the data
+        } catch (error) {
+            console.error("Error updating user:", error);
+            showAlert("Failed to update user", "danger");
+        }
+    });
+    
+    // Remove modal when closed
+    document.getElementById('editUserModal').addEventListener('hidden.bs.modal', () => {
+        document.getElementById('editUserModal').remove();
+    });
+}
+
+    showLoadingState(true);
+    console.log("Admin dashboard initialized");
     </script>
 </body>
 </html>
