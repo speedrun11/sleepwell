@@ -64,7 +64,7 @@ def handle_errors(f):
 def home():
     return render_template("index.html")
 
-@app.route("/dashboard.html")
+@app.route("/user/dashboard.html")
 @auth_required
 def dashboard():
     try:
@@ -75,7 +75,7 @@ def dashboard():
         decoded_claims = auth.verify_session_cookie(session_cookie)
         user = auth.get_user(decoded_claims['uid'])
         
-        return render_template("dashboard.html", user={
+        return render_template("/user/dashboard.html", user={
             'email': user.email,
             'name': user.display_name
         })
@@ -85,7 +85,7 @@ def dashboard():
         return redirect(url_for('home'))
 
 # Add this with your other routes
-@app.route("/admin.html")
+@app.route("/admin/admindashboard.html")
 @admin_required  # Use the new decorator
 def admin_dashboard():
     try:
@@ -93,7 +93,7 @@ def admin_dashboard():
         decoded_claims = auth.verify_session_cookie(session_cookie)
         user = auth.get_user(decoded_claims['uid'])
         
-        return render_template("admin.html", user={
+        return render_template("admin/admindashboard.html", user={
             'email': user.email,
             'name': user.display_name or "Admin",
             'is_admin': True  # Explicitly pass admin status
@@ -103,25 +103,43 @@ def admin_dashboard():
         app.logger.error(f"Admin dashboard error: {str(e)}")
         return redirect(url_for('dashboard'))
 
-@app.route('/sleepanalysis')
+@app.route("/admin/usermanagement.html")
+@admin_required
+def user_management():
+    try:
+        session_cookie = request.cookies.get('session')
+        decoded_claims = auth.verify_session_cookie(session_cookie)
+        user = auth.get_user(decoded_claims['uid'])
+        
+        return render_template("admin/usermanagement.html", user={
+            'email': user.email,
+            'name': user.display_name or "Admin",
+            'is_admin': True
+        })
+        
+    except Exception as e:
+        app.logger.error(f"User management error: {str(e)}")
+        return redirect(url_for('admin_dashboard'))
+
+@app.route('/user/sleepanalysis')
 def sleep_analysis():
-    return render_template('sleepanalysis.html')
+    return render_template('/user/sleepanalysis.html')
 
-@app.route('/decisiontree')
+@app.route('/user/decisiontree')
 def decision_tree():
-    return render_template('decisiontree.html')
+    return render_template('/user/decisiontree.html')
 
-@app.route('/recommendations')
+@app.route('/user/recommendations')
 def recommendations():
-    return render_template('recommendations.html')
+    return render_template('/user/recommendations.html')
 
-@app.route('/feedback')
+@app.route('/user/feedback')
 def feedback():
-    return render_template('feedback.html')
+    return render_template('/user/feedback.html')
 
-@app.route('/settings')
+@app.route('/user/settings')
 def settings():
-    return render_template('settings.html')
+    return render_template('/user/settings.html')
 
 @app.route("/signup", methods=["POST"])
 @limiter.limit("5 per minute")
@@ -163,7 +181,7 @@ def signup():
         
         response = jsonify({
             "message": "User created successfully",
-            "redirect": "/dashboard.html"
+            "redirect": "/user/dashboard.html"
         })
         
         response.set_cookie(
@@ -203,7 +221,7 @@ def login():
         
         response = jsonify({
             "status": "success",
-            "redirect": "/dashboard.html"
+            "redirect": "/user/dashboard.html"
         })
         
         response.set_cookie(
@@ -249,7 +267,7 @@ def admin_login():
         
         response = jsonify({
             "status": "success",
-            "redirect": "/admin.html",
+            "redirect": "/admin/admindashboard.html",
             "is_admin": True
         })
         

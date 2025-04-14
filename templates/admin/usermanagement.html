@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SLEEPWELL - USER MANAGEMENT</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary: #6d28d9;
+            --primary-hover: #7c3aed;
+            --accent: #10b981;
+            --bg: #121212;
+            --surface: #1e1e1e;
+            --surface-hover: rgba(255,255,255,0.05);
+            --surface-light: #2a2a2a;
+            --text: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --admin-accent: #f59e0b;
+        }
+
+        .user-info h5,
+        .user-info small,
+        #last-login,
+        .stat-value,
+        .stat-value i,
+        .stat-value small {
+            color: #fff !important;
+        }
+        
+        * {
+            font-family: 'Montserrat', sans-serif;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: var(--bg);
+            color: var(--text);
+            padding-top: 56px;
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 600;
+            letter-spacing: -0.025em;
+        }
+
+        .navbar {
+            background: var(--surface) !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--admin-accent) !important;
+        }
+
+        .sidebar {
+            height: 100vh;
+            background: var(--surface);
+            padding: 20px;
+            position: fixed;
+            width: 280px;
+            overflow-y: auto;
+            border-right: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 4px 0 12px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .sidebar a {
+            color: var(--text);
+            text-decoration: none;
+            display: block;
+            padding: 12px 16px;
+            margin: 4px 0;
+            border-radius: 6px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar a:hover {
+            background: var(--surface-hover);
+            transform: translateX(4px);
+            border-left-color: var(--admin-accent);
+        }
+
+        .sidebar a.active {
+            background: linear-gradient(90deg, rgba(245,158,11,0.1) 0%, transparent 100%);
+            border-left-color: var(--admin-accent);
+        }
+
+        .sidebar a i {
+            width: 20px;
+            text-align: center;
+            margin-right: 12px;
+            font-size: 1.1rem;
+        }
+
+        .content {
+            padding: 24px;
+            margin-left: 280px;
+            flex-grow: 1;
+        }
+
+        .user-info {
+            background: var(--surface-light);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(241, 229, 229, 0.1)
+        }
+
+        .user-info h5 {
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .user-info small {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            margin-bottom: 24px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+
+        .card-header {
+            background: rgba(255,255,255,0.03);
+            color: var(--text);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 16px 20px;
+            border-radius: 12px 12px 0 0 !important;
+            font-weight: 600;
+        }
+
+        .card-header i {
+            margin-right: 8px;
+            color: var(--admin-accent);
+        }
+
+        .card-body {
+            color: var(--text-muted);
+            padding: 20px;
+        }
+
+        .card-body .text-muted {
+            color: #fff !important;
+        }
+
+        .btn-primary {
+            background: var(--admin-accent);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s;
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            background: #fbbf24;
+            transform: scale(1.02);
+            color: #000;
+        }
+
+        .btn-outline-light {
+            border-color: rgba(255,255,255,0.2);
+            color: var(--text);
+            transition: all 0.3s;
+        }
+
+        .btn-outline-light:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .form-control, .form-select {
+            background: rgba(255,255,255,0.05) !important;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text);
+            border-radius: 8px;
+            padding: 10px 16px;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--admin-accent);
+            box-shadow: 0 0 0 3px rgba(245,158,11,0.25);
+            background: rgba(255,255,255,0.08) !important;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 3px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            border-top-color: var(--admin-accent);
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .alert-info {
+            background: linear-gradient(45deg, rgba(146, 185, 172, 0.1), transparent);
+            border: 1px solid rgba(16,185,129,0.2);
+            backdrop-filter: blur(4px);
+            color: var(--text);
+            border-radius: 10px;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .admin-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: rgba(255,255,255,0.03);
+            transition: all 0.3s;
+        }
+
+        .admin-item:hover {
+            background: rgba(255,255,255,0.08);
+        }
+
+        .admin-item i {
+            color: var(--admin-accent);
+            font-size: 1.2rem;
+            margin-top: 2px;
+        }
+
+        .admin-text {
+            flex: 1;
+        }
+
+        .admin-text h6 {
+            margin-bottom: 2px;
+            color: var(--text);
+        }
+
+        .admin-text small {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .user-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .user-table th {
+            background: rgba(255,255,255,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .user-table td, .user-table th {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .user-table tr:hover td {
+            background: rgba(255,255,255,0.03);
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .table-container {
+            max-height: 500px;
+            overflow-y: auto;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 100%;
+                position: relative;
+                height: auto;
+                box-shadow: none;
+                border-right: none;
+            }
+            
+            .content {
+                margin-left: 0;
+                padding: 16px;
+            }
+            
+            .card {
+                margin-bottom: 16px;
+            }
+        }
+
+        .stat-card {
+            background: linear-gradient(145deg, var(--surface-light), var(--surface)) !important;
+            border-left: 4px solid var(--admin-accent) !important;
+        }
+
+        .badge-admin {
+            background-color: var(--admin-accent);
+            color: #000;
+        }
+
+        .badge-user {
+            background-color: var(--primary);
+        }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-container i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .search-container input {
+            padding-left: 40px !important;
+        }
+
+        .pagination .page-item .page-link {
+            background: var(--surface);
+            color: var(--text);
+            border-color: rgba(255,255,255,0.1);
+        }
+
+        .pagination .page-item.active .page-link {
+            background: var(--admin-accent);
+            color: #000;
+            border-color: var(--admin-accent);
+        }
+
+        .pagination .page-item.disabled .page-link {
+            background: var(--surface);
+            color: var(--text-muted);
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: var(--admin-accent);
+        }
+
+        .filter-buttons .btn {
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            color: white;
+            font-weight: bold;
+        }
+    </style>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark px-4 fixed-top">
+        <a class="navbar-brand" href="#">SleepWell <span class="badge badge-admin ms-2">ADMIN</span></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="bi bi-house-door"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <button id="logout-btn" class="btn btn-outline-danger ms-2">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="userinfo">
+                <h5 id="sidebar-username">Loading admin...</h5>
+                <small class="text-muted" id="sidebar-email">Loading email...</small>
+            </div>
+            
+            <nav class="nav flex-column">
+                <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                    <i class="bi bi-speedometer2"></i> Overview
+                </a>
+                <a class="nav-link active" href="{{ url_for('user_management') }}">
+                    <i class="bi bi-people"></i> User Management
+                </a>
+                <a class="nav-link" href="">
+                    <i class="bi bi-graph-up"></i> Analytics
+                </a>
+                <a class="nav-link" href="">
+                    <i class="bi bi-file-earmark-text"></i> Reports
+                </a>
+                <a class="nav-link" href="">
+                    <i class="bi bi-gear"></i> System Settings
+                </a>
+                <a class="nav-link" href="">
+                    <i class="bi bi-shield-lock"></i> Audit Log
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <div id="user-greeting" class="mb-4">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="bg-warning rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <i class="bi bi-people fs-4"></i>
+                    </div>
+                    <div>
+                        <h2 class="mb-0">User Management</h2>
+                        <small class="text-muted" id="last-login">Manage all SleepWell users</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-people"></i>
+                        <span>All Users</span>
+                    </div>
+                    <button class="btn btn-primary btn-sm" id="add-user-btn">
+                        <i class="bi bi-plus-lg"></i> Add User
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="search-container mb-4">
+                        <i class="bi bi-search"></i>
+                        <input type="text" class="form-control" id="user-search" placeholder="Search users...">
+                    </div>
+
+                    <div class="filter-buttons mb-4">
+                        <button class="btn btn-outline-light btn-sm active" data-filter="all">All Users</button>
+                        <button class="btn btn-outline-light btn-sm" data-filter="active">Active</button>
+                        <button class="btn btn-outline-light btn-sm" data-filter="inactive">Inactive</button>
+                        <button class="btn btn-outline-light btn-sm" data-filter="admin">Admins</button>
+                        <button class="btn btn-outline-light btn-sm" data-filter="regular">Regular Users</button>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="user-table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                    <th>Last Active</th>
+                                    <th>Entries</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body">
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <div class="loading-spinner"></div> Loading users...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <nav aria-label="User pagination" class="mt-4">
+                        <ul class="pagination justify-content-center" id="pagination">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background: var(--surface); color: var(--text);">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-user-form">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="new-user-firstname" class="form-label">First Name</label>
+                                <input type="text" class="form-control" id="new-user-firstname" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="new-user-lastname" class="form-label">Last Name</label>
+                                <input type="text" class="form-control" id="new-user-lastname" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new-user-email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="new-user-email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new-user-password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="new-user-password" minlength="6" required>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="new-user-admin">
+                            <label class="form-check-label" for="new-user-admin">Admin User</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="save-new-user">Create User</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Details Modal -->
+    <div class="modal fade" id="userDetailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background: var(--surface); color: var(--text);">
+                <div class="modal-header">
+                    <h5 class="modal-title">User Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="user-details-content">
+                    Loading user details...
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background: var(--surface); color: var(--text);">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="edit-user-content">
+                    <!-- Content will be dynamically populated -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="save-user-changes">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+    function initializeFirebase() {
+        try {
+            // Initialize Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyDSKYsYwvM-0zof2rHtiKodp4z0HUTNiI4",
+  authDomain: "sleepwell-7ec3a.firebaseapp.com",
+  projectId: "sleepwell-7ec3a",
+  storageBucket: "sleepwell-7ec3a.appspot.com",
+  messagingSenderId: "37760004376",
+  appId: "1:37760004376:web:87a663c13995e6f02c6e6d"
+};
+
+// Initialize Firebase
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// Enable persistence
+db.enablePersistence()
+  .catch((err) => {
+    if (err.code == 'failed-precondition') {
+      console.warn("Multiple tabs open, persistence can only be enabled in one tab at a time.");
+    } else if (err.code == 'unimplemented') {
+      console.warn("The current browser does not support all of the features required to enable persistence");
+    }
+  });
+
+  async function checkFirebaseConnection() {
+  try {
+    const testDoc = await db.collection('users').limit(1).get();
+    console.log("Firestore connection OK", testDoc);
+    return true;
+  } catch (error) {
+    console.error("Firestore connection failed", error);
+    return false;
+  }
+}
+
+// Call this during initialization
+checkFirebaseConnection().then(connected => {
+  if (!connected) {
+    showAlert("Cannot connect to database", "danger");
+  }
+});
+
+// Call this during initialization
+checkFirebaseConnection().then(connected => {
+    if (!connected) {
+        showAlert("Cannot connect to database", "danger");
+    }
+});
+
+// Initialize Firebase
+let db, auth;
+
+async function initializeApp() {
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyDSKYsYwvM-0zof2rHtiKodp4z0HUTNiI4",
+            authDomain: "sleepwell-7ec3a.firebaseapp.com",
+            projectId: "sleepwell-7ec3a",
+            storageBucket: "sleepwell-7ec3a.appspot.com",
+            messagingSenderId: "37760004376",
+            appId: "1:37760004376:web:87a663c13995e6f02c6e6d"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
+        auth = firebase.auth();
+        db = firebase.firestore();
+        
+        // Enable persistence
+        await db.enablePersistence()
+            .catch(err => {
+                if (err.code == 'failed-precondition') {
+                    console.warn("Multiple tabs open, persistence can only be enabled in one tab at a time.");
+                } else if (err.code == 'unimplemented') {
+                    console.warn("The current browser does not support all of the features required to enable persistence");
+                }
+            });
+        
+        console.log("Firebase initialized successfully");
+        return true;
+    } catch (error) {
+        console.error("Firebase initialization error:", error);
+        showAlert("Failed to initialize database connection", "danger");
+        return false;
+    }
+}
+
+// Call this at the start
+initializeApp().then(initialized => {
+    if (initialized) {
+        // Set up auth state listener
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                window.location.href = "/";
+                return;
+            }
+            
+            verifyAdminStatus(user.uid).then(isAdmin => {
+                if (isAdmin) {
+                    updateUserInfo(user);
+                    loadUsers();
+                }
+            });
+        });
+    }
+});
+
+    // DOM Elements
+    const sidebarUsername = document.getElementById('sidebar-username');
+    const sidebarEmail = document.getElementById('sidebar-email');
+    const logoutBtn = document.getElementById('logout-btn');
+    const usersTableBody = document.getElementById('users-table-body');
+    const userSearch = document.getElementById('user-search');
+    const addUserBtn = document.getElementById('add-user-btn');
+    const saveNewUserBtn = document.getElementById('save-new-user');
+    const saveUserChangesBtn = document.getElementById('save-user-changes');
+    const filterButtons = document.querySelectorAll('[data-filter]');
+    const pagination = document.getElementById('pagination');
+
+    // Modals
+    const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
+    const userDetailsModal = new bootstrap.Modal(document.getElementById('userDetailsModal'));
+    const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal'));
+
+    // State
+    let allUsers = [];
+    let filteredUsers = [];
+    let currentPage = 1;
+    const usersPerPage = 10;
+    let currentFilter = 'all';
+    let currentSearch = '';
+
+    // Initialize
+    auth.onAuthStateChanged(user => {
+        if (!user) {
+            window.location.href = "/";
+            return;
+        }
+        
+        verifyAdminStatus(user.uid);
+        updateUserInfo(user);
+        loadUsers();
+    });
+
+    async function verifyAdminStatus(uid) {
+  try {
+    const user = auth.currentUser;
+    if (!user) return false;
+    
+    // Force token refresh to get latest claims
+    const idTokenResult = await user.getIdTokenResult(true);
+    
+    if (idTokenResult.claims.admin) {
+      return true;
+    }
+    
+    // If no admin claim, check Firestore as fallback
+    const userDoc = await db.collection('users').doc(uid).get();
+    if (userDoc.exists && userDoc.data().isAdmin) {
+      return true;
+    }
+    
+    showAlert("No admin privileges. Redirecting...", "danger");
+    setTimeout(() => window.location.href = "/", 3000);
+    return false;
+  } catch (error) {
+    console.error("Admin verification failed:", error);
+    showAlert("Admin verification error", "danger");
+    return false;
+  }
+}
+
+    function updateUserInfo(user) {
+        const displayName = user.displayName || "Admin User";
+        const email = user.email || "No email";
+
+        sidebarUsername.textContent = displayName;
+        sidebarEmail.textContent = email;
+    }
+
+    async function loadUsers() {
+    try {
+        showLoading(true);
+        
+        // Get all users from Firestore
+        const usersSnapshot = await db.collection('users').get();
+        
+        if (usersSnapshot.empty) {
+            renderEmptyState("No users found in database");
+            return;
+        }
+        
+        // Process users
+        allUsers = [];
+        
+        for (const doc of usersSnapshot.docs) {
+            const data = doc.data();
+            
+            // Get entries count
+            let entriesCount = 0;
+            try {
+                const entriesSnapshot = await db.collection('sleepEntries')
+                    .where('userId', '==', doc.id)
+                    .get();
+                entriesCount = entriesSnapshot.size;
+            } catch (e) {
+                console.error("Error counting entries:", e);
+            }
+            
+            allUsers.push({
+                id: doc.id,
+                userId: doc.id,
+                firstName: data.firstName || "",
+                lastName: data.lastName || "",
+                displayName: data.displayName || `${data.firstName || ""} ${data.lastName || ""}`.trim() || "Unknown",
+                email: data.email || "No email",
+                lastLogin: data.lastLogin?.toDate() || new Date(0),
+                createdAt: data.createdAt?.toDate() || new Date(0),
+                isAdmin: data.isAdmin || false,
+                isActive: data.isActive !== false,
+                entriesCount: entriesCount
+            });
+        }
+        
+        applyFilters();
+        renderUsers();
+        setupPagination();
+    } catch (error) {
+        console.error("Error loading users:", error);
+        showAlert(`Failed to load users: ${error.message}`, "danger");
+        renderEmptyState("Failed to load users");
+    } finally {
+        showLoading(false);
+    }
+}
+
+    function applyFilters() {
+        filteredUsers = allUsers.filter(user => {
+            // Apply search filter
+            if (currentSearch && 
+                !user.name.toLowerCase().includes(currentSearch) && 
+                !user.email.toLowerCase().includes(currentSearch)) {
+                return false;
+            }
+            
+            // Apply status filter
+            switch(currentFilter) {
+                case 'active':
+                    return user.isActive;
+                case 'inactive':
+                    return !user.isActive;
+                case 'admin':
+                    return user.isAdmin;
+                case 'regular':
+                    return !user.isAdmin;
+                default:
+                    return true;
+            }
+        });
+    }
+
+    function renderUsers() {
+    if (filteredUsers.length === 0) {
+        renderEmptyState("No users found");
+        return;
+    }
+    
+    const startIndex = (currentPage - 1) * usersPerPage;
+    const endIndex = Math.min(startIndex + usersPerPage, filteredUsers.length);
+    const usersToDisplay = filteredUsers.slice(startIndex, endIndex);
+    
+    usersTableBody.innerHTML = usersToDisplay.map(user => {
+        const displayName = user.lastName ? 
+            `${user.firstName} ${user.lastName.charAt(0)}.` : 
+            user.firstName;
+        
+        return `
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="user-avatar">
+                            ${user.firstName.charAt(0).toUpperCase()}${user.lastName?.charAt(0)?.toUpperCase() || ''}
+                        </div>
+                        <div>
+                            <div>${displayName}</div>
+                            <small class="text-muted">${formatDate(user.createdAt)}</small>
+                        </div>
+                    </div>
+                </td>
+                <td>${user.email}</td>
+                <td>
+                    ${user.isAdmin ? 
+                        '<span class="badge badge-admin">ADMIN</span>' : 
+                        '<span class="badge badge-user">USER</span>'}
+                    ${user.isActive ? 
+                        '<span class="badge bg-success ms-1">Active</span>' : 
+                        '<span class="badge bg-secondary ms-1">Inactive</span>'}
+                </td>
+                <td>${formatDate(user.lastLogin)}</td>
+                <td>${user.entriesCount}</td>
+                <td>
+                    <div class="user-actions">
+                        <button class="btn btn-sm btn-outline-light view-user" data-user-id="${user.id}">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-light edit-user" data-user-id="${user.id}">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger delete-user" data-user-id="${user.id}">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+    function renderEmptyState(message) {
+        usersTableBody.innerHTML = `
+            <tr>
+                <td colspan="6">
+                    <div class="empty-state">
+                        <i class="bi bi-people"></i>
+                        <h5>${message}</h5>
+                        <p class="text-muted">No users match your current filters</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+
+    function setupPagination() {
+        const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+        
+        if (totalPages <= 1) {
+            pagination.style.display = 'none';
+            return;
+        }
+        
+        pagination.style.display = 'flex';
+        
+        let paginationHtml = `
+            <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>
+            </li>
+        `;
+        
+        for (let i = 1; i <= totalPages; i++) {
+            paginationHtml += `
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `;
+        }
+        
+        paginationHtml += `
+            <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>
+            </li>
+        `;
+        
+        pagination.innerHTML = paginationHtml;
+    }
+
+    function formatDate(date) {
+        if (date?.toDate) date = date.toDate();
+        
+        const now = new Date();
+        const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) return "Today";
+        if (diffDays === 1) return "Yesterday";
+        if (diffDays < 7) return `${diffDays} days ago`;
+        
+        return date.toLocaleDateString();
+    }
+
+    function showLoading(isLoading) {
+        if (isLoading) {
+            usersTableBody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center py-4">
+                        <div class="loading-spinner"></div> Loading users...
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    function showAlert(message, type = "info") {
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} alert-dismissible fade show`;
+        alert.role = "alert";
+        alert.innerHTML = `
+            <i class="bi ${type === 'danger' ? 'bi-exclamation-triangle-fill' : 'bi-info-circle-fill'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        const container = document.querySelector('.content');
+        container.insertBefore(alert, container.firstChild);
+        
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }, 5000);
+    }
+
+    // Event Listeners
+    logoutBtn.addEventListener('click', async () => {
+        try {
+            await auth.signOut();
+            window.location.href = '/';
+        } catch (error) {
+            console.error("Logout error:", error);
+            showAlert("Logout failed. Please try again.", "danger");
+        }
+    });
+
+    addUserBtn.addEventListener('click', () => {
+        document.getElementById('add-user-form').reset();
+        addUserModal.show();
+    });
+
+    saveNewUserBtn.addEventListener('click', async () => {
+    try {
+        const firstName = document.getElementById('new-user-firstname').value.trim();
+        const lastName = document.getElementById('new-user-lastname').value.trim();
+        const email = document.getElementById('new-user-email').value.trim();
+        const password = document.getElementById('new-user-password').value;
+        const isAdmin = document.getElementById('new-user-admin').checked;
+        
+        if (!firstName || !lastName || !email || !password) {
+            showAlert("Please fill all required fields", "danger");
+            return;
+        }
+        
+        if (password.length < 6) {
+            showAlert("Password must be at least 6 characters", "danger");
+            return;
+        }
+        
+        // Create user in Firebase Auth
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        
+        // Create complete user document in Firestore
+        await db.collection('users').doc(userCredential.user.uid).set({
+            userId: userCredential.user.uid,
+            firstName: firstName,
+            lastName: lastName,
+            displayName: `${firstName} ${lastName}`,
+            email: email,
+            isAdmin: isAdmin,
+            isActive: true,
+            createdAt: new Date(),
+            lastLogin: new Date(),
+            entriesCount: 0,
+            updatedAt: new Date()
+        });
+        
+        // Set custom claims for admin
+        if (isAdmin) {
+            await setAdminClaim(userCredential.user.uid);
+        }
+        
+        addUserModal.hide();
+        showAlert("User created successfully", "success");
+        loadUsers();
+    } catch (error) {
+        console.error("Error creating user:", error);
+        showAlert("Failed to create user: " + error.message, "danger");
+    }
+});
+
+    async function setAdminClaim(uid) {
+        try {
+            // This would typically be done on your backend server
+            // For demo purposes, we're doing it here
+            const user = await auth.currentUser;
+            if (user) {
+                await user.getIdToken(true); // Refresh token
+            }
+            
+            // In a real app, you would call a Cloud Function here
+            console.log(`Admin claim set for user ${uid}`);
+        } catch (error) {
+            console.error("Error setting admin claim:", error);
+            throw error;
+        }
+    }
+
+    document.addEventListener('click', async (e) => {
+        if (e.target.closest('.view-user')) {
+            const userId = e.target.closest('.view-user').getAttribute('data-user-id');
+            await showUserDetails(userId);
+        }
+        
+        if (e.target.closest('.edit-user')) {
+            const userId = e.target.closest('.edit-user').getAttribute('data-user-id');
+            await showEditUserForm(userId);
+        }
+        
+        if (e.target.closest('.delete-user')) {
+            const userId = e.target.closest('.delete-user').getAttribute('data-user-id');
+            await deleteUser(userId);
+        }
+        
+        if (e.target.closest('.page-link')) {
+            e.preventDefault();
+            const page = parseInt(e.target.closest('.page-link').getAttribute('data-page'));
+            if (!isNaN(page)) {
+                currentPage = page;
+                renderUsers();
+                setupPagination();
+            }
+        }
+    });
+
+    async function showUserDetails(userId) {
+    try {
+        const userDoc = await db.collection('users').doc(userId).get();
+        if (!userDoc.exists) {
+            showAlert("User not found", "danger");
+            return;
+        }
+        
+        const userData = userDoc.data();
+        const authUser = await auth.getUser(userId);
+        
+        const entriesSnapshot = await db.collection('sleepEntries')
+            .where('userId', '==', userId)
+            .count()
+            .get();
+        
+        const entriesCount = entriesSnapshot.data().count;
+        const fullName = `${userData.firstName} ${userData.lastName}`;
+        
+        document.getElementById('user-details-content').innerHTML = `
+            <div class="mb-3">
+                <h6>Name</h6>
+                <p>${fullName}</p>
+            </div>
+            <div class="mb-3">
+                <h6>Email</h6>
+                <p>${authUser.email || userData.email || 'Not provided'}</p>
+            </div>
+            <div class="mb-3">
+                <h6>Account Status</h6>
+                <p>
+                    ${userData.isAdmin ? '<span class="badge badge-admin">ADMIN</span>' : '<span class="badge badge-user">USER</span>'}
+                    ${userData.isActive !== false ? '<span class="badge bg-success ms-1">Active</span>' : '<span class="badge bg-secondary ms-1">Inactive</span>'}
+                </p>
+            </div>
+            <div class="mb-3">
+                <h6>Account Created</h6>
+                <p>${userData.createdAt?.toDate().toLocaleString() || new Date(authUser.metadata.creationTime).toLocaleString() || 'Unknown'}</p>
+            </div>
+            <div class="mb-3">
+                <h6>Last Login</h6>
+                <p>${userData.lastLogin?.toDate().toLocaleString() || new Date(authUser.metadata.lastSignInTime).toLocaleString() || 'Never'}</p>
+            </div>
+            <div class="mb-3">
+                <h6>Sleep Entries</h6>
+                <p>${entriesCount}</p>
+            </div>
+            <div class="mb-3">
+                <h6>User ID</h6>
+                <p><small>${userId}</small></p>
+            </div>
+        `;
+        
+        userDetailsModal.show();
+    } catch (error) {
+        console.error("Error showing user details:", error);
+        showAlert("Failed to load user details", "danger");
+    }
+}
+    async function showEditUserForm(userId) {
+        try {
+            const userDoc = await db.collection('users').doc(userId).get();
+            if (!userDoc.exists) {
+                showAlert("User not found", "danger");
+                return;
+            }
+            
+            const userData = userDoc.data();
+            // Split displayName into first and last names
+            const names = userData.displayName ? userData.displayName.split(' ') : ['', ''];
+            const firstName = userData.firstName || names[0] || '';
+            const lastName = userData.lastName || (names.length > 1 ? names.slice(1).join(' ') : '');
+            
+            document.getElementById('edit-user-content').innerHTML = `
+                <form id="edit-user-form">
+                    <input type="hidden" id="edit-user-id" value="${userId}">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-user-firstname" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="edit-user-firstname" value="${firstName}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-user-lastname" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="edit-user-lastname" value="${lastName}" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-user-email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="edit-user-email" value="${userData.email || ''}" required>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="edit-user-admin" ${userData.isAdmin ? 'checked' : ''}>
+                        <label class="form-check-label" for="edit-user-admin">Admin User</label>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="edit-user-active" ${userData.isActive !== false ? 'checked' : ''}>
+                        <label class="form-check-label" for="edit-user-active">Active Account</label>
+                    </div>
+                </form>
+            `;
+            
+            editUserModal.show();
+        } catch (error) {
+            console.error("Error showing edit form:", error);
+            showAlert("Failed to load user for editing", "danger");
+        }
+    }
+
+    saveUserChangesBtn.addEventListener('click', async () => {
+        try {
+            const userId = document.getElementById('edit-user-id').value;
+            const firstName = document.getElementById('edit-user-firstname').value.trim();
+            const lastName = document.getElementById('edit-user-lastname').value.trim();
+            const email = document.getElementById('edit-user-email').value.trim();
+            const isAdmin = document.getElementById('edit-user-admin').checked;
+            const isActive = document.getElementById('edit-user-active').checked;
+            
+            if (!firstName || !lastName || !email) {
+                showAlert("Please fill all required fields", "danger");
+                return;
+            }
+            
+            // Update user document in Firestore
+            await db.collection('users').doc(userId).update({
+                firstName: firstName,
+                lastName: lastName,
+                displayName: `${firstName} ${lastName}`,
+                email: email,
+                isAdmin: isAdmin,
+                isActive: isActive,
+                updatedAt: new Date()
+            });
+            
+            // If the user is being made an admin, set the custom claim
+            if (isAdmin) {
+                await setAdminClaim(userId);
+            }
+            
+            editUserModal.hide();
+            showAlert("User updated successfully", "success");
+            loadUsers();
+        } catch (error) {
+            console.error("Error updating user:", error);
+            showAlert("Failed to update user: " + error.message, "danger");
+        }
+    });
+
+    async function createUser(email, password, userData) {
+    try {
+        // First create auth user
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        
+        // Then create user document
+        await db.collection('users').doc(userCredential.user.uid).set({
+            ...userData,
+            createdAt: new Date(),
+            lastLogin: new Date()
+        });
+        
+        return userCredential.user;
+    } catch (error) {
+        console.error("Error creating user:", error);
+        throw error;
+    }
+}
+
+    async function deleteUser(userId) {
+        try {
+            if (!confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
+                return;
+            }
+            
+            // First delete all sleep entries for this user
+            const entriesSnapshot = await db.collection('sleepEntries')
+                .where('userId', '==', userId)
+                .get();
+            
+            const batch = db.batch();
+            entriesSnapshot.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+            
+            // Then delete the user document
+            batch.delete(db.collection('users').doc(userId));
+            
+            // Finally, delete the auth user
+            // Note: In a real app, this would be done via a Cloud Function
+            console.log(`Would delete auth user ${userId}`);
+            
+            await batch.commit();
+            
+            showAlert("User deleted successfully", "success");
+            loadUsers();
+        } catch (error) {
+            console.error("Error deleting user:", error);
+            showAlert("Failed to delete user", "danger");
+        }
+    }
+
+    // Search functionality
+    userSearch.addEventListener('input', () => {
+        currentSearch = userSearch.value.toLowerCase();
+        currentPage = 1;
+        applyFilters();
+        renderUsers();
+        setupPagination();
+    });
+
+    // Filter buttons
+    filterButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            
+            currentFilter = button.dataset.filter;
+            currentPage = 1;
+            applyFilters();
+            renderUsers();
+            setupPagination();
+        });
+    });
+
+    // Initialize
+    console.log("User management initialized");
+    </script>
+</body>
+</html>
