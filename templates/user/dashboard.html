@@ -642,15 +642,18 @@
 
     async function saveSleepEntry(entryData, retries = 3) {
         try {
+            // Validate input data
             if (!entryData.userId || !entryData.bedtime || !entryData.wakeupTime) {
                 throw new Error("Invalid sleep entry data");
             }
 
+            // Calculate duration
             const duration = (entryData.wakeupTime.toDate() - entryData.bedtime.toDate()) / (1000 * 60 * 60);
             if (duration <= 0) {
                 throw new Error("Wake-up time must be after bedtime");
             }
 
+            // Prepare sleep entry document
             const entry = {
                 userId: entryData.userId,
                 bedtime: entryData.bedtime,
@@ -659,19 +662,41 @@
                 quality: entryData.quality,
                 screenHoursBeforeBed: entryData.screenHoursBeforeBed,
                 caffeineHoursBeforeBed: entryData.caffeineHoursBeforeBed,
-                date: firebase.firestore.Timestamp.fromDate(new Date())
+                date: firebase.firestore.Timestamp.fromDate(new Date()),
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
             let lastError;
             for (let i = 0; i < retries; i++) {
                 try {
-                    const docRef = await db.collection('sleepEntries').add(entry);
-                    console.log("Entry saved with ID:", docRef.id);
-                    return docRef;
+                    // Get user document first
+                    const userRef = db.collection('users').doc(entryData.userId);
+                    const userDoc = await userRef.get();
+                    
+                    // Prepare user updates - ONLY the allowed fields
+                    const userUpdates = {
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        entriesCount: (userDoc.exists ? (userDoc.data().entriesCount || 0) : 0) + 1
+                    };
+                    
+                    // If creating new user document, add minimum required fields
+                    if (!userDoc.exists) {
+                        userUpdates.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                        userUpdates.userId = entryData.userId;
+                    }
+                    
+                    // Create sleep entry first
+                    const sleepEntryRef = await db.collection('sleepEntries').add(entry);
+                    
+                    // Then update user document
+                    await userRef.set(userUpdates, { merge: true });
+                    
+                    console.log("Entry saved and count updated");
+                    return sleepEntryRef.id;
                 } catch (error) {
                     lastError = error;
                     console.warn(`Save attempt ${i + 1} failed, retrying...`, error);
-                    await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); 
+                    await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
                 }
             }
             
@@ -681,6 +706,7 @@
             throw error;
         }
     }
+
 
     function calculateHoursBeforeBed(bedtimeDate, timeString) {
         try {
@@ -1611,7 +1637,7 @@
             duration: parseFloat(durationHours.toFixed(2)),
             screenHoursBeforeBed: parseFloat(screenHoursBeforeBed.toFixed(1)),
             caffeineHoursBeforeBed: parseFloat(caffeineHoursBeforeBed.toFixed(1)),
-            date: firebase.firestore.FieldValue.serverTimestamp()
+            date: firebase.firestore.Timestamp.fromDate(new Date())
         };
 
         if (entryData.quality < 1 || entryData.quality > 5) {
@@ -1631,7 +1657,6 @@
             await loadUserData(user.uid);
         } catch (error) {
             console.error("Save error:", error);
-            showAlert(`Save failed: ${error.message}`, "danger");
             
             let errorMessage = "Failed to save entry. Please try again.";
             if (error.code === 'permission-denied') {
@@ -1647,12 +1672,14 @@
             submitBtn.innerHTML = originalBtnText;
             submitBtn.disabled = false;
         }
-
     } catch (error) {
         console.error("Unexpected form error:", error);
         showAlert("An unexpected error occurred. Please try again.", "danger");
     }
 });
+
+
+
     logoutBtn.addEventListener('click', async () => {
         try {
             await auth.signOut();

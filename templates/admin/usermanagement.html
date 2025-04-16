@@ -624,66 +624,22 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-    function initializeFirebase() {
-        try {
-            // Initialize Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyDSKYsYwvM-0zof2rHtiKodp4z0HUTNiI4",
-  authDomain: "sleepwell-7ec3a.firebaseapp.com",
-  projectId: "sleepwell-7ec3a",
-  storageBucket: "sleepwell-7ec3a.appspot.com",
-  messagingSenderId: "37760004376",
-  appId: "1:37760004376:web:87a663c13995e6f02c6e6d"
-};
-
 // Initialize Firebase
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
+// Debugging flags
+const DEBUG = true;
+function debugLog(...args) {
+    if (DEBUG) console.log('[DEBUG]', ...args);
 }
-
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-// Enable persistence
-db.enablePersistence()
-  .catch((err) => {
-    if (err.code == 'failed-precondition') {
-      console.warn("Multiple tabs open, persistence can only be enabled in one tab at a time.");
-    } else if (err.code == 'unimplemented') {
-      console.warn("The current browser does not support all of the features required to enable persistence");
-    }
-  });
-
-  async function checkFirebaseConnection() {
-  try {
-    const testDoc = await db.collection('users').limit(1).get();
-    console.log("Firestore connection OK", testDoc);
-    return true;
-  } catch (error) {
-    console.error("Firestore connection failed", error);
-    return false;
-  }
-}
-
-// Call this during initialization
-checkFirebaseConnection().then(connected => {
-  if (!connected) {
-    showAlert("Cannot connect to database", "danger");
-  }
-});
-
-// Call this during initialization
-checkFirebaseConnection().then(connected => {
-    if (!connected) {
-        showAlert("Cannot connect to database", "danger");
-    }
-});
 
 // Initialize Firebase
 let db, auth;
+let firebaseInitialized = false;
 
-async function initializeApp() {
+async function initializeFirebase() {
     try {
+        if (firebaseInitialized) return true;
+        
+        debugLog("Initializing Firebase...");
         const firebaseConfig = {
             apiKey: "AIzaSyDSKYsYwvM-0zof2rHtiKodp4z0HUTNiI4",
             authDomain: "sleepwell-7ec3a.firebaseapp.com",
@@ -695,22 +651,22 @@ async function initializeApp() {
 
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
+            debugLog("Firebase app initialized");
         }
         
         auth = firebase.auth();
         db = firebase.firestore();
         
         // Enable persistence
-        await db.enablePersistence()
-            .catch(err => {
-                if (err.code == 'failed-precondition') {
-                    console.warn("Multiple tabs open, persistence can only be enabled in one tab at a time.");
-                } else if (err.code == 'unimplemented') {
-                    console.warn("The current browser does not support all of the features required to enable persistence");
-                }
-            });
+        try {
+            await db.enablePersistence();
+            debugLog("Firestore persistence enabled");
+        } catch (err) {
+            console.warn("Persistence error:", err);
+        }
         
-        console.log("Firebase initialized successfully");
+        firebaseInitialized = true;
+        debugLog("Firebase initialized successfully");
         return true;
     } catch (error) {
         console.error("Firebase initialization error:", error);
@@ -736,6 +692,95 @@ initializeApp().then(initialized => {
                 }
             });
         });
+    }
+});
+
+// Enable persistence
+db.enablePersistence()
+  .catch((err) => {
+    if (err.code == 'failed-precondition') {
+      console.warn("Multiple tabs open, persistence can only be enabled in one tab at a time.");
+    } else if (err.code == 'unimplemented') {
+      console.warn("The current browser does not support all of the features required to enable persistence");
+    }
+  });
+
+// Check Firebase connection
+async function checkFirebaseConnection() {
+    try {
+        debugLog("Checking Firestore connection...");
+        const testDoc = await db.collection('users').limit(1).get();
+        debugLog("Firestore connection OK");
+        return true;
+    } catch (error) {
+        console.error("Firestore connection failed", error);
+        showAlert("Cannot connect to database. Please refresh the page.", "danger");
+        return false;
+    }
+}
+
+// Call this during initialization
+checkFirebaseConnection().then(connected => {
+  if (!connected) {
+    showAlert("Cannot connect to database", "danger");
+  }
+});
+
+// Call this during initialization
+checkFirebaseConnection().then(connected => {
+    if (!connected) {
+        showAlert("Cannot connect to database", "danger");
+    }
+});
+
+async function initializeApp() {
+    try {
+        debugLog("Starting app initialization...");
+        
+        // Initialize Firebase
+        const firebaseReady = await initializeFirebase();
+        if (!firebaseReady) return false;
+        
+        // Check connection
+        const connected = await checkFirebaseConnection();
+        if (!connected) return false;
+        
+        // Set up auth state listener
+        auth.onAuthStateChanged(async user => {
+            if (!user) {
+                debugLog("No user, redirecting to login");
+                window.location.href = "/";
+                return;
+            }
+            
+            debugLog("User authenticated:", user.uid);
+            const isAdmin = await verifyAdminStatus(user.uid);
+            
+            if (isAdmin) {
+                debugLog("User is admin, loading UI");
+                updateUserInfo(user);
+                await loadUsers();
+            } else {
+                debugLog("User is not admin, redirecting");
+                showAlert("No admin privileges. Redirecting...", "danger");
+                setTimeout(() => window.location.href = "/", 3000);
+            }
+        });
+        
+        return true;
+    } catch (error) {
+        console.error("App initialization error:", error);
+        showAlert("Failed to initialize application", "danger");
+        return false;
+    }
+}
+
+// Start the app
+document.addEventListener('DOMContentLoaded', async () => {
+    debugLog("DOM loaded, initializing app...");
+    const initialized = await initializeApp();
+    if (!initialized) {
+        showAlert("Failed to initialize application. Please try again.", "danger");
     }
 });
 
@@ -812,14 +857,18 @@ initializeApp().then(initialized => {
         sidebarEmail.textContent = email;
     }
 
-    async function loadUsers() {
+// Modified loadUsers function with better error handling
+async function loadUsers() {
     try {
+        debugLog("Loading users...");
         showLoading(true);
         
         // Get all users from Firestore
         const usersSnapshot = await db.collection('users').get();
+        debugLog(`Found ${usersSnapshot.size} users`);
         
         if (usersSnapshot.empty) {
+            debugLog("No users found in database");
             renderEmptyState("No users found in database");
             return;
         }
@@ -829,6 +878,7 @@ initializeApp().then(initialized => {
         
         for (const doc of usersSnapshot.docs) {
             const data = doc.data();
+            debugLog(`Processing user ${doc.id}:`, data);
             
             // Get entries count
             let entriesCount = 0;
@@ -837,15 +887,18 @@ initializeApp().then(initialized => {
                     .where('userId', '==', doc.id)
                     .get();
                 entriesCount = entriesSnapshot.size;
+                debugLog(`Found ${entriesCount} entries for user ${doc.id}`);
             } catch (e) {
                 console.error("Error counting entries:", e);
             }
             
-            allUsers.push({
+            // Ensure we have all required fields
+            const user = {
                 id: doc.id,
                 userId: doc.id,
                 firstName: data.firstName || "",
                 lastName: data.lastName || "",
+                name: `${data.firstName || ""} ${data.lastName || ""}`.trim() || "Unknown", // Added name for search
                 displayName: data.displayName || `${data.firstName || ""} ${data.lastName || ""}`.trim() || "Unknown",
                 email: data.email || "No email",
                 lastLogin: data.lastLogin?.toDate() || new Date(0),
@@ -853,9 +906,12 @@ initializeApp().then(initialized => {
                 isAdmin: data.isAdmin || false,
                 isActive: data.isActive !== false,
                 entriesCount: entriesCount
-            });
+            };
+            
+            allUsers.push(user);
         }
         
+        debugLog("Users loaded:", allUsers.length);
         applyFilters();
         renderUsers();
         setupPagination();
@@ -868,30 +924,35 @@ initializeApp().then(initialized => {
     }
 }
 
-    function applyFilters() {
-        filteredUsers = allUsers.filter(user => {
-            // Apply search filter
-            if (currentSearch && 
-                !user.name.toLowerCase().includes(currentSearch) && 
-                !user.email.toLowerCase().includes(currentSearch)) {
-                return false;
-            }
-            
-            // Apply status filter
-            switch(currentFilter) {
-                case 'active':
-                    return user.isActive;
-                case 'inactive':
-                    return !user.isActive;
-                case 'admin':
-                    return user.isAdmin;
-                case 'regular':
-                    return !user.isAdmin;
-                default:
-                    return true;
-            }
-        });
-    }
+// Modified applyFilters to use the name property
+function applyFilters() {
+    debugLog(`Applying filters - search: "${currentSearch}", filter: "${currentFilter}"`);
+    
+    filteredUsers = allUsers.filter(user => {
+        // Apply search filter
+        if (currentSearch && 
+            !user.name.toLowerCase().includes(currentSearch) && 
+            !user.email.toLowerCase().includes(currentSearch)) {
+            return false;
+        }
+        
+        // Apply status filter
+        switch(currentFilter) {
+            case 'active':
+                return user.isActive;
+            case 'inactive':
+                return !user.isActive;
+            case 'admin':
+                return user.isAdmin;
+            case 'regular':
+                return !user.isAdmin;
+            default:
+                return true;
+        }
+    });
+    
+    debugLog(`Filtered users count: ${filteredUsers.length}`);
+}   
 
     function renderUsers() {
     if (filteredUsers.length === 0) {
