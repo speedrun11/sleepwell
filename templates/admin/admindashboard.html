@@ -1340,11 +1340,11 @@ async function editUser(userId) {
         }
         
         const userData = userDoc.data();
-        // Show edit form with user data
+        userData.id = userId; // Include the document ID
         showEditForm(userData);
     } catch (error) {
         console.error("Error editing user:", error);
-        showAlert("Failed to load user for editing", "danger");
+        showAlert(`Failed to load user for editing: ${error.message}`, "danger");
     }
 }
 
@@ -1354,25 +1354,43 @@ async function deleteUser(userId) {
             return;
         }
         
-        // First delete all sleep entries for this user
-        const entriesSnapshot = await db.collection('sleepEntries')
-            .where('userId', '==', userId)
-            .get();
+        const idToken = await auth.currentUser.getIdToken();
+        const response = // Delete user completely
+await fetch(`/api/users/${userId}`, {
+    method: 'DELETE',
+    headers: {
+        'Authorization': `Bearer ${idToken}`,
+        'Content-Type': 'application/json'
+    }
+});
+
+// Delete only sleep entries
+await fetch(`/api/users/${userId}/sleep-entries`, {
+    method: 'DELETE',
+    headers: {
+        'Authorization': `Bearer ${idToken}`,
+        'Content-Type': 'application/json'
+    }
+});
         
-        const batch = db.batch();
-        entriesSnapshot.forEach(doc => {
-            batch.delete(doc.ref);
-        });
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            throw new Error(`Unexpected response: ${text}`);
+        }
         
-        // Then delete the user
-        batch.delete(db.collection('users').doc(userId));
-        await batch.commit();
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to delete user');
+        }
         
         showAlert("User deleted successfully", "success");
-        loadAdminData(); // Refresh the data
+        loadAdminData();
     } catch (error) {
-        console.error("Error deleting user:", error);
-        showAlert("Failed to delete user", "danger");
+        console.error("Detailed deletion error:", error);
+        showAlert(`Failed to delete user: ${error.message}`, "danger");
     }
 }
 
@@ -1438,17 +1456,33 @@ function showEditForm(userData) {
                     </div>
                     <div class="modal-body">
                         <form id="editUserForm">
-                            <div class="mb-3">
-                                <label for="editDisplayName" class="form-label">Display Name</label>
-                                <input type="text" class="form-control" id="editDisplayName" value="${userData.displayName || ''}">
+                            <input type="hidden" id="editUserId" value="${userData.id}">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="editFirstName" class="form-label">First Name</label>
+                                    <input type="text" class="form-control" id="editFirstName" 
+                                        value="${userData.firstName || ''}" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="editLastName" class="form-label">Last Name</label>
+                                    <input type="text" class="form-control" id="editLastName" 
+                                        value="${userData.lastName || ''}" required>
+                                </div>
                             </div>
                             <div class="mb-3">
                                 <label for="editEmail" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="editEmail" value="${userData.email || ''}">
+                                <input type="email" class="form-control" id="editEmail" 
+                                    value="${userData.email || ''}" required>
                             </div>
                             <div class="mb-3 form-check">
-                                <input type="checkbox" class="form-check-input" id="editIsAdmin" ${userData.isAdmin ? 'checked' : ''}>
+                                <input type="checkbox" class="form-check-input" id="editIsAdmin" 
+                                    ${userData.isAdmin ? 'checked' : ''}>
                                 <label class="form-check-label" for="editIsAdmin">Admin User</label>
+                            </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="editIsActive" 
+                                    ${userData.isActive !== false ? 'checked' : ''}>
+                                <label class="form-check-label" for="editIsActive">Active Account</label>
                             </div>
                         </form>
                     </div>
@@ -1468,20 +1502,36 @@ function showEditForm(userData) {
     // Handle save changes
     document.getElementById('saveUserChanges').addEventListener('click', async () => {
         try {
-            const newData = {
-                displayName: document.getElementById('editDisplayName').value,
-                email: document.getElementById('editEmail').value,
-                isAdmin: document.getElementById('editIsAdmin').checked,
-                updatedAt: new Date()
+            const userId = document.getElementById('editUserId').value;
+            const firstName = document.getElementById('editFirstName').value.trim();
+            const lastName = document.getElementById('editLastName').value.trim();
+            const email = document.getElementById('editEmail').value.trim();
+            const isAdmin = document.getElementById('editIsAdmin').checked;
+            const isActive = document.getElementById('editIsActive').checked;
+            
+            if (!firstName || !lastName || !email) {
+                showAlert("Please fill all required fields", "danger");
+                return;
+            }
+            
+            const updateData = {
+                firstName: firstName,
+                lastName: lastName,
+                displayName: `${firstName} ${lastName}`,
+                email: email,
+                isAdmin: isAdmin,
+                isActive: isActive,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
             
-            await db.collection('users').doc(userData.id).update(newData);
+            await db.collection('users').doc(userId).update(updateData);
+            
             showAlert("User updated successfully", "success");
             modal.hide();
             loadAdminData(); // Refresh the data
         } catch (error) {
             console.error("Error updating user:", error);
-            showAlert("Failed to update user", "danger");
+            showAlert(`Failed to update user: ${error.message}`, "danger");
         }
     });
     

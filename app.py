@@ -155,7 +155,101 @@ def create_user():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
+@app.route('/api/users/<user_id>', methods=['DELETE'])
+@admin_required
+@handle_errors
+def delete_user(user_id):
+    try:
+        # Verify the user exists in Firebase Auth
+        try:
+            auth.get_user(user_id)
+        except auth.UserNotFoundError:
+            return jsonify({"error": "User not found in authentication system"}), 404
 
+        # Delete all sleep entries for this user
+        entries_ref = db.collection('sleepEntries').where('userId', '==', user_id)
+        entries = entries_ref.stream()
+        
+        # Batch delete entries (Firestore has limit of 500 operations per batch)
+        batch = db.batch()
+        batch_count = 0
+        max_batch_size = 400  # conservative number to stay under limit
+        
+        for entry in entries:
+            if batch_count >= max_batch_size:
+                batch.commit()
+                batch = db.batch()
+                batch_count = 0
+            batch.delete(entry.reference)
+            batch_count += 1
+        
+        if batch_count > 0:
+            batch.commit()
+
+        # Delete user document from Firestore
+        user_ref = db.collection('users').document(user_id)
+        user_ref.delete()
+
+        # Delete the auth user
+        auth.delete_user(user_id)
+
+        return jsonify({
+            "success": True,
+            "message": f"User {user_id} and all associated data deleted successfully"
+        }), 200
+
+    except Exception as e:
+        app.logger.error(f"Error deleting user {user_id}: {str(e)}")
+        return jsonify({
+            "error": f"Failed to delete user: {str(e)}"
+        }), 500
+
+
+@app.route('/api/users/<user_id>/sleep-entries', methods=['DELETE'])
+@admin_required
+@handle_errors
+def delete_user_sleep_entries(user_id):
+    try:
+        # Verify user exists
+        auth.get_user(user_id)
+        
+        # Delete all sleep entries
+        entries_ref = db.collection('sleepEntries').where('userId', '==', user_id)
+        entries = entries_ref.stream()
+        
+        batch = db.batch()
+        batch_count = 0
+        max_batch_size = 400
+        
+        for entry in entries:
+            if batch_count >= max_batch_size:
+                batch.commit()
+                batch = db.batch()
+                batch_count = 0
+            batch.delete(entry.reference)
+            batch_count += 1
+        
+        if batch_count > 0:
+            batch.commit()
+
+        # Update user's entries count
+        db.collection('users').document(user_id).update({
+            'entriesCount': 0,
+            'updatedAt': firestore.SERVER_TIMESTAMP
+        })
+
+        return jsonify({
+            "success": True,
+            "message": f"All sleep entries for user {user_id} deleted successfully"
+        }), 200
+
+    except auth.UserNotFoundError:
+        return jsonify({"error": "User not found"}), 404
+    except Exception as e:
+        app.logger.error(f"Error deleting sleep entries for {user_id}: {str(e)}")
+        return jsonify({
+            "error": f"Failed to delete sleep entries: {str(e)}"
+        }), 500
 
 @app.route('/user/sleepanalysis')
 def sleep_analysis():
