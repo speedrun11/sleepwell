@@ -383,6 +383,9 @@
             color: var(--text);
             border-bottom: 2px solid rgba(255,255,255,0.1);
         }
+        #sidebar-email {
+            color: white !important;
+        }
     </style>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -735,27 +738,20 @@
             });
     });
 
-// Update verifyAdminStatus function
     async function verifyAdminStatus(uid) {
         try {
-            const user = await auth.currentUser;
-            if (!user) return false;
-            
-            const idTokenResult = await user.getIdTokenResult();
-            
-            if (idTokenResult.claims.admin) {
-            return true;
+            const userDoc = await db.collection('users').doc(uid).get();
+            if (userDoc.exists && userDoc.data().isAdmin) {
+                return true;
             }
-            
             showAlert("No admin privileges. Redirecting...", "danger");
             setTimeout(() => window.location.href = "/", 3000);
             return false;
         } catch (error) {
             console.error("Admin verification failed:", error);
-            showAlert("Admin verification error", "danger");
             return false;
         }
-        }
+    }
 
     function updateGreeting(user) {
         const displayName = user.displayName || "Admin";

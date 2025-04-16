@@ -6,6 +6,7 @@ import re
 import firebase_admin
 from firebase_admin import credentials, auth
 import os
+from firebase_admin import firestore
 
 app = Flask(__name__)
 
@@ -13,6 +14,7 @@ if not firebase_admin._apps:
     cred_path = os.path.join(os.path.dirname(__file__), 'sleepwell-7ec3a-firebase-adminsdk-fbsvc-0d2a905bbb.json')
     cred = credentials.Certificate(cred_path)
     firebase_admin.initialize_app(cred)
+    db = firestore.client()
 
 limiter = Limiter(
     app=app,
@@ -120,6 +122,40 @@ def user_management():
     except Exception as e:
         app.logger.error(f"User management error: {str(e)}")
         return redirect(url_for('admin_dashboard'))
+
+@app.route('/api/createUser', methods=['POST'])
+@admin_required  # Your admin verification decorator
+def create_user():
+    try:
+        data = request.get_json()
+        
+        # Create the user using Firebase Admin SDK
+        user = auth.create_user(
+            email=data['email'],
+            password=data['password']
+        )
+        
+        # Set user data in Firestore
+        db.collection('users').document(user.uid).set({
+            'userId': user.uid,
+            'firstName': data['firstName'],
+            'lastName': data['lastName'],
+            'displayName': f"{data['firstName']} {data['lastName']}",
+            'email': data['email'],
+            'isAdmin': data.get('isAdmin', False),
+            'isActive': True,
+            'createdAt': firestore.SERVER_TIMESTAMP,
+            'lastLogin': firestore.SERVER_TIMESTAMP,
+            'entriesCount': 0,
+            'updatedAt': firestore.SERVER_TIMESTAMP
+        })
+        
+        return jsonify({'success': True}), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+
 
 @app.route('/user/sleepanalysis')
 def sleep_analysis():

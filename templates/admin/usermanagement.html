@@ -403,6 +403,9 @@
             color: white;
             font-weight: bold;
         }
+        #sidebar-email {
+            color: white !important;
+        }
     </style>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -624,501 +627,401 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-// Initialize Firebase
-// Debugging flags
-const DEBUG = true;
-function debugLog(...args) {
-    if (DEBUG) console.log('[DEBUG]', ...args);
-}
-
-// Initialize Firebase
-let db, auth;
-let firebaseInitialized = false;
-
-async function initializeFirebase() {
-    try {
-        if (firebaseInitialized) return true;
-        
-        debugLog("Initializing Firebase...");
-        const firebaseConfig = {
-            apiKey: "AIzaSyDSKYsYwvM-0zof2rHtiKodp4z0HUTNiI4",
-            authDomain: "sleepwell-7ec3a.firebaseapp.com",
-            projectId: "sleepwell-7ec3a",
-            storageBucket: "sleepwell-7ec3a.appspot.com",
-            messagingSenderId: "37760004376",
-            appId: "1:37760004376:web:87a663c13995e6f02c6e6d"
-        };
-
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-            debugLog("Firebase app initialized");
+        // Initialize Firebase
+        const DEBUG = true;
+        function debugLog(...args) {
+            if (DEBUG) console.log('[DEBUG]', ...args);
         }
         
-        auth = firebase.auth();
-        db = firebase.firestore();
+        let db, auth;
+        let firebaseInitialized = false;
+        let loadUsersCallCount = 0;
+        let listenersAttached = false;
+        let isLoading = false;
         
+        // DOM Elements
+        const sidebarUsername = document.getElementById('sidebar-username');
+        const sidebarEmail = document.getElementById('sidebar-email');
+        const logoutBtn = document.getElementById('logout-btn');
+        const usersTableBody = document.getElementById('users-table-body');
+        const userSearch = document.getElementById('user-search');
+        const addUserBtn = document.getElementById('add-user-btn');
+        const saveNewUserBtn = document.getElementById('save-new-user');
+        const saveUserChangesBtn = document.getElementById('save-user-changes');
+        const filterButtons = document.querySelectorAll('[data-filter]');
+        const pagination = document.getElementById('pagination');
+    
+        // Modals
+        const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
+        const userDetailsModal = new bootstrap.Modal(document.getElementById('userDetailsModal'));
+        const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal'));
+    
+        // State
+        let allUsers = [];
+        let filteredUsers = [];
+        let currentPage = 1;
+        const usersPerPage = 10;
+        let currentFilter = 'all';
+        let currentSearch = '';
+        let searchDebounce;
+    
+        async function initializeFirebase() {
+            try {
+                if (firebaseInitialized) {
+                    debugLog("Firebase already initialized");
+                    return true;
+                }
+                
+                debugLog("Initializing Firebase...");
+                const firebaseConfig = {
+                    apiKey: "AIzaSyDSKYsYwvM-0zof2rHtiKodp4z0HUTNiI4",
+                    authDomain: "sleepwell-7ec3a.firebaseapp.com",
+                    projectId: "sleepwell-7ec3a",
+                    storageBucket: "sleepwell-7ec3a.appspot.com",
+                    messagingSenderId: "37760004376",
+                    appId: "1:37760004376:web:87a663c13995e6f02c6e6d"
+                };
+    
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                    debugLog("Firebase app initialized");
+                }
+                
+                auth = firebase.auth();
+                db = firebase.firestore();
+                
+                firebaseInitialized = true;
+                debugLog("Firebase initialized successfully");
+                return true;
+            } catch (error) {
+                console.error("Firebase initialization error:", error);
+                showAlert("Failed to initialize database connection", "danger");
+                return false;
+            }
+        }
+    
         // Enable persistence
-        try {
-            await db.enablePersistence();
-            debugLog("Firestore persistence enabled");
-        } catch (err) {
-            console.warn("Persistence error:", err);
+        async function enablePersistence() {
+            try {
+                await db.enablePersistence()
+                  .catch((err) => {
+                    if (err.code == 'failed-precondition') {
+                      console.warn("Multiple tabs open, persistence can only be enabled in one tab at a time.");
+                    } else if (err.code == 'unimplemented') {
+                      console.warn("The current browser does not support all of the features required to enable persistence");
+                    }
+                  });
+            } catch (error) {
+                console.error("Persistence error:", error);
+            }
         }
-        
-        firebaseInitialized = true;
-        debugLog("Firebase initialized successfully");
-        return true;
-    } catch (error) {
-        console.error("Firebase initialization error:", error);
-        showAlert("Failed to initialize database connection", "danger");
-        return false;
-    }
-}
-
-// Call this at the start
-initializeApp().then(initialized => {
-    if (initialized) {
-        // Set up auth state listener
-        auth.onAuthStateChanged(user => {
-            if (!user) {
-                window.location.href = "/";
+    
+        // Check Firebase connection
+        async function checkFirebaseConnection() {
+            try {
+                debugLog("Checking Firestore connection...");
+                const testDoc = await db.collection('users').limit(1).get();
+                debugLog("Firestore connection OK");
+                return true;
+            } catch (error) {
+                console.error("Firestore connection failed", error);
+                showAlert("Cannot connect to database. Please refresh the page.", "danger");
+                return false;
+            }
+        }
+    
+        async function initializeApp() {
+            try {
+                debugLog("Starting app initialization...");
+                
+                const firebaseReady = await initializeFirebase();
+                if (!firebaseReady) return false;
+                
+                await enablePersistence();
+                
+                const connected = await checkFirebaseConnection();
+                if (!connected) return false;
+                
+                return true;
+            } catch (error) {
+                console.error("App initialization error:", error);
+                showAlert("Failed to initialize application", "danger");
+                return false;
+            }
+        }
+    
+        function updateUserInfo(user) {
+            const displayName = user.displayName || "Admin User";
+            const email = user.email || "No email";
+    
+            sidebarUsername.textContent = displayName;
+            sidebarEmail.textContent = email;
+        }
+    
+        async function loadUsers() {
+            if (isLoading) {
+                debugLog("Load already in progress");
                 return;
             }
             
-            verifyAdminStatus(user.uid).then(isAdmin => {
-                if (isAdmin) {
-                    updateUserInfo(user);
-                    loadUsers();
+            loadUsersCallCount++;
+            debugLog(`loadUsers() called (${loadUsersCallCount} times)`);
+            isLoading = true;
+            
+            try {
+                debugLog("Loading users...");
+                showLoading(true);
+                
+                // Clear the array before loading
+                allUsers = [];
+                
+                const usersSnapshot = await db.collection('users').get();
+                debugLog(`Found ${usersSnapshot.size} users`);
+                
+                if (usersSnapshot.empty) {
+                    debugLog("No users found in database");
+                    renderEmptyState("No users found in database");
+                    return;
+                }
+                
+                for (const doc of usersSnapshot.docs) {
+                    const data = doc.data();
+                    debugLog(`Processing user ${doc.id}:`, data);
+                    
+                    let entriesCount = 0;
+                    try {
+                        const entriesSnapshot = await db.collection('sleepEntries')
+                            .where('userId', '==', doc.id)
+                            .get();
+                        entriesCount = entriesSnapshot.size;
+                        debugLog(`Found ${entriesCount} entries for user ${doc.id}`);
+                    } catch (e) {
+                        console.error("Error counting entries:", e);
+                    }
+                    
+                    const user = {
+                        id: doc.id,
+                        userId: doc.id,
+                        firstName: data.firstName || "",
+                        lastName: data.lastName || "",
+                        name: `${data.firstName || ""} ${data.lastName || ""}`.trim() || "Unknown",
+                        displayName: data.displayName || `${data.firstName || ""} ${data.lastName || ""}`.trim() || "Unknown",
+                        email: data.email || "No email",
+                        lastLogin: data.lastLogin?.toDate() || new Date(0),
+                        createdAt: data.createdAt?.toDate() || new Date(0),
+                        isAdmin: data.isAdmin || false,
+                        isActive: data.isActive !== false,
+                        entriesCount: entriesCount
+                    };
+                    
+                    allUsers.push(user);
+                }
+                
+                debugLog("Users loaded:", allUsers.length);
+                applyFilters();
+                renderUsers();
+                setupPagination();
+            } catch (error) {
+                console.error("Error loading users:", error);
+                showAlert(`Failed to load users: ${error.message}`, "danger");
+                renderEmptyState("Failed to load users");
+            } finally {
+                showLoading(false);
+                isLoading = false;
+            }
+        }
+    
+        function applyFilters() {
+            debugLog(`Applying filters - search: "${currentSearch}", filter: "${currentFilter}"`);
+            
+            filteredUsers = allUsers.filter(user => {
+                if (currentSearch && 
+                    !user.name.toLowerCase().includes(currentSearch) && 
+                    !user.email.toLowerCase().includes(currentSearch)) {
+                    return false;
+                }
+                
+                switch(currentFilter) {
+                    case 'active':
+                        return user.isActive;
+                    case 'inactive':
+                        return !user.isActive;
+                    case 'admin':
+                        return user.isAdmin;
+                    case 'regular':
+                        return !user.isAdmin;
+                    default:
+                        return true;
                 }
             });
-        });
-    }
-});
-
-// Enable persistence
-db.enablePersistence()
-  .catch((err) => {
-    if (err.code == 'failed-precondition') {
-      console.warn("Multiple tabs open, persistence can only be enabled in one tab at a time.");
-    } else if (err.code == 'unimplemented') {
-      console.warn("The current browser does not support all of the features required to enable persistence");
-    }
-  });
-
-// Check Firebase connection
-async function checkFirebaseConnection() {
-    try {
-        debugLog("Checking Firestore connection...");
-        const testDoc = await db.collection('users').limit(1).get();
-        debugLog("Firestore connection OK");
-        return true;
-    } catch (error) {
-        console.error("Firestore connection failed", error);
-        showAlert("Cannot connect to database. Please refresh the page.", "danger");
-        return false;
-    }
-}
-
-// Call this during initialization
-checkFirebaseConnection().then(connected => {
-  if (!connected) {
-    showAlert("Cannot connect to database", "danger");
-  }
-});
-
-// Call this during initialization
-checkFirebaseConnection().then(connected => {
-    if (!connected) {
-        showAlert("Cannot connect to database", "danger");
-    }
-});
-
-async function initializeApp() {
-    try {
-        debugLog("Starting app initialization...");
-        
-        // Initialize Firebase
-        const firebaseReady = await initializeFirebase();
-        if (!firebaseReady) return false;
-        
-        // Check connection
-        const connected = await checkFirebaseConnection();
-        if (!connected) return false;
-        
-        // Set up auth state listener
-        auth.onAuthStateChanged(async user => {
-            if (!user) {
-                debugLog("No user, redirecting to login");
-                window.location.href = "/";
+            
+            debugLog(`Filtered users count: ${filteredUsers.length}`);
+        } 
+    
+        function renderUsers() {
+            if (filteredUsers.length === 0) {
+                renderEmptyState("No users found");
                 return;
             }
             
-            debugLog("User authenticated:", user.uid);
-            const isAdmin = await verifyAdminStatus(user.uid);
+            const startIndex = (currentPage - 1) * usersPerPage;
+            const endIndex = Math.min(startIndex + usersPerPage, filteredUsers.length);
+            const usersToDisplay = filteredUsers.slice(startIndex, endIndex);
             
-            if (isAdmin) {
-                debugLog("User is admin, loading UI");
-                updateUserInfo(user);
-                await loadUsers();
-            } else {
-                debugLog("User is not admin, redirecting");
-                showAlert("No admin privileges. Redirecting...", "danger");
-                setTimeout(() => window.location.href = "/", 3000);
-            }
-        });
-        
-        return true;
-    } catch (error) {
-        console.error("App initialization error:", error);
-        showAlert("Failed to initialize application", "danger");
-        return false;
-    }
-}
-
-// Start the app
-document.addEventListener('DOMContentLoaded', async () => {
-    debugLog("DOM loaded, initializing app...");
-    const initialized = await initializeApp();
-    if (!initialized) {
-        showAlert("Failed to initialize application. Please try again.", "danger");
-    }
-});
-
-    // DOM Elements
-    const sidebarUsername = document.getElementById('sidebar-username');
-    const sidebarEmail = document.getElementById('sidebar-email');
-    const logoutBtn = document.getElementById('logout-btn');
-    const usersTableBody = document.getElementById('users-table-body');
-    const userSearch = document.getElementById('user-search');
-    const addUserBtn = document.getElementById('add-user-btn');
-    const saveNewUserBtn = document.getElementById('save-new-user');
-    const saveUserChangesBtn = document.getElementById('save-user-changes');
-    const filterButtons = document.querySelectorAll('[data-filter]');
-    const pagination = document.getElementById('pagination');
-
-    // Modals
-    const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
-    const userDetailsModal = new bootstrap.Modal(document.getElementById('userDetailsModal'));
-    const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal'));
-
-    // State
-    let allUsers = [];
-    let filteredUsers = [];
-    let currentPage = 1;
-    const usersPerPage = 10;
-    let currentFilter = 'all';
-    let currentSearch = '';
-
-    // Initialize
-    auth.onAuthStateChanged(user => {
-        if (!user) {
-            window.location.href = "/";
-            return;
+            usersTableBody.innerHTML = usersToDisplay.map(user => {
+                const displayName = user.lastName ? 
+                    `${user.firstName} ${user.lastName.charAt(0)}.` : 
+                    user.firstName;
+                
+                return `
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="user-avatar">
+                                    ${user.firstName.charAt(0).toUpperCase()}${user.lastName?.charAt(0)?.toUpperCase() || ''}
+                                </div>
+                                <div>
+                                    <div>${displayName}</div>
+                                    <small class="text-muted">${formatDate(user.createdAt)}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>${user.email}</td>
+                        <td>
+                            ${user.isAdmin ? 
+                                '<span class="badge badge-admin">ADMIN</span>' : 
+                                '<span class="badge badge-user">USER</span>'}
+                            ${user.isActive ? 
+                                '<span class="badge bg-success ms-1">Active</span>' : 
+                                '<span class="badge bg-secondary ms-1">Inactive</span>'}
+                        </td>
+                        <td>${formatDate(user.lastLogin)}</td>
+                        <td>${user.entriesCount}</td>
+                        <td>
+                            <div class="user-actions">
+                                <button class="btn btn-sm btn-outline-light view-user" data-user-id="${user.id}">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-light edit-user" data-user-id="${user.id}">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger delete-user" data-user-id="${user.id}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
-        
-        verifyAdminStatus(user.uid);
-        updateUserInfo(user);
-        loadUsers();
-    });
-
-    async function verifyAdminStatus(uid) {
-  try {
-    const user = auth.currentUser;
-    if (!user) return false;
     
-    // Force token refresh to get latest claims
-    const idTokenResult = await user.getIdTokenResult(true);
-    
-    if (idTokenResult.claims.admin) {
-      return true;
-    }
-    
-    // If no admin claim, check Firestore as fallback
-    const userDoc = await db.collection('users').doc(uid).get();
-    if (userDoc.exists && userDoc.data().isAdmin) {
-      return true;
-    }
-    
-    showAlert("No admin privileges. Redirecting...", "danger");
-    setTimeout(() => window.location.href = "/", 3000);
-    return false;
-  } catch (error) {
-    console.error("Admin verification failed:", error);
-    showAlert("Admin verification error", "danger");
-    return false;
-  }
-}
-
-    function updateUserInfo(user) {
-        const displayName = user.displayName || "Admin User";
-        const email = user.email || "No email";
-
-        sidebarUsername.textContent = displayName;
-        sidebarEmail.textContent = email;
-    }
-
-// Modified loadUsers function with better error handling
-async function loadUsers() {
-    try {
-        debugLog("Loading users...");
-        showLoading(true);
-        
-        // Get all users from Firestore
-        const usersSnapshot = await db.collection('users').get();
-        debugLog(`Found ${usersSnapshot.size} users`);
-        
-        if (usersSnapshot.empty) {
-            debugLog("No users found in database");
-            renderEmptyState("No users found in database");
-            return;
-        }
-        
-        // Process users
-        allUsers = [];
-        
-        for (const doc of usersSnapshot.docs) {
-            const data = doc.data();
-            debugLog(`Processing user ${doc.id}:`, data);
-            
-            // Get entries count
-            let entriesCount = 0;
-            try {
-                const entriesSnapshot = await db.collection('sleepEntries')
-                    .where('userId', '==', doc.id)
-                    .get();
-                entriesCount = entriesSnapshot.size;
-                debugLog(`Found ${entriesCount} entries for user ${doc.id}`);
-            } catch (e) {
-                console.error("Error counting entries:", e);
-            }
-            
-            // Ensure we have all required fields
-            const user = {
-                id: doc.id,
-                userId: doc.id,
-                firstName: data.firstName || "",
-                lastName: data.lastName || "",
-                name: `${data.firstName || ""} ${data.lastName || ""}`.trim() || "Unknown", // Added name for search
-                displayName: data.displayName || `${data.firstName || ""} ${data.lastName || ""}`.trim() || "Unknown",
-                email: data.email || "No email",
-                lastLogin: data.lastLogin?.toDate() || new Date(0),
-                createdAt: data.createdAt?.toDate() || new Date(0),
-                isAdmin: data.isAdmin || false,
-                isActive: data.isActive !== false,
-                entriesCount: entriesCount
-            };
-            
-            allUsers.push(user);
-        }
-        
-        debugLog("Users loaded:", allUsers.length);
-        applyFilters();
-        renderUsers();
-        setupPagination();
-    } catch (error) {
-        console.error("Error loading users:", error);
-        showAlert(`Failed to load users: ${error.message}`, "danger");
-        renderEmptyState("Failed to load users");
-    } finally {
-        showLoading(false);
-    }
-}
-
-// Modified applyFilters to use the name property
-function applyFilters() {
-    debugLog(`Applying filters - search: "${currentSearch}", filter: "${currentFilter}"`);
-    
-    filteredUsers = allUsers.filter(user => {
-        // Apply search filter
-        if (currentSearch && 
-            !user.name.toLowerCase().includes(currentSearch) && 
-            !user.email.toLowerCase().includes(currentSearch)) {
-            return false;
-        }
-        
-        // Apply status filter
-        switch(currentFilter) {
-            case 'active':
-                return user.isActive;
-            case 'inactive':
-                return !user.isActive;
-            case 'admin':
-                return user.isAdmin;
-            case 'regular':
-                return !user.isAdmin;
-            default:
-                return true;
-        }
-    });
-    
-    debugLog(`Filtered users count: ${filteredUsers.length}`);
-}   
-
-    function renderUsers() {
-    if (filteredUsers.length === 0) {
-        renderEmptyState("No users found");
-        return;
-    }
-    
-    const startIndex = (currentPage - 1) * usersPerPage;
-    const endIndex = Math.min(startIndex + usersPerPage, filteredUsers.length);
-    const usersToDisplay = filteredUsers.slice(startIndex, endIndex);
-    
-    usersTableBody.innerHTML = usersToDisplay.map(user => {
-        const displayName = user.lastName ? 
-            `${user.firstName} ${user.lastName.charAt(0)}.` : 
-            user.firstName;
-        
-        return `
-            <tr>
-                <td>
-                    <div class="d-flex align-items-center">
-                        <div class="user-avatar">
-                            ${user.firstName.charAt(0).toUpperCase()}${user.lastName?.charAt(0)?.toUpperCase() || ''}
-                        </div>
-                        <div>
-                            <div>${displayName}</div>
-                            <small class="text-muted">${formatDate(user.createdAt)}</small>
-                        </div>
-                    </div>
-                </td>
-                <td>${user.email}</td>
-                <td>
-                    ${user.isAdmin ? 
-                        '<span class="badge badge-admin">ADMIN</span>' : 
-                        '<span class="badge badge-user">USER</span>'}
-                    ${user.isActive ? 
-                        '<span class="badge bg-success ms-1">Active</span>' : 
-                        '<span class="badge bg-secondary ms-1">Inactive</span>'}
-                </td>
-                <td>${formatDate(user.lastLogin)}</td>
-                <td>${user.entriesCount}</td>
-                <td>
-                    <div class="user-actions">
-                        <button class="btn btn-sm btn-outline-light view-user" data-user-id="${user.id}">
-                            <i class="bi bi-eye"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-light edit-user" data-user-id="${user.id}">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger delete-user" data-user-id="${user.id}">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `;
-    }).join('');
-}
-
-    function renderEmptyState(message) {
-        usersTableBody.innerHTML = `
-            <tr>
-                <td colspan="6">
-                    <div class="empty-state">
-                        <i class="bi bi-people"></i>
-                        <h5>${message}</h5>
-                        <p class="text-muted">No users match your current filters</p>
-                    </div>
-                </td>
-            </tr>
-        `;
-    }
-
-    function setupPagination() {
-        const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
-        
-        if (totalPages <= 1) {
-            pagination.style.display = 'none';
-            return;
-        }
-        
-        pagination.style.display = 'flex';
-        
-        let paginationHtml = `
-            <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
-                <a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>
-            </li>
-        `;
-        
-        for (let i = 1; i <= totalPages; i++) {
-            paginationHtml += `
-                <li class="page-item ${i === currentPage ? 'active' : ''}">
-                    <a class="page-link" href="#" data-page="${i}">${i}</a>
-                </li>
-            `;
-        }
-        
-        paginationHtml += `
-            <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
-                <a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>
-            </li>
-        `;
-        
-        pagination.innerHTML = paginationHtml;
-    }
-
-    function formatDate(date) {
-        if (date?.toDate) date = date.toDate();
-        
-        const now = new Date();
-        const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
-        
-        if (diffDays === 0) return "Today";
-        if (diffDays === 1) return "Yesterday";
-        if (diffDays < 7) return `${diffDays} days ago`;
-        
-        return date.toLocaleDateString();
-    }
-
-    function showLoading(isLoading) {
-        if (isLoading) {
+        function renderEmptyState(message) {
             usersTableBody.innerHTML = `
                 <tr>
-                    <td colspan="6" class="text-center py-4">
-                        <div class="loading-spinner"></div> Loading users...
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <i class="bi bi-people"></i>
+                            <h5>${message}</h5>
+                            <p class="text-muted">No users match your current filters</p>
+                        </div>
                     </td>
                 </tr>
             `;
         }
-    }
-
-    function showAlert(message, type = "info") {
-        const alert = document.createElement('div');
-        alert.className = `alert alert-${type} alert-dismissible fade show`;
-        alert.role = "alert";
-        alert.innerHTML = `
-            <i class="bi ${type === 'danger' ? 'bi-exclamation-triangle-fill' : 'bi-info-circle-fill'} me-2"></i>
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        `;
-        
-        const container = document.querySelector('.content');
-        container.insertBefore(alert, container.firstChild);
-        
-        setTimeout(() => {
-            const bsAlert = new bootstrap.Alert(alert);
-            bsAlert.close();
-        }, 5000);
-    }
-
-    // Event Listeners
-    logoutBtn.addEventListener('click', async () => {
-        try {
-            await auth.signOut();
-            window.location.href = '/';
-        } catch (error) {
-            console.error("Logout error:", error);
-            showAlert("Logout failed. Please try again.", "danger");
+    
+        function setupPagination() {
+            const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+            
+            if (totalPages <= 1) {
+                pagination.style.display = 'none';
+                return;
+            }
+            
+            pagination.style.display = 'flex';
+            
+            let paginationHtml = `
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>
+                </li>
+            `;
+            
+            for (let i = 1; i <= totalPages; i++) {
+                paginationHtml += `
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" data-page="${i}">${i}</a>
+                    </li>
+                `;
+            }
+            
+            paginationHtml += `
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>
+                </li>
+            `;
+            
+            pagination.innerHTML = paginationHtml;
         }
-    });
-
-    addUserBtn.addEventListener('click', () => {
-        document.getElementById('add-user-form').reset();
-        addUserModal.show();
-    });
-
-    saveNewUserBtn.addEventListener('click', async () => {
+    
+        function formatDate(date) {
+            if (date?.toDate) date = date.toDate();
+            
+            const now = new Date();
+            const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 0) return "Today";
+            if (diffDays === 1) return "Yesterday";
+            if (diffDays < 7) return `${diffDays} days ago`;
+            
+            return date.toLocaleDateString();
+        }
+    
+        function showLoading(isLoading) {
+            if (isLoading) {
+                usersTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <div class="loading-spinner"></div> Loading users...
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+    
+        function showAlert(message, type = "info") {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show`;
+            alert.role = "alert";
+            alert.innerHTML = `
+                <i class="bi ${type === 'danger' ? 'bi-exclamation-triangle-fill' : 'bi-info-circle-fill'} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            const container = document.querySelector('.content');
+            container.insertBefore(alert, container.firstChild);
+            
+            setTimeout(() => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }, 5000);
+        }
+    
+        async function handleLogout() {
+            try {
+                await auth.signOut();
+                window.location.href = '/';
+            } catch (error) {
+                console.error("Logout error:", error);
+                showAlert("Logout failed. Please try again.", "danger");
+            }
+        }
+    
+        function showAddUserModal() {
+            document.getElementById('add-user-form').reset();
+            addUserModal.show();
+        }
+    
+        async function handleSaveNewUser() {
     try {
         const firstName = document.getElementById('new-user-firstname').value.trim();
         const lastName = document.getElementById('new-user-lastname').value.trim();
@@ -1135,307 +1038,329 @@ function applyFilters() {
             showAlert("Password must be at least 6 characters", "danger");
             return;
         }
-        
-        // Create user in Firebase Auth
-        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        
-        // Create complete user document in Firestore
-        await db.collection('users').doc(userCredential.user.uid).set({
-            userId: userCredential.user.uid,
-            firstName: firstName,
-            lastName: lastName,
-            displayName: `${firstName} ${lastName}`,
-            email: email,
-            isAdmin: isAdmin,
-            isActive: true,
-            createdAt: new Date(),
-            lastLogin: new Date(),
-            entriesCount: 0,
-            updatedAt: new Date()
-        });
-        
-        // Set custom claims for admin
-        if (isAdmin) {
-            await setAdminClaim(userCredential.user.uid);
+
+        // Get admin auth token first
+        const adminUser = auth.currentUser;
+        if (!adminUser) {
+            showAlert("Session expired. Please log in again.", "danger");
+            return;
         }
         
-        addUserModal.hide();
-        showAlert("User created successfully", "success");
-        loadUsers();
+        const idToken = await adminUser.getIdToken();
+
+        // Use Firebase Admin SDK through a backend endpoint
+        const response = await fetch('/api/createUser', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${idToken}`
+            },
+            body: JSON.stringify({
+                firstName,
+                lastName,
+                email,
+                password,
+                isAdmin
+            })
+        });
+
+        const result = await response.json();
+        
+        if (response.ok) {
+            addUserModal.hide();
+            showAlert("User created successfully", "success");
+            loadUsers();
+        } else {
+            throw new Error(result.error || "Failed to create user");
+        }
     } catch (error) {
         console.error("Error creating user:", error);
         showAlert("Failed to create user: " + error.message, "danger");
     }
-});
-
-    async function setAdminClaim(uid) {
-        try {
-            // This would typically be done on your backend server
-            // For demo purposes, we're doing it here
-            const user = await auth.currentUser;
-            if (user) {
-                await user.getIdToken(true); // Refresh token
-            }
-            
-            // In a real app, you would call a Cloud Function here
-            console.log(`Admin claim set for user ${uid}`);
-        } catch (error) {
-            console.error("Error setting admin claim:", error);
-            throw error;
-        }
-    }
-
-    document.addEventListener('click', async (e) => {
-        if (e.target.closest('.view-user')) {
-            const userId = e.target.closest('.view-user').getAttribute('data-user-id');
-            await showUserDetails(userId);
-        }
-        
-        if (e.target.closest('.edit-user')) {
-            const userId = e.target.closest('.edit-user').getAttribute('data-user-id');
-            await showEditUserForm(userId);
-        }
-        
-        if (e.target.closest('.delete-user')) {
-            const userId = e.target.closest('.delete-user').getAttribute('data-user-id');
-            await deleteUser(userId);
-        }
-        
-        if (e.target.closest('.page-link')) {
-            e.preventDefault();
-            const page = parseInt(e.target.closest('.page-link').getAttribute('data-page'));
-            if (!isNaN(page)) {
-                currentPage = page;
-                renderUsers();
-                setupPagination();
-            }
-        }
-    });
-
-    async function showUserDetails(userId) {
-    try {
-        const userDoc = await db.collection('users').doc(userId).get();
-        if (!userDoc.exists) {
-            showAlert("User not found", "danger");
-            return;
-        }
-        
-        const userData = userDoc.data();
-        const authUser = await auth.getUser(userId);
-        
-        const entriesSnapshot = await db.collection('sleepEntries')
-            .where('userId', '==', userId)
-            .count()
-            .get();
-        
-        const entriesCount = entriesSnapshot.data().count;
-        const fullName = `${userData.firstName} ${userData.lastName}`;
-        
-        document.getElementById('user-details-content').innerHTML = `
-            <div class="mb-3">
-                <h6>Name</h6>
-                <p>${fullName}</p>
-            </div>
-            <div class="mb-3">
-                <h6>Email</h6>
-                <p>${authUser.email || userData.email || 'Not provided'}</p>
-            </div>
-            <div class="mb-3">
-                <h6>Account Status</h6>
-                <p>
-                    ${userData.isAdmin ? '<span class="badge badge-admin">ADMIN</span>' : '<span class="badge badge-user">USER</span>'}
-                    ${userData.isActive !== false ? '<span class="badge bg-success ms-1">Active</span>' : '<span class="badge bg-secondary ms-1">Inactive</span>'}
-                </p>
-            </div>
-            <div class="mb-3">
-                <h6>Account Created</h6>
-                <p>${userData.createdAt?.toDate().toLocaleString() || new Date(authUser.metadata.creationTime).toLocaleString() || 'Unknown'}</p>
-            </div>
-            <div class="mb-3">
-                <h6>Last Login</h6>
-                <p>${userData.lastLogin?.toDate().toLocaleString() || new Date(authUser.metadata.lastSignInTime).toLocaleString() || 'Never'}</p>
-            </div>
-            <div class="mb-3">
-                <h6>Sleep Entries</h6>
-                <p>${entriesCount}</p>
-            </div>
-            <div class="mb-3">
-                <h6>User ID</h6>
-                <p><small>${userId}</small></p>
-            </div>
-        `;
-        
-        userDetailsModal.show();
-    } catch (error) {
-        console.error("Error showing user details:", error);
-        showAlert("Failed to load user details", "danger");
-    }
 }
-    async function showEditUserForm(userId) {
-        try {
-            const userDoc = await db.collection('users').doc(userId).get();
-            if (!userDoc.exists) {
-                showAlert("User not found", "danger");
-                return;
-            }
-            
-            const userData = userDoc.data();
-            // Split displayName into first and last names
-            const names = userData.displayName ? userData.displayName.split(' ') : ['', ''];
-            const firstName = userData.firstName || names[0] || '';
-            const lastName = userData.lastName || (names.length > 1 ? names.slice(1).join(' ') : '');
-            
-            document.getElementById('edit-user-content').innerHTML = `
-                <form id="edit-user-form">
-                    <input type="hidden" id="edit-user-id" value="${userId}">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="edit-user-firstname" class="form-label">First Name</label>
-                            <input type="text" class="form-control" id="edit-user-firstname" value="${firstName}" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="edit-user-lastname" class="form-label">Last Name</label>
-                            <input type="text" class="form-control" id="edit-user-lastname" value="${lastName}" required>
-                        </div>
+    
+        async function showUserDetails(userId) {
+            try {
+                const userDoc = await db.collection('users').doc(userId).get();
+                if (!userDoc.exists) {
+                    showAlert("User not found", "danger");
+                    return;
+                }
+                
+                const userData = userDoc.data();
+                const authUser = await auth.getUser(userId);
+                
+                const entriesSnapshot = await db.collection('sleepEntries')
+                    .where('userId', '==', userId)
+                    .count()
+                    .get();
+                
+                const entriesCount = entriesSnapshot.data().count;
+                const fullName = `${userData.firstName} ${userData.lastName}`;
+                
+                document.getElementById('user-details-content').innerHTML = `
+                    <div class="mb-3">
+                        <h6>Name</h6>
+                        <p>${fullName}</p>
                     </div>
                     <div class="mb-3">
-                        <label for="edit-user-email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="edit-user-email" value="${userData.email || ''}" required>
+                        <h6>Email</h6>
+                        <p>${authUser.email || userData.email || 'Not provided'}</p>
                     </div>
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="edit-user-admin" ${userData.isAdmin ? 'checked' : ''}>
-                        <label class="form-check-label" for="edit-user-admin">Admin User</label>
+                    <div class="mb-3">
+                        <h6>Account Status</h6>
+                        <p>
+                            ${userData.isAdmin ? '<span class="badge badge-admin">ADMIN</span>' : '<span class="badge badge-user">USER</span>'}
+                            ${userData.isActive !== false ? '<span class="badge bg-success ms-1">Active</span>' : '<span class="badge bg-secondary ms-1">Inactive</span>'}
+                        </p>
                     </div>
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="edit-user-active" ${userData.isActive !== false ? 'checked' : ''}>
-                        <label class="form-check-label" for="edit-user-active">Active Account</label>
+                    <div class="mb-3">
+                        <h6>Account Created</h6>
+                        <p>${userData.createdAt?.toDate().toLocaleString() || new Date(authUser.metadata.creationTime).toLocaleString() || 'Unknown'}</p>
                     </div>
-                </form>
-            `;
-            
-            editUserModal.show();
-        } catch (error) {
-            console.error("Error showing edit form:", error);
-            showAlert("Failed to load user for editing", "danger");
-        }
-    }
-
-    saveUserChangesBtn.addEventListener('click', async () => {
-        try {
-            const userId = document.getElementById('edit-user-id').value;
-            const firstName = document.getElementById('edit-user-firstname').value.trim();
-            const lastName = document.getElementById('edit-user-lastname').value.trim();
-            const email = document.getElementById('edit-user-email').value.trim();
-            const isAdmin = document.getElementById('edit-user-admin').checked;
-            const isActive = document.getElementById('edit-user-active').checked;
-            
-            if (!firstName || !lastName || !email) {
-                showAlert("Please fill all required fields", "danger");
-                return;
+                    <div class="mb-3">
+                        <h6>Last Login</h6>
+                        <p>${userData.lastLogin?.toDate().toLocaleString() || new Date(authUser.metadata.lastSignInTime).toLocaleString() || 'Never'}</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6>Sleep Entries</h6>
+                        <p>${entriesCount}</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6>User ID</h6>
+                        <p><small>${userId}</small></p>
+                    </div>
+                `;
+                
+                userDetailsModal.show();
+            } catch (error) {
+                console.error("Error showing user details:", error);
+                showAlert("Failed to load user details", "danger");
             }
+        }
+    
+        async function showEditUserForm(userId) {
+            try {
+                const userDoc = await db.collection('users').doc(userId).get();
+                if (!userDoc.exists) {
+                    showAlert("User not found", "danger");
+                    return;
+                }
+                
+                const userData = userDoc.data();
+                const names = userData.displayName ? userData.displayName.split(' ') : ['', ''];
+                const firstName = userData.firstName || names[0] || '';
+                const lastName = userData.lastName || (names.length > 1 ? names.slice(1).join(' ') : '');
+                
+                document.getElementById('edit-user-content').innerHTML = `
+                    <form id="edit-user-form">
+                        <input type="hidden" id="edit-user-id" value="${userId}">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="edit-user-firstname" class="form-label">First Name</label>
+                                <input type="text" class="form-control" id="edit-user-firstname" value="${firstName}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="edit-user-lastname" class="form-label">Last Name</label>
+                                <input type="text" class="form-control" id="edit-user-lastname" value="${lastName}" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-user-email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="edit-user-email" value="${userData.email || ''}" required>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="edit-user-admin" ${userData.isAdmin ? 'checked' : ''}>
+                            <label class="form-check-label" for="edit-user-admin">Admin User</label>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="edit-user-active" ${userData.isActive !== false ? 'checked' : ''}>
+                            <label class="form-check-label" for="edit-user-active">Active Account</label>
+                        </div>
+                    </form>
+                `;
+                
+                editUserModal.show();
+            } catch (error) {
+                console.error("Error showing edit form:", error);
+                showAlert("Failed to load user for editing", "danger");
+            }
+        }
+    
+        async function handleSaveUserChanges() {
+            try {
+                const userId = document.getElementById('edit-user-id').value;
+                const firstName = document.getElementById('edit-user-firstname').value.trim();
+                const lastName = document.getElementById('edit-user-lastname').value.trim();
+                const email = document.getElementById('edit-user-email').value.trim();
+                const isAdmin = document.getElementById('edit-user-admin').checked;
+                const isActive = document.getElementById('edit-user-active').checked;
+                
+                if (!firstName || !lastName || !email) {
+                    showAlert("Please fill all required fields", "danger");
+                    return;
+                }
+                
+                await db.collection('users').doc(userId).update({
+                    firstName: firstName,
+                    lastName: lastName,
+                    displayName: `${firstName} ${lastName}`,
+                    email: email,
+                    isAdmin: isAdmin,
+                    isActive: isActive,
+                    updatedAt: new Date()
+                });
+                
+                editUserModal.hide();
+                showAlert("User updated successfully", "success");
+                loadUsers();
+            } catch (error) {
+                console.error("Error updating user:", error);
+                showAlert("Failed to update user: " + error.message, "danger");
+            }
+        }
+    
+        async function deleteUser(userId) {
+            try {
+                if (!confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
+                    return;
+                }
+                
+                const entriesSnapshot = await db.collection('sleepEntries')
+                    .where('userId', '==', userId)
+                    .get();
+                
+                const batch = db.batch();
+                entriesSnapshot.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+                
+                batch.delete(db.collection('users').doc(userId));
+                
+                console.log(`Would delete auth user ${userId}`);
+                
+                await batch.commit();
+                
+                showAlert("User deleted successfully", "success");
+                loadUsers();
+            } catch (error) {
+                console.error("Error deleting user:", error);
+                showAlert("Failed to delete user", "danger");
+            }
+        }
+    
+        function setupEventListeners() {
+            if (listenersAttached) return;
             
-            // Update user document in Firestore
-            await db.collection('users').doc(userId).update({
-                firstName: firstName,
-                lastName: lastName,
-                displayName: `${firstName} ${lastName}`,
-                email: email,
-                isAdmin: isAdmin,
-                isActive: isActive,
-                updatedAt: new Date()
+            // Logout button
+            logoutBtn.addEventListener('click', handleLogout);
+            
+            // Add user button
+            addUserBtn.addEventListener('click', showAddUserModal);
+            
+            // Save new user button
+            saveNewUserBtn.addEventListener('click', handleSaveNewUser);
+            
+            // Save user changes button
+            saveUserChangesBtn.addEventListener('click', handleSaveUserChanges);
+            
+            // Search functionality
+            userSearch.addEventListener('input', () => {
+                clearTimeout(searchDebounce);
+                searchDebounce = setTimeout(() => {
+                    currentSearch = userSearch.value.toLowerCase();
+                    currentPage = 1;
+                    applyFilters();
+                    renderUsers();
+                    setupPagination();
+                }, 300);
             });
             
-            // If the user is being made an admin, set the custom claim
-            if (isAdmin) {
-                await setAdminClaim(userId);
-            }
-            
-            editUserModal.hide();
-            showAlert("User updated successfully", "success");
-            loadUsers();
-        } catch (error) {
-            console.error("Error updating user:", error);
-            showAlert("Failed to update user: " + error.message, "danger");
-        }
-    });
-
-    async function createUser(email, password, userData) {
-    try {
-        // First create auth user
-        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        
-        // Then create user document
-        await db.collection('users').doc(userCredential.user.uid).set({
-            ...userData,
-            createdAt: new Date(),
-            lastLogin: new Date()
-        });
-        
-        return userCredential.user;
-    } catch (error) {
-        console.error("Error creating user:", error);
-        throw error;
-    }
-}
-
-    async function deleteUser(userId) {
-        try {
-            if (!confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
-                return;
-            }
-            
-            // First delete all sleep entries for this user
-            const entriesSnapshot = await db.collection('sleepEntries')
-                .where('userId', '==', userId)
-                .get();
-            
-            const batch = db.batch();
-            entriesSnapshot.forEach(doc => {
-                batch.delete(doc.ref);
+            // Filter buttons
+            filterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    
+                    currentFilter = button.dataset.filter;
+                    currentPage = 1;
+                    applyFilters();
+                    renderUsers();
+                    setupPagination();
+                });
             });
             
-            // Then delete the user document
-            batch.delete(db.collection('users').doc(userId));
+            // Table actions (delegated)
+            document.addEventListener('click', async (e) => {
+                if (e.target.closest('.view-user')) {
+                    const userId = e.target.closest('.view-user').getAttribute('data-user-id');
+                    await showUserDetails(userId);
+                }
+                
+                if (e.target.closest('.edit-user')) {
+                    const userId = e.target.closest('.edit-user').getAttribute('data-user-id');
+                    await showEditUserForm(userId);
+                }
+                
+                if (e.target.closest('.delete-user')) {
+                    const userId = e.target.closest('.delete-user').getAttribute('data-user-id');
+                    await deleteUser(userId);
+                }
+                
+                if (e.target.closest('.page-link')) {
+                    e.preventDefault();
+                    const page = parseInt(e.target.closest('.page-link').getAttribute('data-page'));
+                    if (!isNaN(page)) {
+                        currentPage = page;
+                        renderUsers();
+                        setupPagination();
+                    }
+                }
+            });
             
-            // Finally, delete the auth user
-            // Note: In a real app, this would be done via a Cloud Function
-            console.log(`Would delete auth user ${userId}`);
-            
-            await batch.commit();
-            
-            showAlert("User deleted successfully", "success");
-            loadUsers();
-        } catch (error) {
-            console.error("Error deleting user:", error);
-            showAlert("Failed to delete user", "danger");
+            listenersAttached = true;
         }
-    }
-
-    // Search functionality
-    userSearch.addEventListener('input', () => {
-        currentSearch = userSearch.value.toLowerCase();
-        currentPage = 1;
-        applyFilters();
-        renderUsers();
-        setupPagination();
-    });
-
-    // Filter buttons
-    filterButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            filterButtons.forEach(btn => btn.classList.remove('active'));
-            button.classList.add('active');
-            
-            currentFilter = button.dataset.filter;
-            currentPage = 1;
-            applyFilters();
-            renderUsers();
-            setupPagination();
+    
+        // Start the app
+        document.addEventListener('DOMContentLoaded', async () => {
+            debugLog("DOM loaded, initializing app...");
+            const initialized = await initializeApp();
+            if (!initialized) {
+                showAlert("Failed to initialize application. Please try again.", "danger");
+                return;
+            }
+    
+            auth.onAuthStateChanged(async user => {
+                if (!user) {
+                    debugLog("No user, redirecting to login");
+                    window.location.href = "/";
+                    return;
+                }
+                
+                debugLog("User authenticated:", user.uid);
+                
+                try {
+                    // Check if user is admin
+                    const userDoc = await db.collection('users').doc(user.uid).get();
+                    if (!userDoc.exists || !userDoc.data().isAdmin) {
+                        showAlert("You don't have admin privileges. Redirecting...", "danger");
+                        setTimeout(() => window.location.href = "/", 3000);
+                        return;
+                    }
+                    
+                    debugLog("User is admin, loading UI");
+                    updateUserInfo(user);
+                    setupEventListeners();
+                    await loadUsers();
+                } catch (error) {
+                    console.error("Error verifying user status:", error);
+                    showAlert("Error checking permissions. Redirecting...", "danger");
+                    setTimeout(() => window.location.href = "/", 3000);
+                }
+            });
         });
-    });
-
-    // Initialize
-    console.log("User management initialized");
+    
+        console.log("User management initialized");
     </script>
 </body>
 </html>
