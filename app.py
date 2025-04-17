@@ -251,6 +251,45 @@ def delete_user_sleep_entries(user_id):
             "error": f"Failed to delete sleep entries: {str(e)}"
         }), 500
 
+@app.route("/admin/analytics.html")
+@admin_required
+def analytics():
+    try:
+        session_cookie = request.cookies.get('session')
+        decoded_claims = auth.verify_session_cookie(session_cookie)
+        user = auth.get_user(decoded_claims['uid'])
+        
+        return render_template("admin/analytics.html", user={
+            'email': user.email,
+            'name': user.display_name or "Admin",
+            'is_admin': True
+        })
+        
+    except Exception as e:
+        app.logger.error(f"Analytics page error: {str(e)}")
+        return redirect(url_for('admin_dashboard'))
+
+@app.route("/admin/feedbackmanage.html")
+@admin_required
+def feedback_management():
+    try:
+        session_cookie = request.cookies.get('session')
+        decoded_claims = auth.verify_session_cookie(session_cookie)
+        user = auth.get_user(decoded_claims['uid'])
+        
+        return render_template("admin/feedbackmanage.html", user={
+            'email': user.email,
+            'name': user.display_name or "Admin",
+            'is_admin': True
+        })
+        
+    except Exception as e:
+        app.logger.error(f"Feedback management error: {str(e)}")
+        return redirect(url_for('admin_dashboard'))
+
+
+
+
 @app.route('/user/sleepanalysis')
 def sleep_analysis():
     return render_template('/user/sleepanalysis.html')

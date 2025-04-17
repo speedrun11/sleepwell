@@ -1,0 +1,1586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SLEEPWELL - ANALYTICS</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<style>
+    /* Inherit all styles from admin_dashboard.html */
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+    
+    :root {
+        --primary: #6d28d9;
+        --primary-hover: #7c3aed;
+        --accent: #10b981;
+        --bg: #121212;
+        --surface: #1e1e1e;
+        --surface-hover: rgba(255,255,255,0.05);
+        --surface-light: #2a2a2a;
+        --text: #e0e0e0;
+        --text-muted: #a0a0a0;
+        --admin-accent: #f59e0b;
+    }
+
+    .user-info h5,
+    .user-info small,
+    #last-login,
+    .stat-value,
+    .stat-value i,
+    .stat-value small {
+        color: #fff !important;
+    }
+    
+    * {
+        font-family: 'Montserrat', sans-serif;
+        box-sizing: border-box;
+    }
+    
+    body {
+        background: var(--bg);
+        color: var(--text);
+        padding-top: 56px;
+        min-height: 100vh;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-weight: 600;
+        letter-spacing: -0.025em;
+    }
+
+    .navbar {
+        background: var(--surface) !important;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .navbar-brand {
+        font-weight: 700;
+        letter-spacing: -0.5px;
+        color: var(--admin-accent) !important;
+    }
+
+    .sidebar {
+        height: 100vh;
+        background: var(--surface);
+        padding: 20px;
+        position: fixed;
+        width: 280px;
+        overflow-y: auto;
+        border-right: 1px solid rgba(255,255,255,0.1);
+        box-shadow: 4px 0 12px rgba(0,0,0,0.2);
+        z-index: 10;
+    }
+
+    .sidebar a {
+        color: var(--text);
+        text-decoration: none;
+        display: block;
+        padding: 12px 16px;
+        margin: 4px 0;
+        border-radius: 6px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border-left: 3px solid transparent;
+    }
+
+    .sidebar a:hover {
+        background: var(--surface-hover);
+        transform: translateX(4px);
+        border-left-color: var(--admin-accent);
+    }
+
+    .sidebar a.active {
+        background: linear-gradient(90deg, rgba(245,158,11,0.1) 0%, transparent 100%);
+        border-left-color: var(--admin-accent);
+    }
+
+    .sidebar a i {
+        width: 20px;
+        text-align: center;
+        margin-right: 12px;
+        font-size: 1.1rem;
+    }
+
+    .content {
+        padding: 24px;
+        margin-left: 280px;
+        flex-grow: 1;
+    }
+
+    .user-info {
+        background: var(--surface-light);
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 24px;
+        border: 1px solid rgba(241, 229, 229, 0.1)
+    }
+
+    .user-info h5 {
+        margin-bottom: 4px;
+        font-weight: 600;
+    }
+
+    .user-info small {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+
+    .card {
+        background: var(--surface);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 12px;
+        margin-bottom: 24px;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+
+    .card-header {
+        background: rgba(255,255,255,0.03);
+        color: var(--text);
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        padding: 16px 20px;
+        border-radius: 12px 12px 0 0 !important;
+        font-weight: 600;
+    }
+
+    .card-header i {
+        margin-right: 8px;
+        color: var(--admin-accent);
+    }
+
+    .card-body {
+        color: var(--text-muted);
+        padding: 20px;
+    }
+
+    .card-body .text-muted {
+        color: #fff !important;
+    }
+
+    .btn-primary {
+        background: var(--admin-accent);
+        border: none;
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s;
+        color: #000;
+    }
+
+    .btn-primary:hover {
+        background: #fbbf24;
+        transform: scale(1.02);
+        color: #000;
+    }
+
+    .btn-outline-light {
+        border-color: rgba(255,255,255,0.2);
+        color: var(--text);
+        transition: all 0.3s;
+    }
+
+    .btn-outline-light:hover {
+        background: rgba(255,255,255,0.05);
+        border-color: rgba(255,255,255,0.3);
+    }
+
+    .form-control, .form-select {
+        background: rgba(255,255,255,0.05) !important;
+        border: 1px solid rgba(255,255,255,0.1);
+        color: var(--text);
+        border-radius: 8px;
+        padding: 10px 16px;
+        transition: all 0.3s;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--admin-accent);
+        box-shadow: 0 0 0 3px rgba(245,158,11,0.25);
+        background: rgba(255,255,255,0.08) !important;
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        width: 1.5rem;
+        height: 1.5rem;
+        border: 3px solid rgba(255,255,255,0.2);
+        border-radius: 50%;
+        border-top-color: var(--admin-accent);
+        animation: spin 1s ease-in-out infinite;
+        margin-right: 5px;
+        vertical-align: middle;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .alert-info {
+        background: linear-gradient(45deg, rgba(146, 185, 172, 0.1), transparent);
+        border: 1px solid rgba(16,185,129,0.2);
+        backdrop-filter: blur(4px);
+        color: var(--text);
+        border-radius: 10px;
+    }
+
+    .stat-value {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    .badge-admin {
+        background-color: var(--admin-accent);
+        color: #000;
+    }
+
+    .badge-user {
+        background-color: var(--primary);
+    }
+
+    @media (max-width: 992px) {
+        .sidebar {
+            width: 100%;
+            position: relative;
+            height: auto;
+            box-shadow: none;
+            border-right: none;
+        }
+        
+        .content {
+            margin-left: 0;
+            padding: 16px;
+        }
+        
+        .card {
+            margin-bottom: 16px;
+        }
+    }
+
+    .stat-card {
+        background: linear-gradient(145deg, var(--surface-light), var(--surface)) !important;
+        border-left: 4px solid var(--admin-accent) !important;
+    }
+
+    .chart-tooltip {
+        background: var(--surface-light) !important;
+        border: 1px solid var(--admin-accent) !important;
+        border-radius: 8px !important;
+    }
+
+    .chart-empty-state {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 300px;
+        color: var(--text-muted);
+        font-size: 1.1rem;
+    }
+
+    /* Analytics-specific styles */
+    .filter-card {
+        background: var(--surface) !important;
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .metric-card {
+        background: linear-gradient(145deg, var(--surface-light), var(--surface)) !important;
+        border-left: 4px solid var(--admin-accent) !important;
+        transition: all 0.3s ease;
+    }
+
+    .metric-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    }
+
+    .metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--admin-accent);
+        margin-bottom: 0;
+    }
+
+    .trend-indicator {
+        display: inline-flex;
+        align-items: center;
+        font-size: 0.9rem;
+        margin-left: 8px;
+    }
+
+    .trend-up {
+        color: #10b981;
+    }
+
+    .trend-down {
+        color: #ef4444;
+    }
+
+    .trend-neutral {
+        color: var(--text-muted);
+    }
+
+    .time-filter {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .time-filter .btn {
+        flex: 1;
+        text-align: center;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 100%;
+        min-height: 300px;
+        background: #000; /* Black background for charts */
+        border-radius: 8px;
+        padding: 10px;
+    }
+
+    .sleep-stage {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .sleep-stage-color {
+        width: 16px;
+        height: 16px;
+        border-radius: 4px;
+        margin-right: 10px;
+    }
+
+    .sleep-stage-label {
+        flex: 1;
+        font-size: 0.9rem;
+    }
+
+    .sleep-stage-percent {
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    .user-selector {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 8px;
+        padding: 10px;
+        background: var(--surface);
+    }
+
+    .user-selector-item {
+        padding: 8px 12px;
+        border-radius: 6px;
+        margin-bottom: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .user-selector-item:hover {
+        background: rgba(255,255,255,0.05);
+    }
+
+    .user-selector-item.active {
+        background: rgba(245,158,11,0.1);
+        border-left: 3px solid var(--admin-accent);
+    }
+
+    .compare-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .sleep-score {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--admin-accent);
+        text-align: center;
+        margin: 20px 0;
+    }
+
+    .sleep-score-label {
+        text-align: center;
+        color: var(--text-muted);
+        margin-bottom: 20px;
+    }
+
+    .sleep-score-legend {
+        display: flex;
+        justify-content: space-around;
+        margin-top: 20px;
+    }
+
+    .sleep-score-legend-item {
+        text-align: center;
+    }
+
+    .sleep-score-legend-color {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        margin: 0 auto 5px;
+    }
+
+    .correlation-matrix {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 4px;
+    }
+
+    .correlation-matrix th {
+        font-weight: 500;
+        font-size: 0.8rem;
+        text-align: center;
+        padding: 8px;
+        background: rgba(255,255,255,0.05);
+    }
+
+    .correlation-matrix td {
+        text-align: center;
+        padding: 10px;
+        background: rgba(255,255,255,0.03);
+        border-radius: 4px;
+    }
+
+    .correlation-value {
+        font-weight: 600;
+    }
+
+    .positive-correlation {
+        background: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+    }
+
+    .negative-correlation {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+    }
+
+    .neutral-correlation {
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-muted);
+    }
+
+    /* Make sidebar email white */
+    #sidebar-email {
+        color: white !important;
+    }
+    </style>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark px-4 fixed-top">
+        <a class="navbar-brand" href="#">SleepWell <span class="badge badge-admin ms-2">ADMIN</span></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="bi bi-house-door"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <button id="logout-btn" class="btn btn-outline-danger ms-2">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="-userinfo">
+                <h5 id="sidebar-username">Loading admin...</h5>
+                <small class="text-muted" id="sidebar-email">Loading email...</small>
+            </div>
+            
+            <nav class="nav flex-column">
+                <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                    <i class="bi bi-speedometer2"></i> Overview
+                </a>
+                <a class="nav-link" href="{{ url_for('user_management') }}">
+                    <i class="bi bi-people"></i> User Management
+                </a>
+                <a class="nav-link active" href="{{ url_for('analytics') }}">
+                    <i class="bi bi-graph-up"></i> Analytics
+                </a>
+                <a class="nav-link" href="{{ url_for('feedback_management') }}">
+                    <i class="bi bi-chat-left-text"></i> Feedback Manage
+                </a>
+                <a class="nav-link" href="">
+                    <i class="bi bi-gear"></i> System Settings
+                </a>
+                <a class="nav-link" href="">
+                    <i class="bi bi-shield-lock"></i> Audit Log
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <div id="user-greeting" class="mb-4">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="bg-warning rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <i class="bi bi-graph-up fs-4"></i>
+                    </div>
+                    <div>
+                        <h2 class="mb-0" id="greeting-text">Sleep Analytics</h2>
+                        <small class="text-muted" id="last-login">Last updated: Just now</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="alert alert-info d-flex align-items-center">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                <div>Detailed sleep analytics and insights. Filter by time period or specific users to analyze sleep patterns.</div>
+            </div>
+
+            <!-- Filters Card -->
+            <div class="card filter-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="bi bi-funnel"></i>
+                        <span>Filters</span>
+                    </div>
+                    <button id="apply-filters" class="btn btn-sm btn-primary">
+                        <i class="bi bi-arrow-clockwise"></i> Apply
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6 class="mb-3">Time Period</h6>
+                            <div class="time-filter">
+                                <button class="btn btn-sm btn-outline-light active" data-period="7d">7 Days</button>
+                                <button class="btn btn-sm btn-outline-light" data-period="30d">30 Days</button>
+                                <button class="btn btn-sm btn-outline-light" data-period="90d">90 Days</button>
+                                <button class="btn btn-sm btn-outline-light" data-period="all">All Time</button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="mb-3">User Selection</h6>
+                            <select class="form-select" id="user-selection">
+                                <option value="all" selected>All Users</option>
+                                <option value="custom">Custom Selection</option>
+                                <option value="group">User Group</option>
+                            </select>
+                            <div id="custom-user-select" class="mt-3" style="display: none;">
+                                <div class="user-selector">
+                                    <div class="user-selector-item active">
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-2">
+                                                <span class="badge badge-admin">ADMIN</span>
+                                            </div>
+                                            <div>
+                                                <div>John Doe</div>
+                                                <small class="text-muted">john@example.com</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="user-selector-item">
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-2">
+                                                <span class="badge badge-user">USER</span>
+                                            </div>
+                                            <div>
+                                                <div>Jane Smith</div>
+                                                <small class="text-muted">jane@example.com</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- More users would be populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="mb-3">Compare With</h6>
+                            <select class="form-select" id="compare-option">
+                                <option value="none" selected>No Comparison</option>
+                                <option value="previous">Previous Period</option>
+                                <option value="average">Platform Average</option>
+                                <option value="custom">Custom Benchmark</option>
+                            </select>
+                            <div class="compare-checkbox mt-2">
+                                <input type="checkbox" class="form-check-input" id="show-trends">
+                                <label class="form-check-label" for="show-trends">Show trends</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Metrics -->
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="card metric-card">
+                        <div class="card-body">
+                            <h6 class="text-muted mb-3">Avg. Sleep Duration</h6>
+                            <div class="d-flex align-items-end">
+                                <p class="metric-value" id="avg-duration-metric">7.2</p>
+                                <span class="trend-indicator trend-up">
+                                    <i class="bi bi-arrow-up"></i> 12%
+                                </span>
+                            </div>
+                            <small class="text-muted">vs. previous period</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card metric-card">
+                        <div class="card-body">
+                            <h6 class="text-muted mb-3">Sleep Quality Score</h6>
+                            <div class="d-flex align-items-end">
+                                <p class="metric-value" id="quality-score-metric">82</p>
+                                <span class="trend-indicator trend-down">
+                                    <i class="bi bi-arrow-down"></i> 5%
+                                </span>
+                            </div>
+                            <small class="text-muted">vs. previous period</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card metric-card">
+                        <div class="card-body">
+                            <h6 class="text-muted mb-3">Sleep Efficiency</h6>
+                            <div class="d-flex align-items-end">
+                                <p class="metric-value" id="efficiency-metric">78%</p>
+                                <span class="trend-indicator trend-neutral">
+                                    <i class="bi bi-dash"></i> 0%
+                                </span>
+                            </div>
+                            <small class="text-muted">vs. previous period</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card metric-card">
+                        <div class="card-body">
+                            <h6 class="text-muted mb-3">Consistency Score</h6>
+                            <div class="d-flex align-items-end">
+                                <p class="metric-value" id="consistency-metric">65</p>
+                                <span class="trend-indicator trend-up">
+                                    <i class="bi bi-arrow-up"></i> 8%
+                                </span>
+                            </div>
+                            <small class="text-muted">vs. previous period</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Charts Row -->
+            <div class="row mt-4">
+                <div class="col-md-8">
+                    <div class="card stat-card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-moon"></i>
+                                <span>Sleep Patterns Over Time</span>
+                            </div>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-light active" data-metric="duration">Duration</button>
+                                <button class="btn btn-sm btn-outline-light" data-metric="quality">Quality</button>
+                                <button class="btn btn-sm btn-outline-light" data-metric="efficiency">Efficiency</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="sleepPatternsChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card stat-card">
+                        <div class="card-header d-flex align-items-center">
+                            <i class="bi bi-pie-chart"></i>
+                            <span>Sleep Stage Distribution</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="sleepStagesChart"></canvas>
+                            </div>
+                            <div class="mt-3">
+                                <div class="sleep-stage">
+                                    <div class="sleep-stage-color" style="background: #3b82f6;"></div>
+                                    <div class="sleep-stage-label">Deep Sleep</div>
+                                    <div class="sleep-stage-percent">22%</div>
+                                </div>
+                                <div class="sleep-stage">
+                                    <div class="sleep-stage-color" style="background: #6366f1;"></div>
+                                    <div class="sleep-stage-label">REM Sleep</div>
+                                    <div class="sleep-stage-percent">18%</div>
+                                </div>
+                                <div class="sleep-stage">
+                                    <div class="sleep-stage-color" style="background: #8b5cf6;"></div>
+                                    <div class="sleep-stage-label">Light Sleep</div>
+                                    <div class="sleep-stage-percent">45%</div>
+                                </div>
+                                <div class="sleep-stage">
+                                    <div class="sleep-stage-color" style="background: #a78bfa;"></div>
+                                    <div class="sleep-stage-label">Awake</div>
+                                    <div class="sleep-stage-percent">15%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Second Charts Row -->
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card stat-card">
+                        <div class="card-header d-flex align-items-center">
+                            <i class="bi bi-calendar-week"></i>
+                            <span>Weekly Sleep Patterns</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="weeklyPatternsChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card stat-card">
+                        <div class="card-header d-flex align-items-center">
+                            <i class="bi bi-activity"></i>
+                            <span>Sleep Score Distribution</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="sleep-score">
+                                82
+                                <div class="sleep-score-label">Average Sleep Score</div>
+                            </div>
+                            <div class="sleep-score-legend">
+                                <div class="sleep-score-legend-item">
+                                    <div class="sleep-score-legend-color" style="background: #ef4444;"></div>
+                                    <small>Poor (0-59)</small>
+                                </div>
+                                <div class="sleep-score-legend-item">
+                                    <div class="sleep-score-legend-color" style="background: #f59e0b;"></div>
+                                    <small>Fair (60-79)</small>
+                                </div>
+                                <div class="sleep-score-legend-item">
+                                    <div class="sleep-score-legend-color" style="background: #10b981;"></div>
+                                    <small>Good (80-100)</small>
+                                </div>
+                            </div>
+                            <div class="chart-container mt-3">
+                                <canvas id="sleepScoreChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Correlation Matrix -->
+            <div class="card mt-4 stat-card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                    <span>Sleep Factor Correlations</span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="correlation-matrix">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>Duration</th>
+                                    <th>Quality</th>
+                                    <th>Efficiency</th>
+                                    <th>Bedtime</th>
+                                    <th>Wake Time</th>
+                                    <th>Exercise</th>
+                                    <th>Caffeine</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <th>Duration</th>
+                                    <td class="neutral-correlation">-</td>
+                                    <td class="positive-correlation"><span class="correlation-value">0.62</span></td>
+                                    <td class="positive-correlation"><span class="correlation-value">0.45</span></td>
+                                    <td class="negative-correlation"><span class="correlation-value">-0.38</span></td>
+                                    <td class="positive-correlation"><span class="correlation-value">0.51</span></td>
+                                    <td class="positive-correlation"><span class="correlation-value">0.29</span></td>
+                                    <td class="negative-correlation"><span class="correlation-value">-0.41</span></td>
+                                </tr>
+                                <tr>
+                                    <th>Quality</th>
+                                    <td class="positive-correlation"><span class="correlation-value">0.62</span></td>
+                                    <td class="neutral-correlation">-</td>
+                                    <td class="positive-correlation"><span class="correlation-value">0.73</span></td>
+                                    <td class="negative-correlation"><span class="correlation-value">-0.18</span></td>
+                                    <td class="positive-correlation"><span class="correlation-value">0.22</span></td>
+                                    <td class="positive-correlation"><span class="correlation-value">0.35</span></td>
+                                    <td class="negative-correlation"><span class="correlation-value">-0.56</span></td>
+                                </tr>
+                                <tr>
+                                    <th>Efficiency</th>
+                                    <td class="positive-correlation"><span class="correlation-value">0.45</span></td>
+                                    <td class="positive-correlation"><span class="correlation-value">0.73</span></td>
+                                    <td class="neutral-correlation">-</td>
+                                    <td class="negative-correlation"><span class="correlation-value">-0.31</span></td>
+                                    <td class="positive-correlation"><span class="correlation-value">0.15</span></td>
+                                    <td class="positive-correlation"><span class="correlation-value">0.12</span></td>
+                                    <td class="negative-correlation"><span class="correlation-value">-0.42</span></td>
+                                </tr>
+                                <tr>
+                                    <th>Bedtime</th>
+                                    <td class="negative-correlation"><span class="correlation-value">-0.38</span></td>
+                                    <td class="negative-correlation"><span class="correlation-value">-0.18</span></td>
+                                    <td class="negative-correlation"><span class="correlation-value">-0.31</span></td>
+                                    <td class="neutral-correlation">-</td>
+                                    <td class="positive-correlation"><span class="correlation-value">0.82</span></td>
+                                    <td class="negative-correlation"><span class="correlation-value">-0.05</span></td>
+                                    <td class="positive-correlation"><span class="correlation-value">0.24</span></td>
+                                </tr>
+                                <tr>
+                                    <th>Wake Time</th>
+                                    <td class="positive-correlation"><span class="correlation-value">0.51</span></td>
+                                    <td class="positive-correlation"><span class="correlation-value">0.22</span></td>
+                                    <td class="positive-correlation"><span class="correlation-value">0.15</span></td>
+                                    <td class="positive-correlation"><span class="correlation-value">0.82</span></td>
+                                    <td class="neutral-correlation">-</td>
+                                    <td class="positive-correlation"><span class="correlation-value">0.08</span></td>
+                                    <td class="positive-correlation"><span class="correlation-value">0.19</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">Pearson correlation coefficients showing relationships between different sleep factors (range: -1 to 1)</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Comparison -->
+            <div class="card mt-4 stat-card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="bi bi-people-fill"></i>
+                    <span>User Comparison</span>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="userComparisonChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@2.0.2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.0.2"></script>
+
+    <script>
+    // Reuse Firebase initialization from admin_dashboard.html
+    function initializeFirebase() {
+        try {
+            const firebaseConfig = {
+                apiKey: "AIzaSyDSKYsYwvM-0zof2rHtiKodp4z0HUTNiI4",
+                authDomain: "sleepwell-7ec3a.firebaseapp.com",
+                projectId: "sleepwell-7ec3a",
+                storageBucket: "sleepwell-7ec3a.appspot.com",
+                messagingSenderId: "37760004376",
+                appId: "1:37760004376:web:87a663c13995e6f02c6e6d"
+            };
+
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            } else {
+                firebase.app();
+            }
+
+            const settings = {
+                cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
+                merge: true
+            };
+
+            const db = firebase.firestore();
+            db.settings(settings);
+
+            return {
+                auth: firebase.auth(),
+                db: db
+            };
+        } catch (error) {
+            console.error("Firebase initialization failed:", error);
+            throw new Error("Failed to initialize Firebase services");
+        }
+    }
+
+    let db, auth;
+    try {
+        const firebaseServices = initializeFirebase();
+        db = firebaseServices.db;
+        auth = firebaseServices.auth;
+    } catch (error) {
+        console.error("Critical Firebase error:", error);
+        document.body.innerHTML = `
+            <div class="alert alert-danger m-4">
+                <h4>Application Error</h4>
+                <p>Failed to initialize required services. Please refresh the page.</p>
+                <p><small>${error.message}</small></p>
+            </div>
+        `;
+    }
+
+    // Chart instances
+    let sleepPatternsChart, sleepStagesChart, weeklyPatternsChart, sleepScoreChart, userComparisonChart;
+
+    // DOM elements
+    const userGreeting = document.getElementById('user-greeting');
+    const greetingText = document.getElementById('greeting-text');
+    const lastLogin = document.getElementById('last-login');
+    const sidebarUsername = document.getElementById('sidebar-username');
+    const sidebarEmail = document.getElementById('sidebar-email');
+    const logoutBtn = document.getElementById('logout-btn');
+    const applyFiltersBtn = document.getElementById('apply-filters');
+    const userSelectionDropdown = document.getElementById('user-selection');
+    const customUserSelect = document.getElementById('custom-user-select');
+    const timeFilterButtons = document.querySelectorAll('[data-period]');
+    const metricButtons = document.querySelectorAll('[data-metric]');
+
+    // Current filter state
+    let currentFilters = {
+        period: '7d',
+        users: 'all',
+        compare: 'none',
+        showTrends: true,
+        metric: 'duration'
+    };
+
+    // Initialize the page
+    auth.onAuthStateChanged(user => {
+        if (!user) {
+            window.location.href = "/";
+            return;
+        }
+        
+        verifyAdminStatus(user.uid);
+        updateGreeting(user);
+        updateUserInfo(user);
+        initializeCharts();
+        loadAnalyticsData();
+        setupEventListeners();
+    });
+
+    async function verifyAdminStatus(uid) {
+        try {
+            const userDoc = await db.collection('users').doc(uid).get();
+            if (userDoc.exists && userDoc.data().isAdmin) {
+                return true;
+            }
+            showAlert("No admin privileges. Redirecting...", "danger");
+            setTimeout(() => window.location.href = "/", 3000);
+            return false;
+        } catch (error) {
+            console.error("Admin verification failed:", error);
+            return false;
+        }
+    }
+
+    function updateGreeting(user) {
+        const displayName = user.displayName || "Admin";
+        greetingText.textContent = `Sleep Analytics`;
+    }
+
+    function updateUserInfo(user) {
+        const displayName = user.displayName || "Admin User";
+        const email = user.email || "No email";
+
+        sidebarUsername.textContent = displayName;
+        sidebarEmail.textContent = email;
+    }
+
+    function setupEventListeners() {
+        // Logout button
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                await auth.signOut();
+                window.location.href = '/';
+            } catch (error) {
+                console.error("Logout error:", error);
+                showAlert("Logout failed. Please try again.", "danger");
+            }
+        });
+
+        // User selection dropdown
+        userSelectionDropdown.addEventListener('change', (e) => {
+            if (e.target.value === 'custom') {
+                customUserSelect.style.display = 'block';
+                loadUserList();
+            } else {
+                customUserSelect.style.display = 'none';
+            }
+        });
+
+        // Time period filter buttons
+        timeFilterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                timeFilterButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                currentFilters.period = button.dataset.period;
+                loadAnalyticsData();
+            });
+        });
+
+        // Metric selection buttons
+        metricButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                metricButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                currentFilters.metric = button.dataset.metric;
+                updateSleepPatternsChart();
+            });
+        });
+
+        // Apply filters button
+        applyFiltersBtn.addEventListener('click', () => {
+            loadAnalyticsData();
+        });
+    }
+
+    function initializeCharts() {
+        // Sleep Patterns Chart
+        const sleepPatternsCtx = document.getElementById('sleepPatternsChart').getContext('2d');
+        sleepPatternsChart = new Chart(sleepPatternsCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Sleep Duration',
+                    data: [],
+                    borderColor: 'rgba(245, 158, 11, 1)',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: getChartOptions('Hours of sleep per night')
+        });
+
+        // Sleep Stages Chart
+        const sleepStagesCtx = document.getElementById('sleepStagesChart').getContext('2d');
+        sleepStagesChart = new Chart(sleepStagesCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Deep Sleep', 'REM Sleep', 'Light Sleep', 'Awake'],
+                datasets: [{
+                    data: [22, 18, 45, 15],
+                    backgroundColor: ['#3b82f6', '#6366f1', '#8b5cf6', '#a78bfa'],
+                    borderColor: 'rgba(30,30,30,0.8)',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(30,30,30,0.9)',
+                        titleColor: '#fff',
+                        bodyColor: '#e0e0e0',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1,
+                        padding: 12
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+
+        // Weekly Patterns Chart
+        const weeklyPatternsCtx = document.getElementById('weeklyPatternsChart').getContext('2d');
+        weeklyPatternsChart = new Chart(weeklyPatternsCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Sleep Duration',
+                    data: [7.2, 6.8, 7.5, 7.1, 6.5, 8.2, 8.5],
+                    backgroundColor: 'rgba(245, 158, 11, 0.7)',
+                    borderColor: 'rgba(245, 158, 11, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: getChartOptions('Average hours per weekday')
+        });
+
+        // Sleep Score Chart
+        const sleepScoreCtx = document.getElementById('sleepScoreChart').getContext('2d');
+        sleepScoreChart = new Chart(sleepScoreCtx, {
+            type: 'bar',
+            data: {
+                labels: ['0-59', '60-69', '70-79', '80-89', '90-100'],
+                datasets: [{
+                    label: 'Users',
+                    data: [5, 15, 30, 35, 15],
+                    backgroundColor: [
+                        'rgba(239, 68, 68, 0.7)',
+                        'rgba(249, 115, 22, 0.7)',
+                        'rgba(245, 158, 11, 0.7)',
+                        'rgba(52, 211, 153, 0.7)',
+                        'rgba(16, 185, 129, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(239, 68, 68, 1)',
+                        'rgba(249, 115, 22, 1)',
+                        'rgba(245, 158, 11, 1)',
+                        'rgba(52, 211, 153, 1)',
+                        'rgba(16, 185, 129, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: getChartOptions('Number of users in each score range')
+        });
+
+        // User Comparison Chart
+        const userComparisonCtx = document.getElementById('userComparisonChart').getContext('2d');
+        userComparisonChart = new Chart(userComparisonCtx, {
+            type: 'radar',
+            data: {
+                labels: ['Duration', 'Quality', 'Consistency', 'Efficiency', 'Bedtime', 'Wake Time'],
+                datasets: [
+                    {
+                        label: 'Selected Users',
+                        data: [85, 82, 78, 80, 75, 88],
+                        backgroundColor: 'rgba(245, 158, 11, 0.2)',
+                        borderColor: 'rgba(245, 158, 11, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(245, 158, 11, 1)'
+                    },
+                    {
+                        label: 'Platform Average',
+                        data: [70, 68, 65, 72, 68, 75],
+                        backgroundColor: 'rgba(100, 116, 139, 0.2)',
+                        borderColor: 'rgba(100, 116, 139, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(100, 116, 139, 1)'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: '#e0e0e0'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(30,30,30,0.9)',
+                        titleColor: '#fff',
+                        bodyColor: '#e0e0e0',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1,
+                        padding: 12
+                    }
+                },
+                scales: {
+                    r: {
+                        angleLines: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        pointLabels: {
+                            color: '#e0e0e0'
+                        },
+                        ticks: {
+                            backdropColor: 'rgba(0, 0, 0, 0)',
+                            color: '#a0a0a0',
+                            showLabelBackdrop: false
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function getChartOptions(title) {
+        return {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(30,30,30,0.9)',
+                    titleColor: '#fff',
+                    bodyColor: '#e0e0e0',
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderWidth: 1,
+                    padding: 12
+                },
+                title: {
+                    display: false,
+                    text: title,
+                    color: '#e0e0e0'
+                }
+            },
+            scales: {
+                y: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#a0a0a0'
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#a0a0a0'
+                    }
+                }
+            }
+        };
+    }
+
+    async function loadAnalyticsData() {
+        try {
+            showLoadingState(true);
+            
+            // Verify admin status
+            const isAdmin = await verifyAdminStatus(auth.currentUser.uid);
+            if (!isAdmin) return;
+            
+            // Load all analytics data
+            const [
+                avgDuration,
+                qualityScore,
+                efficiency,
+                consistency,
+                sleepPatterns,
+                sleepStages,
+                weeklyPatterns,
+                sleepScores,
+                userComparison
+            ] = await Promise.all([
+                getAverageDuration(),
+                getAverageQualityScore(),
+                getAverageEfficiency(),
+                getConsistencyScore(),
+                getSleepPatternsData(),
+                getSleepStagesData(),
+                getWeeklyPatternsData(),
+                getSleepScoresData(),
+                getUserComparisonData()
+            ]);
+            
+            // Update metrics
+            document.getElementById('avg-duration-metric').textContent = avgDuration.value;
+            document.getElementById('quality-score-metric').textContent = qualityScore.value;
+            document.getElementById('efficiency-metric').textContent = efficiency.value;
+            document.getElementById('consistency-metric').textContent = consistency.value;
+            
+            // Update trend indicators
+            updateTrendIndicator('avg-duration-metric', avgDuration.trend);
+            updateTrendIndicator('quality-score-metric', qualityScore.trend);
+            updateTrendIndicator('efficiency-metric', efficiency.trend);
+            updateTrendIndicator('consistency-metric', consistency.trend);
+            
+            // Update charts
+            updateSleepPatternsChart(sleepPatterns);
+            updateSleepStagesChart(sleepStages);
+            updateWeeklyPatternsChart(weeklyPatterns);
+            updateSleepScoreChart(sleepScores);
+            updateUserComparisonChart(userComparison);
+            
+        } catch (error) {
+            console.error("Analytics data load error:", error);
+            showAlert("Failed to load analytics data: " + error.message, "danger");
+        } finally {
+            showLoadingState(false);
+        }
+    }
+
+    function updateTrendIndicator(elementId, trend) {
+        const container = document.querySelector(`#${elementId}`).parentElement.querySelector('.trend-indicator');
+        container.className = 'trend-indicator';
+        
+        if (trend > 0) {
+            container.classList.add('trend-up');
+            container.innerHTML = `<i class="bi bi-arrow-up"></i> ${Math.abs(trend)}%`;
+        } else if (trend < 0) {
+            container.classList.add('trend-down');
+            container.innerHTML = `<i class="bi bi-arrow-down"></i> ${Math.abs(trend)}%`;
+        } else {
+            container.classList.add('trend-neutral');
+            container.innerHTML = `<i class="bi bi-dash"></i> 0%`;
+        }
+    }
+
+    async function getAverageDuration() {
+        // Simulate API call
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve({
+                    value: '7.2',
+                    trend: 12
+                });
+            }, 500);
+        });
+    }
+
+    async function getAverageQualityScore() {
+        // Simulate API call
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve({
+                    value: '82',
+                    trend: -5
+                });
+            }, 500);
+        });
+    }
+
+    async function getAverageEfficiency() {
+        // Simulate API call
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve({
+                    value: '78%',
+                    trend: 0
+                });
+            }, 500);
+        });
+    }
+
+    async function getConsistencyScore() {
+        // Simulate API call
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve({
+                    value: '65',
+                    trend: 8
+                });
+            }, 500);
+        });
+    }
+
+    async function getSleepPatternsData() {
+        // Simulate API call with different data based on period
+        const days = currentFilters.period === '7d' ? 7 : 
+                    currentFilters.period === '30d' ? 30 : 
+                    currentFilters.period === '90d' ? 90 : 365;
+        
+        const labels = [];
+        const data = [];
+        
+        for (let i = 0; i < days; i++) {
+            labels.push(`Day ${i+1}`);
+            data.push((Math.random() * 2 + 6).toFixed(1));
+        }
+        
+        return { labels, data };
+    }
+
+    async function getSleepStagesData() {
+        // Simulate API call
+        return {
+            labels: ['Deep Sleep', 'REM Sleep', 'Light Sleep', 'Awake'],
+            data: [22, 18, 45, 15],
+            colors: ['#3b82f6', '#6366f1', '#8b5cf6', '#a78bfa']
+        };
+    }
+
+    async function getWeeklyPatternsData() {
+        // Simulate API call
+        return {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            data: [7.2, 6.8, 7.5, 7.1, 6.5, 8.2, 8.5]
+        };
+    }
+
+    async function getSleepScoresData() {
+        // Simulate API call
+        return {
+            labels: ['0-59', '60-69', '70-79', '80-89', '90-100'],
+            data: [5, 15, 30, 35, 15],
+            colors: ['#ef4444', '#f97316', '#f59e0b', '#34d399', '#10b981']
+        };
+    }
+
+    async function getUserComparisonData() {
+        // Simulate API call
+        return {
+            labels: ['Duration', 'Quality', 'Consistency', 'Efficiency', 'Bedtime', 'Wake Time'],
+            userData: [85, 82, 78, 80, 75, 88],
+            averageData: [70, 68, 65, 72, 68, 75]
+        };
+    }
+
+    function updateSleepPatternsChart(data) {
+        if (!data) {
+            // Get current data from chart if none provided
+            data = {
+                labels: sleepPatternsChart.data.labels,
+                data: sleepPatternsChart.data.datasets[0].data
+            };
+        }
+        
+        sleepPatternsChart.data.labels = data.labels;
+        
+        // Update dataset based on selected metric
+        const dataset = sleepPatternsChart.data.datasets[0];
+        dataset.data = data.data;
+        
+        if (currentFilters.metric === 'duration') {
+            dataset.label = 'Sleep Duration';
+            dataset.borderColor = 'rgba(245, 158, 11, 1)';
+            dataset.backgroundColor = 'rgba(245, 158, 11, 0.1)';
+        } else if (currentFilters.metric === 'quality') {
+            dataset.label = 'Sleep Quality';
+            dataset.borderColor = 'rgba(16, 185, 129, 1)';
+            dataset.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+        } else {
+            dataset.label = 'Sleep Efficiency';
+            dataset.borderColor = 'rgba(59, 130, 246, 1)';
+            dataset.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+        }
+        
+        sleepPatternsChart.update();
+    }
+
+    function updateSleepStagesChart(data) {
+        sleepStagesChart.data.labels = data.labels;
+        sleepStagesChart.data.datasets[0].data = data.data;
+        sleepStagesChart.data.datasets[0].backgroundColor = data.colors;
+        sleepStagesChart.update();
+    }
+
+    function updateWeeklyPatternsChart(data) {
+        weeklyPatternsChart.data.labels = data.labels;
+        weeklyPatternsChart.data.datasets[0].data = data.data;
+        weeklyPatternsChart.update();
+    }
+
+    function updateSleepScoreChart(data) {
+        sleepScoreChart.data.labels = data.labels;
+        sleepScoreChart.data.datasets[0].data = data.data;
+        sleepScoreChart.data.datasets[0].backgroundColor = data.colors.map(c => c + 'CC');
+        sleepScoreChart.data.datasets[0].borderColor = data.colors;
+        sleepScoreChart.update();
+    }
+
+    function updateUserComparisonChart(data) {
+        userComparisonChart.data.labels = data.labels;
+        userComparisonChart.data.datasets[0].data = data.userData;
+        userComparisonChart.data.datasets[1].data = data.averageData;
+        userComparisonChart.update();
+    }
+
+    async function loadUserList() {
+        try {
+            const snapshot = await db.collection('users')
+                .where('isAdmin', '==', false)
+                .orderBy('displayName')
+                .limit(50)
+                .get();
+            
+            const userListContainer = document.querySelector('.user-selector');
+            userListContainer.innerHTML = '';
+            
+            if (snapshot.empty) {
+                userListContainer.innerHTML = '<div class="text-muted py-3 text-center">No users found</div>';
+                return;
+            }
+            
+            snapshot.forEach(doc => {
+                const user = doc.data();
+                const item = document.createElement('div');
+                item.className = 'user-selector-item';
+                item.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <div class="me-2">
+                            <span class="badge badge-user">USER</span>
+                        </div>
+                        <div>
+                            <div>${user.displayName || 'Unknown User'}</div>
+                            <small class="text-muted">${user.email || 'No email'}</small>
+                        </div>
+                    </div>
+                `;
+                userListContainer.appendChild(item);
+            });
+        } catch (error) {
+            console.error("Error loading user list:", error);
+            showAlert("Failed to load user list", "danger");
+        }
+    }
+
+    function showLoadingState(isLoading) {
+        // Show/hide loading indicators
+        const elements = document.querySelectorAll('.loading-spinner');
+        elements.forEach(el => {
+            el.style.visibility = isLoading ? 'visible' : 'hidden';
+        });
+        
+        // Disable/enable buttons
+        applyFiltersBtn.disabled = isLoading;
+    }
+
+    function showAlert(message, type = "info") {
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} alert-dismissible fade show`;
+        alert.role = "alert";
+        alert.innerHTML = `
+            <i class="bi ${type === 'danger' ? 'bi-exclamation-triangle-fill' : 'bi-info-circle-fill'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        const container = document.querySelector('.content');
+        container.insertBefore(alert, container.firstChild);
+        
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }, 5000);
+    }
+    </script>
+</body>
+</html>

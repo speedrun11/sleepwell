@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SLEEPWELL - FEEDBACK MANAGEMENT</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary: #6d28d9;
+            --primary-hover: #7c3aed;
+            --accent: #10b981;
+            --bg: #121212;
+            --surface: #1e1e1e;
+            --surface-hover: rgba(255,255,255,0.05);
+            --surface-light: #2a2a2a;
+            --text: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --admin-accent: #f59e0b;
+        }
+
+        .user-info h5,
+        .user-info small,
+        #last-login,
+        .stat-value,
+        .stat-value i,
+        .stat-value small {
+            color: #fff !important;
+        }
+        
+        * {
+            font-family: 'Montserrat', sans-serif;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: var(--bg);
+            color: var(--text);
+            padding-top: 56px;
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 600;
+            letter-spacing: -0.025em;
+        }
+
+        .navbar {
+            background: var(--surface) !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--admin-accent) !important;
+        }
+
+        .sidebar {
+            height: 100vh;
+            background: var(--surface);
+            padding: 20px;
+            position: fixed;
+            width: 280px;
+            overflow-y: auto;
+            border-right: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 4px 0 12px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .sidebar a {
+            color: var(--text);
+            text-decoration: none;
+            display: block;
+            padding: 12px 16px;
+            margin: 4px 0;
+            border-radius: 6px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar a:hover {
+            background: var(--surface-hover);
+            transform: translateX(4px);
+            border-left-color: var(--admin-accent);
+        }
+
+        .sidebar a.active {
+            background: linear-gradient(90deg, rgba(245,158,11,0.1) 0%, transparent 100%);
+            border-left-color: var(--admin-accent);
+        }
+
+        .sidebar a i {
+            width: 20px;
+            text-align: center;
+            margin-right: 12px;
+            font-size: 1.1rem;
+        }
+
+        .content {
+            padding: 24px;
+            margin-left: 280px;
+            flex-grow: 1;
+        }
+
+        .user-info {
+            background: var(--surface-light);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(241, 229, 229, 0.1)
+        }
+
+        .user-info h5 {
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .user-info small {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            margin-bottom: 24px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+
+        .card-header {
+            background: rgba(255,255,255,0.03);
+            color: var(--text);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 16px 20px;
+            border-radius: 12px 12px 0 0 !important;
+            font-weight: 600;
+        }
+
+        .card-header i {
+            margin-right: 8px;
+            color: var(--admin-accent);
+        }
+
+        .card-body {
+            color: var(--text-muted);
+            padding: 20px;
+        }
+
+        .card-body .text-muted {
+            color: #fff !important;
+        }
+
+        .btn-primary {
+            background: var(--admin-accent);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s;
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            background: #fbbf24;
+            transform: scale(1.02);
+            color: #000;
+        }
+
+        .btn-outline-light {
+            border-color: rgba(255,255,255,0.2);
+            color: var(--text);
+            transition: all 0.3s;
+        }
+
+        .btn-outline-light:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .form-control, .form-select {
+            background: rgba(255,255,255,0.05) !important;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text);
+            border-radius: 8px;
+            padding: 10px 16px;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--admin-accent);
+            box-shadow: 0 0 0 3px rgba(245,158,11,0.25);
+            background: rgba(255,255,255,0.08) !important;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 3px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            border-top-color: var(--admin-accent);
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .alert-info {
+            background: linear-gradient(45deg, rgba(146, 185, 172, 0.1), transparent);
+            border: 1px solid rgba(16,185,129,0.2);
+            backdrop-filter: blur(4px);
+            color: var(--text);
+            border-radius: 10px;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .feedback-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            background: rgba(255,255,255,0.03);
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        .feedback-item:hover {
+            background: rgba(255,255,255,0.08);
+        }
+
+        .feedback-item.unread {
+            border-left-color: var(--admin-accent);
+            background: rgba(245, 158, 11, 0.05);
+        }
+
+        .feedback-item.archived {
+            opacity: 0.7;
+        }
+
+        .feedback-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-weight: 600;
+        }
+
+        .feedback-content {
+            flex: 1;
+        }
+
+        .feedback-content h6 {
+            margin-bottom: 4px;
+            color: var(--text);
+        }
+
+        .feedback-content small {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .feedback-content p {
+            margin-bottom: 0;
+            color: var(--text);
+        }
+
+        .feedback-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .feedback-rating {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            margin-left: 8px;
+        }
+
+        .feedback-rating i {
+            color: var(--admin-accent);
+            font-size: 0.9rem;
+        }
+
+        .feedback-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .feedback-table th {
+            background: rgba(255,255,255,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .feedback-table td, .feedback-table th {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .feedback-table tr:hover td {
+            background: rgba(255,255,255,0.03);
+        }
+
+        .table-container {
+            max-height: 500px;
+            overflow-y: auto;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .badge-new {
+            background-color: var(--accent);
+        }
+
+        .badge-archived {
+            background-color: var(--text-muted);
+        }
+
+        .badge-important {
+            background-color: #ef4444;
+        }
+
+        .badge-admin {
+            background-color: var(--admin-accent);
+            color: #000;
+        }
+
+        .badge-user {
+            background-color: var(--primary);
+        }
+
+        .nav-tabs .nav-link {
+            color: var(--text-muted);
+            border: none;
+            padding: 10px 20px;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--admin-accent);
+            background: transparent;
+            border-bottom: 2px solid var(--admin-accent);
+        }
+
+        .nav-tabs .nav-link:hover:not(.active) {
+            color: var(--text);
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+        }
+
+        .tab-content {
+            padding: 20px 0;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+            color: var(--admin-accent);
+        }
+
+        .empty-state h5 {
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            max-width: 400px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 100%;
+                position: relative;
+                height: auto;
+                box-shadow: none;
+                border-right: none;
+            }
+            
+            .content {
+                margin-left: 0;
+                padding: 16px;
+            }
+            
+            .card {
+                margin-bottom: 16px;
+            }
+        }
+
+        .stat-card {
+            background: linear-gradient(145deg, var(--surface-light), var(--surface)) !important;
+            border-left: 4px solid var(--admin-accent) !important;
+        }
+        
+        #sidebar-email {
+            color: white !important;
+        }
+
+        .feedback-table small.text-muted {
+            color: var(--text) !important;
+            opacity: 0.8;
+        }
+    </style>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark px-4 fixed-top">
+        <a class="navbar-brand" href="#">SleepWell <span class="badge badge-admin ms-2">ADMIN</span></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="bi bi-house-door"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <button id="logout-btn" class="btn btn-outline-danger ms-2">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="-userinfo">
+                <h5 id="sidebar-username">Loading admin...</h5>
+                <small class="text-muted" id="sidebar-email">Loading email...</small>
+            </div>
+            
+            <nav class="nav flex-column">
+                <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                    <i class="bi bi-speedometer2"></i> Overview
+                </a>
+                <a class="nav-link" href="{{ url_for('user_management') }}">
+                    <i class="bi bi-people"></i> User Management
+                </a>
+                <a class="nav-link" href="{{ url_for('analytics') }}">
+                    <i class="bi bi-graph-up"></i> Analytics
+                </a>
+                <a class="nav-link active" href="{{ url_for('feedback_management') }}">
+                    <i class="bi bi-chat-left-text"></i> Feedback Manage
+                </a>
+                <a class="nav-link" href="">
+                    <i class="bi bi-gear"></i> System Settings
+                </a>
+                <a class="nav-link" href="">
+                    <i class="bi bi-shield-lock"></i> Audit Log
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <div id="user-greeting" class="mb-4">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="bg-warning rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <i class="bi bi-chat-left-text fs-4"></i>
+                    </div>
+                    <div>
+                        <h2 class="mb-0">Feedback Management</h2>
+                        <small class="text-muted" id="last-login">Last updated: Just now</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="alert alert-info d-flex align-items-center">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                <div>Manage user feedback, respond to inquiries, and track common issues.</div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="card stat-card">
+                        <div class="card-header">
+                            <i class="bi bi-envelope"></i>
+                            <span>Total Feedback</span>
+                        </div>
+                        <div class="card-body">
+                            <p class="stat-value mb-0" id="total-feedback"><span class="loading-spinner"></span> Loading...</p>
+                            <small class="text-muted">All feedback items</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card">
+                        <div class="card-header">
+                            <i class="bi bi-envelope-exclamation"></i>
+                            <span>Unread</span>
+                        </div>
+                        <div class="card-body">
+                            <p class="stat-value mb-0" id="unread-feedback"><span class="loading-spinner"></span> Loading...</p>
+                            <small class="text-muted">Requires attention</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card">
+                        <div class="card-header">
+                            <i class="bi bi-star"></i>
+                            <span>Avg. Rating</span>
+                        </div>
+                        <div class="card-body">
+                            <p class="stat-value mb-0" id="avg-rating"><span class="loading-spinner"></span> Loading...</p>
+                            <small class="text-muted">User satisfaction</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card">
+                        <div class="card-header">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <span>Urgent</span>
+                        </div>
+                        <div class="card-body">
+                            <p class="stat-value mb-0" id="urgent-feedback"><span class="loading-spinner"></span> Loading...</p>
+                            <small class="text-muted">High priority</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4 stat-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-filter-square"></i>
+                        <span>Feedback Filters</span>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-light active" data-filter="all">All</button>
+                        <button class="btn btn-sm btn-outline-light" data-filter="unread">Unread</button>
+                        <button class="btn btn-sm btn-outline-light" data-filter="archived">Archived</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="feedback-search" class="form-label">Search Feedback</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="feedback-search" placeholder="Search messages...">
+                                <button class="btn btn-outline-light" type="button">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="feedback-type" class="form-label">Type</label>
+                            <select class="form-select" id="feedback-type">
+                                <option value="all">All Types</option>
+                                <option value="bug">Bug Report</option>
+                                <option value="feature">Feature Request</option>
+                                <option value="question">Question</option>
+                                <option value="complaint">Complaint</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="feedback-rating" class="form-label">Rating</label>
+                            <select class="form-select" id="feedback-rating">
+                                <option value="all">All Ratings</option>
+                                <option value="5">5 Stars</option>
+                                <option value="4">4 Stars</option>
+                                <option value="3">3 Stars</option>
+                                <option value="2">2 Stars</option>
+                                <option value="1">1 Star</option>
+                                <option value="0">No Rating</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <ul class="nav nav-tabs mt-4" id="feedbackTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="list-tab" data-bs-toggle="tab" data-bs-target="#list-tab-pane" type="button" role="tab">
+                        <i class="bi bi-list-ul me-1"></i> List View
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="table-tab" data-bs-toggle="tab" data-bs-target="#table-tab-pane" type="button" role="tab">
+                        <i class="bi bi-table me-1"></i> Table View
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="feedbackTabsContent">
+                <div class="tab-pane fade show active" id="list-tab-pane" role="tabpanel">
+                    <div id="feedback-list">
+                        <!-- Feedback items will be loaded here -->
+                        <div class="empty-state">
+                            <i class="bi bi-chat-square-text"></i>
+                            <h5>No Feedback Yet</h5>
+                            <p>User feedback will appear here once submitted through the app or website.</p>
+                            <button class="btn btn-primary" disabled>
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <nav class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+                
+                <div class="tab-pane fade" id="table-tab-pane" role="tabpanel">
+                    <div class="table-container">
+                        <table class="feedback-table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Type</th>
+                                    <th>Message</th>
+                                    <th>Rating</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="feedback-table-body">
+                                <tr>
+                                    <td colspan="7" class="text-center py-4">Loading feedback data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <nav class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback Detail Modal -->
+    <div class="modal fade" id="feedbackModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="background: var(--surface); color: var(--text);">
+                <div class="modal-header">
+                    <h5 class="modal-title">Feedback Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="feedback-modal-content">
+                    <!-- Content will be loaded dynamically -->
+                </div>
+                <div class="modal-footer">
+                    <div class="me-auto">
+                        <div class="dropdown d-inline-block me-2">
+                            <button class="btn btn-outline-light dropdown-toggle" type="button" 
+                                    data-bs-toggle="dropdown" aria-expanded="false" id="priorityDropdown">
+                                <i class="bi bi-arrow-up-right"></i> Priority
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li><a class="dropdown-item priority-option" href="#" data-priority="low">Low</a></li>
+                                <li><a class="dropdown-item priority-option" href="#" data-priority="normal">Normal</a></li>
+                                <li><a class="dropdown-item priority-option" href="#" data-priority="high">High (Urgent)</a></li>
+                            </ul>
+                        </div>
+                        <button type="button" class="btn btn-outline-danger" id="archive-feedback">
+                            <i class="bi bi-archive"></i> Archive
+                        </button>
+                    </div>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="reply-to-feedback">
+                        <i class="bi bi-reply"></i> Reply
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reply Modal -->
+    <div class="modal fade" id="replyModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content" style="background: var(--surface); color: var(--text);">
+                <div class="modal-header">
+                    <h5 class="modal-title">Send Reply</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="replyForm">
+                        <input type="hidden" id="feedback-id">
+                        <div class="mb-3">
+                            <label for="reply-message" class="form-label">Your Response</label>
+                            <textarea class="form-control" id="reply-message" rows="5" required></textarea>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="mark-as-resolved" checked>
+                            <label class="form-check-label" for="mark-as-resolved">Mark as resolved</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="send-reply">
+                        <i class="bi bi-send"></i> Send Reply
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+    function initializeFirebase() {
+        try {
+            const firebaseConfig = {
+                apiKey: "AIzaSyDSKYsYwvM-0zof2rHtiKodp4z0HUTNiI4",
+                authDomain: "sleepwell-7ec3a.firebaseapp.com",
+                projectId: "sleepwell-7ec3a",
+                storageBucket: "sleepwell-7ec3a.appspot.com",
+                messagingSenderId: "37760004376",
+                appId: "1:37760004376:web:87a663c13995e6f02c6e6d"
+            };
+
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            } else {
+                firebase.app();
+            }
+
+            const settings = {
+                cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
+                merge: true
+            };
+
+            const db = firebase.firestore();
+            db.settings(settings);
+
+            return {
+                auth: firebase.auth(),
+                db: db
+            };
+        } catch (error) {
+            console.error("Firebase initialization failed:", error);
+            throw new Error("Failed to initialize Firebase services");
+        }
+    }
+
+    let db, auth;
+    try {
+        const firebaseServices = initializeFirebase();
+        db = firebaseServices.db;
+        auth = firebaseServices.auth;
+    } catch (error) {
+        console.error("Critical Firebase error:", error);
+        document.body.innerHTML = `
+            <div class="alert alert-danger m-4">
+                <h4>Application Error</h4>
+                <p>Failed to initialize required services. Please refresh the page.</p>
+                <p><small>${error.message}</small></p>
+            </div>
+        `;
+    }
+
+    const userGreeting = document.getElementById('user-greeting');
+    const greetingText = document.getElementById('greeting-text');
+    const lastLogin = document.getElementById('last-login');
+    const sidebarUsername = document.getElementById('sidebar-username');
+    const sidebarEmail = document.getElementById('sidebar-email');
+    const logoutBtn = document.getElementById('logout-btn');
+    const feedbackList = document.getElementById('feedback-list');
+    const feedbackTableBody = document.getElementById('feedback-table-body');
+    const feedbackModal = new bootstrap.Modal(document.getElementById('feedbackModal'));
+    const replyModal = new bootstrap.Modal(document.getElementById('replyModal'));
+    const feedbackModalContent = document.getElementById('feedback-modal-content');
+    const feedbackSearch = document.getElementById('feedback-search');
+    const feedbackType = document.getElementById('feedback-type');
+    const feedbackRating = document.getElementById('feedback-rating');
+    const filterButtons = document.querySelectorAll('[data-filter]');
+    const sendReplyBtn = document.getElementById('send-reply');
+    const replyToFeedbackBtn = document.getElementById('reply-to-feedback');
+    const replyMessage = document.getElementById('reply-message');
+    const feedbackIdInput = document.getElementById('feedback-id');
+    const markAsResolved = document.getElementById('mark-as-resolved');
+    const archiveFeedbackBtn = document.getElementById('archive-feedback');
+    const priorityDropdown = document.getElementById('priorityDropdown');
+    const priorityOptions = document.querySelectorAll('.priority-option');
+
+    let currentFilter = 'all';
+    let currentFeedback = null;
+
+    auth.onAuthStateChanged(user => {
+        if (!user) {
+            window.location.href = "/";
+            return;
+        }
+        
+        // Verify admin status
+        verifyAdminStatus(user.uid);
+        
+        console.log("Admin authenticated:", user.uid);
+        updateUserInfo(user);
+        loadFeedbackData();
+    });
+
+    async function verifyAdminStatus(uid) {
+        try {
+            const userDoc = await db.collection('users').doc(uid).get();
+            if (userDoc.exists && userDoc.data().isAdmin) {
+                return true;
+            }
+            showAlert("No admin privileges. Redirecting...", "danger");
+            setTimeout(() => window.location.href = "/", 3000);
+            return false;
+        } catch (error) {
+            console.error("Admin verification failed:", error);
+            return false;
+        }
+    }
+
+    function updateUserInfo(user) {
+        const displayName = user.displayName || "Admin User";
+        const email = user.email || "No email";
+
+        document.getElementById('sidebar-username').textContent = displayName;
+        document.getElementById('sidebar-email').textContent = email;
+    }
+
+    async function loadFeedbackData() {
+        try {
+            showLoadingState(true);
+            
+            // First verify admin status
+            const isAdmin = await verifyAdminStatus(auth.currentUser.uid);
+            if (!isAdmin) return;
+            
+            // Load stats
+            const [totalCount, unreadCount, avgRating, urgentCount] = await Promise.all([
+                getFeedbackCount(),
+                getUnreadFeedbackCount(),
+                getAverageRating(),
+                getUrgentFeedbackCount()
+            ]);
+            
+            document.getElementById('total-feedback').textContent = totalCount;
+            document.getElementById('unread-feedback').textContent = unreadCount;
+            document.getElementById('avg-rating').textContent = avgRating;
+            document.getElementById('urgent-feedback').textContent = urgentCount;
+            
+            // Load feedback items
+            const feedbackItems = await getFeedbackItems(currentFilter);
+            updateFeedbackList(feedbackItems);
+            updateFeedbackTable(feedbackItems);
+            
+        } catch (error) {
+            console.error("Feedback load error:", error);
+            showAlert("Feedback load failed: " + error.message, "danger");
+        } finally {
+            showLoadingState(false);
+        }
+    }
+
+    async function getFeedbackCount() {
+        try {
+            const collectionRef = db.collection('feedback');
+            const snapshot = await collectionRef.get();
+            return snapshot.size; // Returns the number of documents in the collection
+        } catch (error) {
+            console.error("Error getting feedback count:", error);
+            return "N/A";
+        }
+    }
+
+    async function getUnreadFeedbackCount() {
+    try {
+        // First verify admin status
+        const isAdmin = await verifyAdminStatus(auth.currentUser.uid);
+        if (!isAdmin) {
+            console.warn("User doesn't have admin privileges");
+            return 0;
+        }
+        
+        // Get count of unread feedback
+        const collectionRef = db.collection('feedback');
+        const query = collectionRef.where('status', '==', 'unread');
+        const snapshot = await query.get();
+            
+        return snapshot.size || 0;
+        
+    } catch (error) {
+        console.error("Error getting unread feedback count:", error);
+        
+        // Specific error handling
+        if (error.code === 'permission-denied') {
+            console.warn("Permission denied - insufficient privileges");
+            return 0;
+        }
+        
+        if (error.code === 'unavailable') {
+            console.warn("Firestore service unavailable");
+            return 0;
+        }
+        
+        return 0;
+    }
+}
+
+    async function getAverageRating() {
+        try {
+            const snapshot = await db.collection('feedback')
+                .where('rating', '>', 0)
+                .get();
+            
+            if (snapshot.empty) return "N/A";
+            
+            let total = 0;
+            let count = 0;
+            
+            snapshot.forEach(doc => {
+                const rating = parseInt(doc.data().rating) || 0;
+                if (rating > 0) {
+                    total += rating;
+                    count++;
+                }
+            });
+            
+            if (count === 0) return "N/A";
+            const avg = total / count;
+            return avg.toFixed(1) + "/5";
+        } catch (error) {
+            console.error("Error getting average rating:", error);
+            return "N/A";
+        }
+    }
+
+    async function getUrgentFeedbackCount() {
+        try {
+            // First verify admin status
+            const isAdmin = await verifyAdminStatus(auth.currentUser.uid);
+            if (!isAdmin) {
+                console.warn("User doesn't have admin privileges");
+                return 0;
+            }
+            
+            // Get count of urgent feedback
+            const collectionRef = db.collection('feedback');
+            const query = collectionRef.where('priority', '==', 'high');
+            const snapshot = await query.get();
+                
+            return snapshot.size || 0;
+            
+        } catch (error) {
+            console.error("Error getting urgent feedback count:", error);
+            
+            // Specific error handling
+            if (error.code === 'permission-denied') {
+                console.warn("Permission denied - insufficient privileges");
+                return 0;
+            }
+            
+            if (error.code === 'unavailable') {
+                console.warn("Firestore service unavailable");
+                return 0;
+            }
+            
+            return 0;
+        }
+    }
+
+    async function getFeedbackItems(filter = 'all') {
+    try {
+        let query = db.collection('feedback').orderBy('createdAt', 'desc').limit(20);
+        
+        if (filter === 'unread') {
+            query = query.where('status', '==', 'unread');
+        } else if (filter === 'archived') {
+            query = query.where('status', '==', 'archived');
+        }
+        
+        const snapshot = await query.get();
+        return snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                userId: data.userId,
+                userName: data.userName || data.userEmail.split('@')[0] || 'Anonymous',
+                userEmail: data.userEmail || 'No email',
+                category: data.category || 'other',
+                message: data.message || 'No message',
+                rating: data.rating || 0,
+                status: data.status || 'unread',
+                priority: data.priority || 'normal',
+                createdAt: data.createdAt?.toDate() || new Date(),
+                updatedAt: data.updatedAt?.toDate(),
+                resolvedAt: data.resolvedAt?.toDate(),
+                resolvedBy: data.resolvedBy,
+                response: data.response,
+                allowContact: data.allowContact || false,
+                subject: data.subject || 'No Subject'
+            };
+        });
+    } catch (error) {
+        console.error("Error getting feedback items:", error);
+        return [];
+    }
+}
+
+
+        function updateFeedbackList(feedbackItems) {
+            if (feedbackItems.length === 0) {
+                feedbackList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="bi bi-chat-square-text"></i>
+                        <h5>No Feedback Found</h5>
+                        <p>No feedback matches your current filters.</p>
+                        <button class="btn btn-primary" onclick="loadFeedbackData()">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+        
+            feedbackList.innerHTML = feedbackItems.map(item => `
+        <div class="feedback-item ${item.status === 'unread' ? 'unread' : ''} ${item.status === 'archived' ? 'archived' : ''}" 
+             data-feedback-id="${item.id}" onclick="showFeedbackDetail('${item.id}')">
+            <div class="feedback-avatar">
+                ${item.userName.charAt(0).toUpperCase()}
+            </div>
+            <div class="feedback-content">
+                <h6>
+                    ${item.subject || 'No Subject'}
+                    ${item.rating > 0 ? `
+                        <span class="feedback-rating">
+                            ${Array.from({length: item.rating}).map(() => '<i class="bi bi-star-fill"></i>').join('')}
+                        </span>
+                    ` : ''}
+                    <span class="badge ${getTypeBadgeClass(item.category)} float-end">
+                        ${item.category ? item.category.charAt(0).toUpperCase() + item.category.slice(1) : 'Other'}
+                    </span>
+                </h6>
+                <small>${formatDate(item.createdAt)} • ${item.userEmail}</small>
+                <p class="text-truncate">${item.message}</p>
+                <div class="feedback-actions">
+                    <span class="badge ${getStatusBadgeClass(item.status)} me-2">
+                        ${item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                    </span>
+                    ${item.priority === 'high' ? '<span class="badge bg-danger me-2">Urgent</span>' : ''}
+                    ${item.allowContact ? '<span class="badge bg-success me-2">Contact OK</span>' : ''}
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function updateFeedbackTable(feedbackItems) {
+    if (feedbackItems.length === 0) {
+        feedbackTableBody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center py-4">No feedback matches your current filters</td>
+            </tr>
+        `;
+        return;
+    }
+    
+    feedbackTableBody.innerHTML = feedbackItems.map(item => `
+        <tr data-feedback-id="${item.id}" onclick="showFeedbackDetail('${item.id}')">
+            <td>
+                <div class="d-flex align-items-center">
+                    <div class="feedback-avatar me-2">
+                        ${item.userName.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                        ${item.userName}
+                        <small class="d-block text-muted">${item.userEmail}</small>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <span class="badge ${getTypeBadgeClass(item.category)}">
+                    ${item.category ? item.category.charAt(0).toUpperCase() + item.category.slice(1) : 'Other'}
+                </span>
+            </td>
+            <td>${item.subject || 'No Subject'}</td>
+            <td class="text-truncate" style="max-width: 200px;">${item.message}</td>
+            <td>
+                ${item.rating > 0 ? `
+                    <span class="feedback-rating">
+                        ${Array.from({length: item.rating}).map(() => '<i class="bi bi-star-fill"></i>').join('')}
+                    </span>
+                ` : 'N/A'}
+            </td>
+            <td>${formatDate(item.createdAt)}</td>
+            <td>
+                <span class="badge ${getStatusBadgeClass(item.status)} me-2">
+                    ${item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                </span>
+                ${item.priority === 'high' ? '<span class="badge bg-danger me-1">Urgent</span>' : ''}
+                ${item.allowContact ? '<span class="badge bg-success">Contact OK</span>' : ''}
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-light" data-feedback-id="${item.id}" onclick="event.stopPropagation(); showFeedbackDetail('${item.id}')">
+                    <i class="bi bi-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" data-feedback-id="${item.id}" onclick="event.stopPropagation(); archiveFeedback('${item.id}')">
+                    <i class="bi bi-archive"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+    function getTypeBadgeClass(category) {
+        switch(category) {
+            case 'bug': return 'bg-danger';
+            case 'feature': return 'bg-primary';
+            case 'question': return 'bg-info';
+            case 'complaint': return 'bg-warning text-dark';
+            case 'general': return 'bg-secondary';
+            default: return 'bg-secondary';
+        }
+    }
+
+    function getStatusBadgeClass(status) {
+        switch(status) {
+            case 'unread': return 'bg-primary';
+            case 'read': return 'bg-secondary';
+            case 'resolved': return 'bg-success';
+            case 'archived': return 'bg-dark';
+            default: return 'bg-secondary';
+        }
+    }
+
+    function formatDate(date) {
+        if (date?.toDate) date = date.toDate();
+        
+        const now = new Date();
+        const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) return "Today";
+        if (diffDays === 1) return "Yesterday";
+        if (diffDays < 7) return `${diffDays} days ago`;
+        
+        return date.toLocaleDateString();
+    }
+
+    async function showFeedbackDetail(feedbackId) {
+    try {
+        const doc = await db.collection('feedback').doc(feedbackId).get();
+        if (!doc.exists) {
+            showAlert("Feedback not found", "danger");
+            return;
+        }
+        
+        const feedback = doc.data();
+        feedback.id = doc.id;
+        currentFeedback = feedback;
+        
+        // Mark as read if unread
+        if (feedback.status === 'unread') {
+            await db.collection('feedback').doc(feedbackId).update({
+                status: 'read',
+                readAt: firebase.firestore.FieldValue.serverTimestamp(),
+                readBy: auth.currentUser.uid,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            // Update the UI immediately for both list and table views
+            const feedbackElements = document.querySelectorAll(`[data-feedback-id="${feedbackId}"]`);
+            feedbackElements.forEach(feedbackElement => {
+                feedbackElement.classList.remove('unread');
+                const badge = feedbackElement.querySelector('.badge.bg-primary');
+                if (badge) {
+                    badge.className = 'badge bg-secondary';
+                    badge.textContent = 'Read';
+                }
+            });
+            
+            // Update counters
+            updateUnreadCount();
+        }
+        
+        // Safely handle dates
+        const createdAt = feedback.createdAt ? (feedback.createdAt.toDate ? feedback.createdAt.toDate() : new Date(feedback.createdAt)) : new Date();
+        const updatedAt = feedback.updatedAt ? (feedback.updatedAt.toDate ? feedback.updatedAt.toDate() : new Date(feedback.updatedAt)) : null;
+        const resolvedAt = feedback.resolvedAt ? (feedback.resolvedAt.toDate ? feedback.resolvedAt.toDate() : new Date(feedback.resolvedAt)) : null;
+        
+        // Display feedback details
+        feedbackModalContent.innerHTML = `
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="mb-4">
+                        <h4>${feedback.subject || 'No Subject'}</h4>
+                        <p class="mt-3">${feedback.message || 'No message provided'}</p>
+                        <div class="d-flex align-items-center mt-2">
+                            ${feedback.rating > 0 ? `
+                                <span class="feedback-rating me-3">
+                                    ${Array.from({length: feedback.rating}).map(() => '<i class="bi bi-star-fill"></i>').join('')}
+                                </span>
+                            ` : ''}
+                            <span class="badge ${getTypeBadgeClass(feedback.category)} me-2">
+                                ${feedback.category ? feedback.category.charAt(0).toUpperCase() + feedback.category.slice(1) : 'Other'}
+                            </span>
+                            <span class="badge ${getPriorityBadgeClass(feedback.priority)} me-2">
+                                ${feedback.priority ? feedback.priority.charAt(0).toUpperCase() + feedback.priority.slice(1) : 'Normal'}
+                            </span>
+                            ${feedback.allowContact ? '<span class="badge bg-success">Contact OK</span>' : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6>Details</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <small class="text-muted">Submitted by</small>
+                                <p>${feedback.userName || 'Anonymous'} (${feedback.userEmail || 'No email'})</p>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted">Date</small>
+                                <p>${createdAt.toLocaleString()}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted">Last Updated</small>
+                                <p>${updatedAt ? updatedAt.toLocaleString() : 'Never updated'}</p>
+                            </div>
+                            ${resolvedAt ? `
+                                <div class="col-md-6">
+                                    <small class="text-muted">Resolved on</small>
+                                    <p>${resolvedAt.toLocaleString()}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="bi bi-person"></i> User Information
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <small class="text-muted">Email</small>
+                                <p>${feedback.userEmail || 'No email'}</p>
+                            </div>
+                            <div class="mb-3">
+                                <small class="text-muted">User ID</small>
+                                <p class="text-truncate">${feedback.userId || 'Unknown'}</p>
+                            </div>
+                            <div class="mb-3">
+                                <small class="text-muted">Contact Allowed</small>
+                                <p>${feedback.allowContact ? 'Yes' : 'No'}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            ${feedback.response ? `
+                <div class="alert alert-info mt-4">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        <strong>Admin Response</strong>
+                    </div>
+                    <p>${feedback.response}</p>
+                    <small class="text-muted">Resolved by ${feedback.resolvedBy || 'admin'} on ${resolvedAt ? resolvedAt.toLocaleString() : 'unknown date'}</small>
+                </div>
+            ` : ''}
+        `;
+        
+        // Update the priority dropdown to show current priority
+        updatePriorityDropdown(feedback.priority || 'normal');
+        
+        // Set up event listeners for this specific feedback item
+        setupFeedbackModalActions(feedbackId);
+
+        feedbackModal.show();
+        
+    } catch (error) {
+        console.error("Error showing feedback detail:", error);
+        showAlert("Failed to load feedback details: " + error.message, "danger");
+    }
+}
+
+    function getPriorityBadgeClass(priority) {
+        switch(priority) {
+            case 'high': return 'bg-danger';
+            case 'normal': return 'bg-primary';
+            case 'low': return 'bg-secondary';
+            default: return 'bg-primary';
+        }
+    }
+
+    function updatePriorityDropdown(priority) {
+        priorityOptions.forEach(option => {
+            if (option.dataset.priority === priority) {
+                option.classList.add('active');
+                priorityDropdown.innerHTML = `
+                    <i class="bi bi-arrow-up-right"></i> Priority: ${priority.charAt(0).toUpperCase() + priority.slice(1)}
+                `;
+            } else {
+                option.classList.remove('active');
+            }
+        });
+    }
+
+    function setupFeedbackModalActions(feedbackId) {
+    // Get fresh references to elements inside the modal
+        const modalArchiveBtn = document.getElementById('archive-feedback');
+        const modalPriorityDropdown = document.getElementById('priorityDropdown');
+        const modalPriorityOptions = document.querySelectorAll('.priority-option');
+        
+        // Clear previous event listeners by cloning elements
+        if (modalArchiveBtn) {
+            const newArchiveBtn = modalArchiveBtn.cloneNode(true);
+            modalArchiveBtn.parentNode.replaceChild(newArchiveBtn, modalArchiveBtn);
+            
+            // Set up archive button
+            newArchiveBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                if (confirm("Are you sure you want to archive this feedback?")) {
+                    try {
+                        await db.collection('feedback').doc(feedbackId).update({
+                            status: 'archived',
+                            archivedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            archivedBy: auth.currentUser.uid,
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        
+                        showAlert("Feedback archived successfully", "success");
+                        feedbackModal.hide();
+                        loadFeedbackData();
+                    } catch (error) {
+                        console.error("Error archiving feedback:", error);
+                        showAlert("Failed to archive feedback", "danger");
+                    }
+                }
+            });
+        }
+        
+        // Set up priority options
+        if (modalPriorityOptions && modalPriorityOptions.length > 0) {
+            modalPriorityOptions.forEach(option => {
+                const newOption = option.cloneNode(true);
+                option.parentNode.replaceChild(newOption, option);
+                
+                newOption.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const newPriority = newOption.dataset.priority;
+                    try {
+                        await db.collection('feedback').doc(feedbackId).update({
+                            priority: newPriority,
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        
+                        updatePriorityDropdown(newPriority);
+                        showAlert("Priority updated successfully", "success");
+                        loadFeedbackData();
+                    } catch (error) {
+                        console.error("Error updating priority:", error);
+                        showAlert("Failed to update priority", "danger");
+                    }
+                });
+            });
+        }
+    }
+
+    async function updateUnreadCount() {
+        const unreadCount = await getUnreadFeedbackCount();
+        document.getElementById('unread-feedback').textContent = unreadCount;
+    }
+
+    async function archiveFeedback(feedbackId) {
+        try {
+            if (!confirm("Are you sure you want to archive this feedback?")) {
+                return;
+            }
+            
+            await db.collection('feedback').doc(feedbackId).update({
+                status: 'archived',
+                archivedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                archivedBy: auth.currentUser.uid
+            });
+            
+            showAlert("Feedback archived successfully", "success");
+            loadFeedbackData();
+            
+        } catch (error) {
+            console.error("Error archiving feedback:", error);
+            showAlert("Failed to archive feedback", "danger");
+        }
+    }
+
+    replyToFeedbackBtn.addEventListener('click', () => {
+        feedbackModal.hide();
+        replyModal.show();
+    });
+
+    sendReplyBtn.addEventListener('click', async () => {
+    try {
+        const feedbackId = feedbackIdInput.value;
+        const message = replyMessage.value.trim();
+        const markResolved = markAsResolved.checked;
+        
+        if (!message) {
+            showAlert("Please enter a response message", "danger");
+            return;
+        }
+        
+        const updateData = {
+            response: message,
+            respondedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            respondedBy: auth.currentUser.uid,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        if (markResolved) {
+            updateData.status = 'resolved';
+            updateData.resolvedAt = firebase.firestore.FieldValue.serverTimestamp();
+            updateData.resolvedBy = auth.currentUser.uid;
+        } else {
+            updateData.status = 'read';
+        }
+        
+        await db.collection('feedback').doc(feedbackId).update(updateData);
+        
+        showAlert("Response sent successfully", "success");
+        replyModal.hide();
+        loadFeedbackData();
+        
+    } catch (error) {
+        console.error("Error sending reply:", error);
+        showAlert("Failed to send response", "danger");
+    }
+});
+
+    filterButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            
+            currentFilter = button.dataset.filter;
+            loadFeedbackData();
+        });
+    });
+
+    feedbackSearch.addEventListener('input', () => {
+        // Implement search functionality
+        console.log("Searching for:", feedbackSearch.value);
+        // You would typically filter the existing data or make a new query
+    });
+
+    feedbackType.addEventListener('change', () => {
+        loadFeedbackData();
+    });
+
+    feedbackRating.addEventListener('change', () => {
+        loadFeedbackData();
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+        try {
+            await auth.signOut();
+            window.location.href = '/';
+        } catch (error) {
+            console.error("Logout error:", error);
+            showAlert("Logout failed. Please try again.", "danger");
+        }
+    });
+
+    function showLoadingState(isLoading) {
+        const elements = document.querySelectorAll('.loading-spinner');
+        elements.forEach(el => {
+            el.style.visibility = isLoading ? 'visible' : 'hidden';
+        });
+    }
+
+    function showAlert(message, type = "info") {
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} alert-dismissible fade show`;
+        alert.role = "alert";
+        alert.innerHTML = `
+            <i class="bi ${type === 'danger' ? 'bi-exclamation-triangle-fill' : 'bi-info-circle-fill'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        const container = document.querySelector('.content');
+        container.insertBefore(alert, container.firstChild);
+        
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }, 5000);
+    }
+
+    // Initialize
+    showLoadingState(true);
+    console.log("Feedback management initialized");
+    </script>
+</body>
+</html>

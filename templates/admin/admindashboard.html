@@ -431,11 +431,11 @@
                 <a class="nav-link" href="{{ url_for('user_management') }}">
                     <i class="bi bi-people"></i> User Management
                 </a>
-                <a class="nav-link" href="">
+                <a class="nav-link" href="{{ url_for('analytics') }}">
                     <i class="bi bi-graph-up"></i> Analytics
                 </a>
-                <a class="nav-link" href="">
-                    <i class="bi bi-file-earmark-text"></i> Reports
+                <a class="nav-link" href="{{ url_for('feedback_management') }}">
+                    <i class="bi bi-chat-left-text"></i> Feedback Manage
                 </a>
                 <a class="nav-link" href="">
                     <i class="bi bi-gear"></i> System Settings
@@ -709,6 +709,8 @@
     const logoutBtn = document.getElementById('logout-btn');
     const recentUsersTable = document.getElementById('recent-users');
     const periodButtons = document.querySelectorAll('[data-period]');
+    const usersCanvas = document.getElementById('usersChart');
+    const qualityCanvas = document.getElementById('sleepQualityChart');
 
     let usersChart, qualityChart;
     const usersCtx = document.getElementById('usersChart').getContext('2d');
@@ -801,8 +803,9 @@
     } catch (error) {
         console.error("Data load error:", error);
         showAlert("Data load failed: " + error.message, "danger");
-        document.querySelectorAll('.loading-spinner').forEach(el => el.remove());
-        }
+    } finally {
+        showLoadingState(false);
+    }
 }
 
 // Add debug logging to Firestore rules (temporarily)
@@ -963,291 +966,300 @@ async function getAverageQuality() {
         return date.toLocaleDateString();
     }
 
-            async function getUsersChartData(period) {
-            try {
-                const now = new Date();
-                let startDate;
-                
-                if (period === 'month') {
-                    startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-                } else if (period === 'year') {
-                    startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-                } else {
-                    // All time - get first user creation date (excluding admin)
-                    const firstUser = await db.collection('users')
-                        .where('email', '!=', 'admin@sleepwell.com')
-                        .orderBy('createdAt')
-                        .limit(1)
-                        .get();
-                    
-                    startDate = firstUser.docs[0]?.data()?.createdAt?.toDate() || 
-                            new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-                }
-                
-                // For month view, get daily counts
-                if (period === 'month') {
-                    const days = [];
-                    const counts = [];
-                    
-                    for (let i = 0; i < 30; i++) {
-                        const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-                        date.setHours(0, 0, 0, 0);
-                        
-                        const nextDate = new Date(date.getTime() + 24 * 60 * 60 * 1000);
-                        
-                        const snapshot = await db.collection('users')
-                            .where('email', '!=', 'admin@sleepwell.com')
-                            .where('createdAt', '>=', date)
-                            .where('createdAt', '<', nextDate)
-                            .count()
-                            .get();
-                        
-                        days.unshift(date.toLocaleDateString([], { month: 'short', day: 'numeric' }));
-                        counts.unshift(snapshot.data().count);
-                    }
-                    
-                    return { labels: days, data: counts };
-                }
-                // For year view, get monthly counts
-                else if (period === 'year') {
-                    const months = [];
-                    const counts = [];
-                    
-                    for (let i = 0; i < 12; i++) {
-                        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-                        const nextDate = new Date(date.getFullYear(), date.getMonth() + 1, 1);
-                        
-                        const snapshot = await db.collection('users')
-                            .where('email', '!=', 'admin@sleepwell.com')
-                            .where('createdAt', '>=', date)
-                            .where('createdAt', '<', nextDate)
-                            .count()
-                            .get();
-                        
-                        months.unshift(date.toLocaleDateString([], { month: 'short' }));
-                        counts.unshift(snapshot.data().count);
-                    }
-                    
-                    return { labels: months, data: counts };
-                }
-                // For all time, get quarterly counts
-                else {
-                    const quarters = [];
-                    const counts = [];
-                    const quarterMonths = 3;
-                    
-                    let currentDate = new Date(startDate);
-                    currentDate.setDate(1);
-                    currentDate.setHours(0, 0, 0, 0);
-                    
-                    while (currentDate <= now) {
-                        const nextDate = new Date(
-                            currentDate.getFullYear(),
-                            currentDate.getMonth() + quarterMonths,
-                            1
-                        );
-                        
-                        const snapshot = await db.collection('users')
-                            .where('email', '!=', 'admin@sleepwell.com')
-                            .where('createdAt', '>=', currentDate)
-                            .where('createdAt', '<', nextDate)
-                            .count()
-                            .get();
-                        
-                        quarters.push(`${currentDate.getFullYear()} Q${Math.floor(currentDate.getMonth() / 3) + 1}`);
-                        counts.push(snapshot.data().count);
-                        
-                        currentDate = nextDate;
-                    }
-                    
-                    return { labels: quarters, data: counts };
-                }
-            } catch (error) {
-                console.error("Error getting users chart data:", error);
-                return { labels: [], data: [] };
-            }
-        }
-
-    async function getQualityDistribution() {
-        try {
-            const snapshot = await db.collection('sleepEntries')
-                .select('quality')
+    async function getUsersChartData(period) {
+    try {
+        console.log(`Fetching user growth data for period: ${period}`); // Debug
+        const now = new Date();
+        let startDate;
+        
+        if (period === 'month') {
+            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        } else if (period === 'year') {
+            startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        } else {
+            // All time - get first user creation date
+            const firstUser = await db.collection('users')
+                .orderBy('createdAt')
+                .limit(1)
                 .get();
             
-            if (snapshot.empty) return { labels: [], data: [] };
-            
-            const distribution = {
-                'Excellent (5)': 0,
-                'Good (4)': 0,
-                'Average (3)': 0,
-                'Poor (2)': 0,
-                'Very Poor (1)': 0
-            };
-            
-            snapshot.forEach(doc => {
-                const quality = parseInt(doc.data().quality) || 3;
-                if (quality === 5) distribution['Excellent (5)']++;
-                else if (quality === 4) distribution['Good (4)']++;
-                else if (quality === 3) distribution['Average (3)']++;
-                else if (quality === 2) distribution['Poor (2)']++;
-                else if (quality === 1) distribution['Very Poor (1)']++;
-            });
-            
-            return {
-                labels: Object.keys(distribution),
-                data: Object.values(distribution),
-                colors: ['#10b981', '#34d399', '#f59e0b', '#f97316', '#ef4444']
-            };
-        } catch (error) {
-            console.error("Error getting quality distribution:", error);
-            return { labels: [], data: [] };
+            startDate = firstUser.docs[0]?.data()?.createdAt?.toDate() || 
+                    new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
         }
+        
+        // For month view, get daily counts
+        if (period === 'month') {
+            const days = [];
+            const counts = [];
+            
+            for (let i = 0; i < 30; i++) {
+                const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+                date.setHours(0, 0, 0, 0);
+                
+                const nextDate = new Date(date.getTime() + 24 * 60 * 60 * 1000);
+                
+                const snapshot = await db.collection('users')
+                    .where('createdAt', '>=', date)
+                    .where('createdAt', '<', nextDate)
+                    .count()
+                    .get();
+                
+                days.unshift(date.toLocaleDateString([], { month: 'short', day: 'numeric' }));
+                counts.unshift(snapshot.data().count);
+            }
+            
+            return { labels: days, data: counts };
+        }
+        // For year view, get monthly counts
+        else if (period === 'year') {
+            const months = [];
+            const counts = [];
+            
+            for (let i = 0; i < 12; i++) {
+                const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const nextDate = new Date(date.getFullYear(), date.getMonth() + 1, 1);
+                
+                const snapshot = await db.collection('users')
+                    .where('createdAt', '>=', date)
+                    .where('createdAt', '<', nextDate)
+                    .count()
+                    .get();
+                
+                months.unshift(date.toLocaleDateString([], { month: 'short' }));
+                counts.unshift(snapshot.data().count);
+            }
+            
+            return { labels: months, data: counts };
+        }
+        // For all time, get quarterly counts
+        else {
+            const quarters = [];
+            const counts = [];
+            const quarterMonths = 3;
+            
+            let currentDate = new Date(startDate);
+            currentDate.setDate(1);
+            currentDate.setHours(0, 0, 0, 0);
+            
+            while (currentDate <= now) {
+                const nextDate = new Date(
+                    currentDate.getFullYear(),
+                    currentDate.getMonth() + quarterMonths,
+                    1
+                );
+                
+                const snapshot = await db.collection('users')
+                    .where('createdAt', '>=', currentDate)
+                    .where('createdAt', '<', nextDate)
+                    .count()
+                    .get();
+                
+                quarters.push(`${currentDate.getFullYear()} Q${Math.floor(currentDate.getMonth() / 3) + 1}`);
+                counts.push(snapshot.data().count);
+                
+                currentDate = nextDate;
+            }
+            
+            return { labels: quarters, data: counts };
+        }
+        console.log('User growth data:', { labels: chartData.labels, data: chartData.data }); // Debug
+        return chartData
+    } catch (error) {
+        console.error("Error getting users chart data:", error);
+        return { labels: [], data: [] };
     }
+}
 
-    function updateUsersChart(chartData) {
-        if (usersChart) {
-            usersChart.destroy();
-        }
+async function getQualityDistribution() {
+    try {
+        console.log("Fetching sleep quality distribution"); // Debug
+        const snapshot = await db.collection('sleepEntries')
+            .select('quality')
+            .get();
         
-        if (chartData.labels.length === 0 || chartData.data.every(v => v === 0)) {
-            document.getElementById('usersChart').innerHTML = `
-                <div class="chart-empty-state">
-                    <i class="bi bi-people fs-4 me-2"></i>
-                    No user data available for this period
-                </div>
-            `;
-            return;
-        }
+        if (snapshot.empty) return { labels: [], data: [] };
         
-        usersChart = new Chart(usersCtx, {
-            type: 'line',
-            data: {
-                labels: chartData.labels,
-                datasets: [{
-                    label: 'New Users',
-                    data: chartData.data,
-                    backgroundColor: 'rgba(245, 158, 11, 0.2)',
-                    borderColor: 'rgba(245, 158, 11, 1)',
-                    borderWidth: 2,
-                    tension: 0.4,
-                    fill: true,
-                    pointBackgroundColor: '#fff',
-                    pointBorderColor: 'rgba(245, 158, 11, 1)',
-                    pointRadius: 5,
-                    pointHoverRadius: 7
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(30,30,30,0.9)',
-                        titleColor: '#fff',
-                        bodyColor: '#e0e0e0',
-                        borderColor: 'rgba(255,255,255,0.1)',
-                        borderWidth: 1,
-                        padding: 12,
-                        callbacks: {
-                            label: function(context) {
-                                return `Users: ${context.raw}`;
-                            }
-                        }
-                    }
+        const distribution = {
+            'Excellent (5)': 0,
+            'Good (4)': 0,
+            'Average (3)': 0,
+            'Poor (2)': 0,
+            'Very Poor (1)': 0
+        };
+        
+        snapshot.forEach(doc => {
+            const quality = parseInt(doc.data().quality) || 3;
+            if (quality === 5) distribution['Excellent (5)']++;
+            else if (quality === 4) distribution['Good (4)']++;
+            else if (quality === 3) distribution['Average (3)']++;
+            else if (quality === 2) distribution['Poor (2)']++;
+            else if (quality === 1) distribution['Very Poor (1)']++;
+        });
+        
+        console.log('Quality distribution data:', { 
+            labels: Object.keys(distribution), 
+            data: Object.values(distribution) 
+        }); // Debug
+        return {
+            labels: Object.keys(distribution),
+            data: Object.values(distribution),
+            colors: ['#10b981', '#34d399', '#f59e0b', '#f97316', '#ef4444']
+        };
+    } catch (error) {
+        console.error("Error getting quality distribution:", error);
+        return { labels: [], data: [] };
+    }
+}
+
+function updateUsersChart(chartData) {
+    console.log("Updating users chart with data:", chartData); // Debug
+    if (usersChart) {
+        console.log("Destroying existing users chart"); // Debug
+        usersChart.destroy();
+    }
+    
+    if (chartData.labels.length === 0 || chartData.data.every(v => v === 0)) {
+        document.getElementById('usersChart').innerHTML = `
+            <div class="chart-empty-state">
+                <i class="bi bi-people fs-4 me-2"></i>
+                No user data available for this period
+            </div>
+        `;
+        return;
+    }
+    
+    usersChart = new Chart(usersCtx, {
+        type: 'line',
+        data: {
+            labels: chartData.labels,
+            datasets: [{
+                label: 'New Users',
+                data: chartData.data,
+                backgroundColor: 'rgba(245, 158, 11, 0.2)',
+                borderColor: 'rgba(245, 158, 11, 1)',
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#fff',
+                pointBorderColor: 'rgba(245, 158, 11, 1)',
+                pointRadius: 5,
+                pointHoverRadius: 7
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        },
-                        ticks: {
-                            color: '#a0a0a0',
-                            precision: 0
-                        }
-                    },
-                    x: {
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        },
-                        ticks: {
-                            color: '#a0a0a0'
+                tooltip: {
+                    backgroundColor: 'rgba(30,30,30,0.9)',
+                    titleColor: '#fff',
+                    bodyColor: '#e0e0e0',
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderWidth: 1,
+                    padding: 12,
+                    callbacks: {
+                        label: function(context) {
+                            return `Users: ${context.raw}`;
                         }
                     }
                 }
-            }
-        });
-    }
-
-    function updateQualityChart(chartData) {
-        if (qualityChart) {
-            qualityChart.destroy();
-        }
-        
-        if (chartData.labels.length === 0 || chartData.data.every(v => v === 0)) {
-            document.getElementById('sleepQualityChart').innerHTML = `
-                <div class="chart-empty-state">
-                    <i class="bi bi-moon fs-4 me-2"></i>
-                    No sleep quality data available
-                </div>
-            `;
-            return;
-        }
-        
-        qualityChart = new Chart(qualityCtx, {
-            type: 'doughnut',
-            data: {
-                labels: chartData.labels,
-                datasets: [{
-                    data: chartData.data,
-                    backgroundColor: chartData.colors || [
-                        'rgba(16, 185, 129, 0.8)',
-                        'rgba(52, 211, 153, 0.8)',
-                        'rgba(245, 158, 11, 0.8)',
-                        'rgba(249, 115, 22, 0.8)',
-                        'rgba(239, 68, 68, 0.8)'
-                    ],
-                    borderColor: 'rgba(30,30,30,0.8)',
-                    borderWidth: 2
-                }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                        labels: {
-                            color: '#e0e0e0',
-                            padding: 20,
-                            usePointStyle: true,
-                            pointStyle: 'circle'
-                        }
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
                     },
-                    tooltip: {
-                        backgroundColor: 'rgba(30,30,30,0.9)',
-                        titleColor: '#fff',
-                        bodyColor: '#e0e0e0',
-                        borderColor: 'rgba(255,255,255,0.1)',
-                        borderWidth: 1,
-                        padding: 12,
-                        callbacks: {
-                            label: function(context) {
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const value = context.raw;
-                                const percentage = Math.round((value / total) * 100);
-                                return `${context.label}: ${value} (${percentage}%)`;
-                            }
-                        }
+                    ticks: {
+                        color: '#a0a0a0',
+                        precision: 0
                     }
                 },
-                cutout: '70%'
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#a0a0a0'
+                    }
+                }
             }
-        });
+        }
+    });
+}
+
+function updateQualityChart(chartData) {
+    console.log("Updating quality chart with data:", chartData); // Debug
+    
+    if (qualityChart) {
+        console.log("Destroying existing quality chart"); // Debug
+        qualityChart.destroy();
     }
+    
+    if (chartData.labels.length === 0 || chartData.data.every(v => v === 0)) {
+        document.getElementById('sleepQualityChart').innerHTML = `
+            <div class="chart-empty-state">
+                <i class="bi bi-moon fs-4 me-2"></i>
+                No sleep quality data available
+            </div>
+        `;
+        return;
+    }
+    
+    qualityChart = new Chart(qualityCtx, {
+        type: 'doughnut',
+        data: {
+            labels: chartData.labels,
+            datasets: [{
+                data: chartData.data,
+                backgroundColor: chartData.colors || [
+                    'rgba(16, 185, 129, 0.8)',
+                    'rgba(52, 211, 153, 0.8)',
+                    'rgba(245, 158, 11, 0.8)',
+                    'rgba(249, 115, 22, 0.8)',
+                    'rgba(239, 68, 68, 0.8)'
+                ],
+                borderColor: 'rgba(30,30,30,0.8)',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        color: '#e0e0e0',
+                        padding: 20,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(30,30,30,0.9)',
+                    titleColor: '#fff',
+                    bodyColor: '#e0e0e0',
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderWidth: 1,
+                    padding: 12,
+                    callbacks: {
+                        label: function(context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const value = context.raw;
+                            const percentage = Math.round((value / total) * 100);
+                            return `${context.label}: ${value} (${percentage}%)`;
+                        }
+                    }
+                }
+            },
+            cutout: '70%'
+        }
+    });
+}
 
     function showLoadingState(isLoading) {
         const elements = document.querySelectorAll('.loading-spinner');

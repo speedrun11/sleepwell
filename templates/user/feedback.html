@@ -9,7 +9,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
-        /* Inherit all dashboard styles */
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+        
         :root {
             --primary: #6d28d9;
             --primary-hover: #7c3aed;
@@ -320,20 +321,22 @@
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label">Subject</label>
-                                    <input type="text" class="form-control" required>
+                                    <input type="text" class="form-control" name="subject" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Category</label>
-                                    <select class="form-select" required>
+                                    <select class="form-select" name="category" required>
                                         <option value="">Select category...</option>
                                         <option value="bug">Bug Report</option>
-                                        <option value="suggestion">Feature Suggestion</option>
-                                        <option value="general">General Feedback</option>
+                                        <option value="feature">Feature Suggestion</option>
+                                        <option value="question">Question</option>
+                                        <option value="complaint">Complaint</option>
+                                        <option value="other">Other</option>
                                     </select>
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label">Your Message</label>
-                                    <textarea class="form-control" rows="4" required></textarea>
+                                    <textarea class="form-control" name="message" rows="4" required></textarea>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Rating</label>
@@ -344,11 +347,11 @@
                                         <i class="bi bi-star-fill star" data-value="4"></i>
                                         <i class="bi bi-star-fill star" data-value="5"></i>
                                     </div>
-                                    <input type="hidden" id="ratingValue" required>
+                                    <input type="hidden" name="rating" id="ratingValue" required>
                                 </div>
                                 <div class="col-12">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="allowContact">
+                                        <input class="form-check-input" type="checkbox" name="allowContact" id="allowContact">
                                         <label class="form-check-label small text-muted">
                                             Allow us to contact you about this feedback
                                         </label>
@@ -461,39 +464,45 @@
         });
     
         // Feedback form submission
-        document.getElementById('feedbackForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const user = auth.currentUser;
-            if (!user) {
-                showAlert("Please login to submit feedback", "warning");
-                return;
-            }
+document.getElementById('feedbackForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const user = auth.currentUser;
+    if (!user) {
+        showAlert("Please login to submit feedback", "warning");
+        return;
+    }
 
-            // Get form values using proper selectors
-            const subject = e.target.querySelector('input[type="text"]').value.trim();
-            const category = e.target.querySelector('select').value;
-            const message = e.target.querySelector('textarea').value.trim();
-            const rating = parseInt(document.getElementById('ratingValue').value);
+    // Get form values
+    const form = e.target;
+    const subject = form.subject.value.trim();
+    const category = form.category.value;
+    const message = form.message.value.trim();
+    const rating = parseInt(form.rating.value);
+    const allowContact = form.allowContact.checked;
 
-            // Enhanced validation
-            if (!subject || !category || !message || isNaN(rating) || rating < 1 || rating > 5) {
-                showAlert("Please fill all required fields and select a valid rating", "warning");
-                return;
-            }
+    // Validation
+    if (!subject || !category || !message || isNaN(rating) || rating < 1 || rating > 5) {
+        showAlert("Please fill all required fields and select a valid rating", "warning");
+        return;
+    }
 
     const formData = {
         subject,
         category,
         message,
         rating,
-        allowContact: document.getElementById('allowContact').checked,
+        allowContact,
         userId: user.uid,
-        email: user.email,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        userName: user.displayName || "Anonymous",
+        userEmail: user.email || "No email",
+        status: "unread", // Default status
+        priority: "normal", // Default priority
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
     try {
-        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const submitBtn = form.querySelector('button[type="submit"]');
         const originalBtnText = submitBtn.innerHTML;
         submitBtn.innerHTML = '<span class="loading-spinner"></span> Submitting...';
         submitBtn.disabled = true;
@@ -503,14 +512,14 @@
             setTimeout(() => reject(new Error("Submission timed out. Please check your connection.")), 10000)
         );
 
-        // Attempt submission
+        // Submit to Firebase
         await Promise.race([
             db.collection('feedback').add(formData),
             timeoutPromise
         ]);
 
         showAlert("Feedback submitted successfully!", "success");
-        e.target.reset();
+        form.reset();
         document.querySelectorAll('.star').forEach(s => s.classList.remove('active'));
         document.getElementById('ratingValue').value = '';
         
@@ -526,7 +535,7 @@
         
         showAlert(errorMessage, "danger");
     } finally {
-        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const submitBtn = form.querySelector('button[type="submit"]');
         if (submitBtn) {
             submitBtn.innerHTML = '<i class="bi bi-send"></i> Submit Feedback';
             submitBtn.disabled = false;
