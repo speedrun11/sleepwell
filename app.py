@@ -396,7 +396,7 @@ def login():
     
     try:
         # Verify the ID token first
-        decoded_token = auth.verify_id_token(data["idToken"])
+        decoded_token = auth.verify_id_token(data["idToken"], clock_skew_seconds=10)
         
         # Then create session cookie
         session_cookie = auth.create_session_cookie(
@@ -431,7 +431,7 @@ def admin_login():
     
     try:
         # Verify the ID token
-        decoded_token = auth.verify_id_token(data["idToken"])
+        decoded_token = auth.verify_id_token(data["idToken"], clock_skew_seconds=10)
         user = auth.get_user(decoded_token['uid'])
         
         # Check if this is an admin user (by email or existing claims)
