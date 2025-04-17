@@ -287,7 +287,23 @@ def feedback_management():
         app.logger.error(f"Feedback management error: {str(e)}")
         return redirect(url_for('admin_dashboard'))
 
-
+@app.route("/admin/systemsettings.html")
+@admin_required
+def system_settings():
+    try:
+        session_cookie = request.cookies.get('session')
+        decoded_claims = auth.verify_session_cookie(session_cookie)
+        user = auth.get_user(decoded_claims['uid'])
+        
+        return render_template("admin/systemsettings.html", user={
+            'email': user.email,
+            'name': user.display_name or "Admin",
+            'is_admin': True
+        })
+        
+    except Exception as e:
+        app.logger.error(f"System settings error: {str(e)}")
+        return redirect(url_for('admin_dashboard'))
 
 
 @app.route('/user/sleepanalysis')

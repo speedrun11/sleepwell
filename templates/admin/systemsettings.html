@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SLEEPWELL - SYSTEM SETTINGS</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        /* Inherit all styles from admin dashboard */
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary: #6d28d9;
+            --primary-hover: #7c3aed;
+            --accent: #10b981;
+            --bg: #121212;
+            --surface: #1e1e1e;
+            --surface-hover: rgba(255,255,255,0.05);
+            --surface-light: #2a2a2a;
+            --text: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --admin-accent: #f59e0b;
+        }
+
+        .user-info h5,
+        .user-info small,
+        #last-login,
+        .stat-value,
+        .stat-value i,
+        .stat-value small {
+            color: #fff !important;
+        }
+        
+        * {
+            font-family: 'Montserrat', sans-serif;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: var(--bg);
+            color: var(--text);
+            padding-top: 56px;
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 600;
+            letter-spacing: -0.025em;
+        }
+
+        .navbar {
+            background: var(--surface) !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--admin-accent) !important;
+        }
+
+        .sidebar {
+            height: 100vh;
+            background: var(--surface);
+            padding: 20px;
+            position: fixed;
+            width: 280px;
+            overflow-y: auto;
+            border-right: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 4px 0 12px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .sidebar a {
+            color: var(--text);
+            text-decoration: none;
+            display: block;
+            padding: 12px 16px;
+            margin: 4px 0;
+            border-radius: 6px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar a:hover {
+            background: var(--surface-hover);
+            transform: translateX(4px);
+            border-left-color: var(--admin-accent);
+        }
+
+        .sidebar a.active {
+            background: linear-gradient(90deg, rgba(245,158,11,0.1) 0%, transparent 100%);
+            border-left-color: var(--admin-accent);
+        }
+
+        .sidebar a i {
+            width: 20px;
+            text-align: center;
+            margin-right: 12px;
+            font-size: 1.1rem;
+        }
+
+        .content {
+            padding: 24px;
+            margin-left: 280px;
+            flex-grow: 1;
+        }
+
+        .user-info {
+            background: var(--surface-light);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(241, 229, 229, 0.1)
+        }
+
+        .user-info h5 {
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .user-info small {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            margin-bottom: 24px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+
+        .card-header {
+            background: rgba(255,255,255,0.03);
+            color: var(--text);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 16px 20px;
+            border-radius: 12px 12px 0 0 !important;
+            font-weight: 600;
+        }
+
+        .card-header i {
+            margin-right: 8px;
+            color: var(--admin-accent);
+        }
+
+        .card-body {
+            color: var(--text-muted);
+            padding: 20px;
+        }
+
+        .card-body .text-muted {
+            color: #fff !important;
+        }
+
+        .btn-primary {
+            background: var(--admin-accent);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s;
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            background: #fbbf24;
+            transform: scale(1.02);
+            color: #000;
+        }
+
+        .btn-outline-light {
+            border-color: rgba(255,255,255,0.2);
+            color: var(--text);
+            transition: all 0.3s;
+        }
+
+        .btn-outline-light:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .form-control, .form-select {
+            background: rgba(255,255,255,0.05) !important;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text);
+            border-radius: 8px;
+            padding: 10px 16px;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--admin-accent);
+            box-shadow: 0 0 0 3px rgba(245,158,11,0.25);
+            background: rgba(255,255,255,0.08) !important;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 3px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            border-top-color: var(--admin-accent);
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .alert-info {
+            background: linear-gradient(45deg, rgba(146, 185, 172, 0.1), transparent);
+            border: 1px solid rgba(16,185,129,0.2);
+            backdrop-filter: blur(4px);
+            color: var(--text);
+            border-radius: 10px;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .admin-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: rgba(255,255,255,0.03);
+            transition: all 0.3s;
+        }
+
+        .admin-item:hover {
+            background: rgba(255,255,255,0.08);
+        }
+
+        .admin-item i {
+            color: var(--admin-accent);
+            font-size: 1.2rem;
+            margin-top: 2px;
+        }
+
+        .admin-text {
+            flex: 1;
+        }
+
+        .admin-text h6 {
+            margin-bottom: 2px;
+            color: var(--text);
+        }
+
+        .admin-text small {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* Additional styles specific to settings page */
+        .settings-section {
+            margin-bottom: 30px;
+        }
+        
+        .settings-section h4 {
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 8px;
+            margin-bottom: 20px;
+            color: var(--admin-accent);
+        }
+        
+        .form-check-label {
+            color: var(--text);
+        }
+        
+        .form-check-input:checked {
+            background-color: var(--admin-accent);
+            border-color: var(--admin-accent);
+        }
+        
+        .settings-save-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 100;
+            padding: 12px 24px;
+            font-weight: 600;
+        }
+        
+        .settings-description {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+        
+        .settings-divider {
+            border-top: 1px solid rgba(255,255,255,0.1);
+            margin: 30px 0;
+        }
+        
+        .settings-card {
+            background: var(--surface-light) !important;
+            border-left: 4px solid var(--admin-accent) !important;
+        }
+        
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 100%;
+                position: relative;
+                height: auto;
+                box-shadow: none;
+                border-right: none;
+            }
+            
+            .content {
+                margin-left: 0;
+                padding: 16px;
+            }
+            
+            .card {
+                margin-bottom: 16px;
+            }
+            
+            .settings-save-btn {
+                position: static;
+                width: 100%;
+                margin-top: 20px;
+            }
+
+            }
+            #sidebar-email {
+                color: white !important;
+            }
+
+            .badge-admin {
+            background-color: var(--admin-accent);
+            color: #000;
+        }
+
+        .badge-user {
+            background-color: var(--primary);
+        }
+    </style>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark px-4 fixed-top">
+        <a class="navbar-brand" href="#">SleepWell <span class="badge badge-admin ms-2">ADMIN</span></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="bi bi-house-door"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <button id="logout-btn" class="btn btn-outline-danger ms-2">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="-userinfo">
+                <h5 id="sidebar-username">Loading admin...</h5>
+                <small class="text-muted" id="sidebar-email">Loading email...</small>
+            </div>
+            
+            <nav class="nav flex-column">
+                <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                    <i class="bi bi-speedometer2"></i> Overview
+                </a>
+                <a class="nav-link" href="{{ url_for('user_management') }}">
+                    <i class="bi bi-people"></i> User Management
+                </a>
+                <a class="nav-link" href="{{ url_for('analytics') }}">
+                    <i class="bi bi-graph-up"></i> Analytics
+                </a>
+                <a class="nav-link" href="{{ url_for('feedback_management') }}">
+                    <i class="bi bi-chat-left-text"></i> Feedback Manage
+                </a>
+                <a class="nav-link active" href="{{ url_for('system_settings') }}">
+                    <i class="bi bi-gear"></i> System Settings
+                </a>
+                <a class="nav-link" href="">
+                    <i class="bi bi-shield-lock"></i> Audit Log
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <div id="user-greeting" class="mb-4">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="bg-warning rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <i class="bi bi-gear fs-4"></i>
+                    </div>
+                    <div>
+                        <h2 class="mb-0" id="greeting-text">System Settings</h2>
+                        <small class="text-muted" id="last-login">Configure application preferences</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="alert alert-info d-flex align-items-center">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                <div>Configure system-wide settings and application preferences. Changes may require a restart to take effect.</div>
+            </div>
+
+            <!-- General Settings -->
+            <div class="card settings-card">
+                <div class="card-header">
+                    <i class="bi bi-sliders"></i>
+                    <span>General Settings</span>
+                </div>
+                <div class="card-body">
+                    <div class="settings-section">
+                        <div class="mb-3">
+                            <label for="appName" class="form-label">Application Name</label>
+                            <input type="text" class="form-control" id="appName" value="SleepWell">
+                            <div class="settings-description">The name displayed throughout the application</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="timezone" class="form-label">Default Timezone</label>
+                            <select class="form-select" id="timezone">
+                                <option value="UTC" selected>UTC</option>
+                                <option value="EST">Eastern Time (EST)</option>
+                                <option value="PST">Pacific Time (PST)</option>
+                                <option value="CET">Central European Time (CET)</option>
+                            </select>
+                            <div class="settings-description">Affects time display for all users</div>
+                        </div>
+                        
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="maintenanceMode" checked>
+                            <label class="form-check-label" for="maintenanceMode">Maintenance Mode</label>
+                            <div class="settings-description">When enabled, only administrators can access the system</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Settings -->
+            <div class="card settings-card mt-4">
+                <div class="card-header">
+                    <i class="bi bi-people"></i>
+                    <span>User Settings</span>
+                </div>
+                <div class="card-body">
+                    <div class="settings-section">
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="allowRegistrations" checked>
+                            <label class="form-check-label" for="allowRegistrations">Allow New Registrations</label>
+                            <div class="settings-description">Enable or disable public user registration</div>
+                        </div>
+                        
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="emailVerification" checked>
+                            <label class="form-check-label" for="emailVerification">Require Email Verification</label>
+                            <div class="settings-description">Users must verify their email before accessing the app</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="defaultUserRole" class="form-label">Default User Role</label>
+                            <select class="form-select" id="defaultUserRole">
+                                <option value="user" selected>Standard User</option>
+                                <option value="premium">Premium User</option>
+                                <option value="researcher">Researcher</option>
+                            </select>
+                            <div class="settings-description">Role assigned to new registrations</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data & Privacy -->
+            <div class="card settings-card mt-4">
+                <div class="card-header">
+                    <i class="bi bi-database"></i>
+                    <span>Data & Privacy</span>
+                </div>
+                <div class="card-body">
+                    <div class="settings-section">
+                        <div class="mb-3">
+                            <label for="dataRetention" class="form-label">Data Retention Period</label>
+                            <select class="form-select" id="dataRetention">
+                                <option value="30">30 days</option>
+                                <option value="90" selected>90 days</option>
+                                <option value="180">180 days</option>
+                                <option value="365">1 year</option>
+                                <option value="0">Indefinitely</option>
+                            </select>
+                            <div class="settings-description">How long to keep user sleep data before automatic deletion</div>
+                        </div>
+                        
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="anonymizeData">
+                            <label class="form-check-label" for="anonymizeData">Anonymize Deleted User Data</label>
+                            <div class="settings-description">Scrub personal information when users delete accounts</div>
+                        </div>
+                        
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="gdprCompliance" checked>
+                            <label class="form-check-label" for="gdprCompliance">GDPR Compliance Mode</label>
+                            <div class="settings-description">Enable additional EU privacy protections</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email Settings -->
+            <div class="card settings-card mt-4">
+                <div class="card-header">
+                    <i class="bi bi-envelope"></i>
+                    <span>Email Settings</span>
+                </div>
+                <div class="card-body">
+                    <div class="settings-section">
+                        <div class="mb-3">
+                            <label for="smtpHost" class="form-label">SMTP Host</label>
+                            <input type="text" class="form-control" id="smtpHost" value="smtp.example.com">
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="smtpPort" class="form-label">SMTP Port</label>
+                                <input type="number" class="form-control" id="smtpPort" value="587">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="smtpSecurity" class="form-label">Security</label>
+                                <select class="form-select" id="smtpSecurity">
+                                    <option value="tls" selected>TLS</option>
+                                    <option value="ssl">SSL</option>
+                                    <option value="none">None</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="smtpUsername" class="form-label">SMTP Username</label>
+                            <input type="text" class="form-control" id="smtpUsername" value="admin@example.com">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="smtpPassword" class="form-label">SMTP Password</label>
+                            <input type="password" class="form-control" id="smtpPassword" placeholder="••••••••">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="fromEmail" class="form-label">From Email Address</label>
+                            <input type="email" class="form-control" id="fromEmail" value="noreply@example.com">
+                            <div class="settings-description">The email address that system emails will be sent from</div>
+                        </div>
+                        
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="emailEnabled" checked>
+                            <label class="form-check-label" for="emailEnabled">Enable Email Notifications</label>
+                            <div class="settings-description">Send system emails to users</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Backup & Restore -->
+            <div class="card settings-card mt-4">
+                <div class="card-header">
+                    <i class="bi bi-archive"></i>
+                    <span>Backup & Restore</span>
+                </div>
+                <div class="card-body">
+                    <div class="settings-section">
+                        <div class="mb-3">
+                            <label for="backupFrequency" class="form-label">Backup Frequency</label>
+                            <select class="form-select" id="backupFrequency">
+                                <option value="daily">Daily</option>
+                                <option value="weekly" selected>Weekly</option>
+                                <option value="monthly">Monthly</option>
+                            </select>
+                            <div class="settings-description">How often to create automatic database backups</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="backupLocation" class="form-label">Backup Location</label>
+                            <input type="text" class="form-control" id="backupLocation" value="/var/backups/sleepwell">
+                            <div class="settings-description">Directory where backups will be stored</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="backupRetention" class="form-label">Backup Retention</label>
+                            <select class="form-select" id="backupRetention">
+                                <option value="7">7 days</option>
+                                <option value="14" selected>14 days</option>
+                                <option value="30">30 days</option>
+                                <option value="90">90 days</option>
+                            </select>
+                            <div class="settings-description">How long to keep backup files before automatic deletion</div>
+                        </div>
+                        
+                        <div class="d-flex gap-3 mt-4">
+                            <button class="btn btn-primary" id="createBackupBtn">
+                                <i class="bi bi-download me-2"></i>Create Backup Now
+                            </button>
+                            <button class="btn btn-outline-light" id="restoreBackupBtn">
+                                <i class="bi bi-upload me-2"></i>Restore from Backup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="card border-danger mt-4">
+                <div class="card-header bg-danger bg-opacity-10 text-danger">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <span>Danger Zone</span>
+                </div>
+                <div class="card-body">
+                    <div class="settings-section">
+                        <h5 class="text-danger mb-3">Irreversible Actions</h5>
+                        
+                        <div class="admin-item border-danger border-opacity-50">
+                            <i class="bi bi-trash text-danger"></i>
+                            <div class="admin-text">
+                                <h6 class="mb-0">Clear All User Data</h6>
+                                <small class="text-danger">Permanently delete all sleep entries and user statistics</small>
+                            </div>
+                            <button class="btn btn-outline-danger">Clear Data</button>
+                        </div>
+                        
+                        <div class="admin-item border-danger border-opacity-50 mt-3">
+                            <i class="bi bi-database-x text-danger"></i>
+                            <div class="admin-text">
+                                <h6 class="mb-0">Reset Application</h6>
+                                <small class="text-danger">Restore all settings to default values</small>
+                            </div>
+                            <button class="btn btn-outline-danger">Reset</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <button class="btn btn-primary settings-save-btn" id="saveSettingsBtn">
+                <i class="bi bi-save me-2"></i>Save All Changes
+            </button>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+    function initializeFirebase() {
+        try {
+            const firebaseConfig = {
+                apiKey: "AIzaSyDSKYsYwvM-0zof2rHtiKodp4z0HUTNiI4",
+                authDomain: "sleepwell-7ec3a.firebaseapp.com",
+                projectId: "sleepwell-7ec3a",
+                storageBucket: "sleepwell-7ec3a.appspot.com",
+                messagingSenderId: "37760004376",
+                appId: "1:37760004376:web:87a663c13995e6f02c6e6d"
+            };
+
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            } else {
+                firebase.app();
+            }
+
+            const settings = {
+                cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
+                merge: true
+            };
+
+            const db = firebase.firestore();
+            db.settings(settings);
+
+            return {
+                auth: firebase.auth(),
+                db: db
+            };
+        } catch (error) {
+            console.error("Firebase initialization failed:", error);
+            throw new Error("Failed to initialize Firebase services");
+        }
+    }
+
+    let db, auth;
+    try {
+        const firebaseServices = initializeFirebase();
+        db = firebaseServices.db;
+        auth = firebaseServices.auth;
+    } catch (error) {
+        console.error("Critical Firebase error:", error);
+        document.body.innerHTML = `
+            <div class="alert alert-danger m-4">
+                <h4>Application Error</h4>
+                <p>Failed to initialize required services. Please refresh the page.</p>
+                <p><small>${error.message}</small></p>
+            </div>
+        `;
+    }
+
+    const userGreeting = document.getElementById('user-greeting');
+    const greetingText = document.getElementById('greeting-text');
+    const lastLogin = document.getElementById('last-login');
+    const sidebarUsername = document.getElementById('sidebar-username');
+    const sidebarEmail = document.getElementById('sidebar-email');
+    const logoutBtn = document.getElementById('logout-btn');
+    const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+    const createBackupBtn = document.getElementById('createBackupBtn');
+    const restoreBackupBtn = document.getElementById('restoreBackupBtn');
+
+    auth.onAuthStateChanged(user => {
+        if (!user) {
+            window.location.href = "/";
+            return;
+        }
+        
+        // Verify admin status
+        verifyAdminStatus(user.uid);
+        
+        console.log("Admin authenticated:", user.uid);
+        updateGreeting(user);
+        updateUserInfo(user);
+        loadSettings();
+    });
+
+    async function verifyAdminStatus(uid) {
+        try {
+            const userDoc = await db.collection('users').doc(uid).get();
+            if (userDoc.exists && userDoc.data().isAdmin) {
+                return true;
+            }
+            showAlert("No admin privileges. Redirecting...", "danger");
+            setTimeout(() => window.location.href = "/", 3000);
+            return false;
+        } catch (error) {
+            console.error("Admin verification failed:", error);
+            return false;
+        }
+    }
+
+    function updateGreeting(user) {
+        const displayName = user.displayName || "Admin";
+        document.getElementById('greeting-text').textContent = `System Settings`;
+    }
+
+    function updateUserInfo(user) {
+        const displayName = user.displayName || "Admin User";
+        const email = user.email || "No email";
+
+        document.getElementById('sidebar-username').textContent = displayName;
+        document.getElementById('sidebar-email').textContent = email;
+    }
+
+    async function loadSettings() {
+    try {
+        showLoadingState(true);
+        const settingsRef = db.collection('systemSettings').doc('main');
+        const settingsDoc = await settingsRef.get();
+        
+        if (!settingsDoc.exists) {
+            // Create default settings if they don't exist
+            const defaultSettings = {
+                appName: 'SleepWell',
+                timezone: 'UTC',
+                maintenanceMode: false,
+                allowRegistrations: true,
+                emailVerification: true,
+                defaultUserRole: 'user',
+                dataRetention: 90,
+                anonymizeData: false,
+                gdprCompliance: true,
+                email: {
+                    smtpHost: '',
+                    smtpPort: 587,
+                    smtpSecurity: 'tls',
+                    smtpUsername: '',
+                    fromEmail: '',
+                    enabled: true
+                },
+                backup: {
+                    frequency: 'weekly',
+                    location: '/var/backups/sleepwell',
+                    retention: 14
+                },
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            await settingsRef.set(defaultSettings);
+            console.log("Default settings created");
+            applySettingsToUI(defaultSettings);
+        } else {
+            console.log("Settings loaded successfully");
+            applySettingsToUI(settingsDoc.data());
+        }
+    } catch (error) {
+        console.error("Error loading settings:", error);
+        showAlert("Failed to load system settings", "danger");
+    } finally {
+        showLoadingState(false);
+}
+    }
+
+    function showLoadingState(show) {
+    const saveBtn = document.getElementById('saveSettingsBtn');
+    if (show) {
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Loading...';
+        saveBtn.disabled = true;
+    } else {
+        saveBtn.innerHTML = '<i class="bi bi-save me-2"></i>Save All Changes';
+        saveBtn.disabled = false;
+    }
+}
+
+function applySettingsToUI(settings) {
+    // General Settings
+    document.getElementById('appName').value = settings.appName || 'SleepWell';
+    document.getElementById('timezone').value = settings.timezone || 'UTC';
+    document.getElementById('maintenanceMode').checked = settings.maintenanceMode || false;
+    
+    // User Settings
+    document.getElementById('allowRegistrations').checked = settings.allowRegistrations !== false;
+    document.getElementById('emailVerification').checked = settings.emailVerification !== false;
+    document.getElementById('defaultUserRole').value = settings.defaultUserRole || 'user';
+    
+    // Data & Privacy
+    document.getElementById('dataRetention').value = settings.dataRetention || 90;
+    document.getElementById('anonymizeData').checked = settings.anonymizeData || false;
+    document.getElementById('gdprCompliance').checked = settings.gdprCompliance !== false;
+    
+    // Email Settings
+    document.getElementById('smtpHost').value = settings.email?.smtpHost || '';
+    document.getElementById('smtpPort').value = settings.email?.smtpPort || 587;
+    document.getElementById('smtpSecurity').value = settings.email?.smtpSecurity || 'tls';
+    document.getElementById('smtpUsername').value = settings.email?.smtpUsername || '';
+    document.getElementById('fromEmail').value = settings.email?.fromEmail || '';
+    document.getElementById('emailEnabled').checked = settings.email?.enabled !== false;
+    
+    // Backup Settings
+    document.getElementById('backupFrequency').value = settings.backup?.frequency || 'weekly';
+    document.getElementById('backupLocation').value = settings.backup?.location || '/var/backups/sleepwell';
+    document.getElementById('backupRetention').value = settings.backup?.retention || 14;
+}
+
+    async function saveSettings() {
+        try {
+            const settings = {
+                // General Settings
+                appName: document.getElementById('appName').value,
+                timezone: document.getElementById('timezone').value,
+                maintenanceMode: document.getElementById('maintenanceMode').checked,
+                
+                // User Settings
+                allowRegistrations: document.getElementById('allowRegistrations').checked,
+                emailVerification: document.getElementById('emailVerification').checked,
+                defaultUserRole: document.getElementById('defaultUserRole').value,
+                
+                // Data & Privacy
+                dataRetention: parseInt(document.getElementById('dataRetention').value),
+                anonymizeData: document.getElementById('anonymizeData').checked,
+                gdprCompliance: document.getElementById('gdprCompliance').checked,
+                
+                // Email Settings
+                email: {
+                    smtpHost: document.getElementById('smtpHost').value,
+                    smtpPort: parseInt(document.getElementById('smtpPort').value),
+                    smtpSecurity: document.getElementById('smtpSecurity').value,
+                    smtpUsername: document.getElementById('smtpUsername').value,
+                    fromEmail: document.getElementById('fromEmail').value,
+                    enabled: document.getElementById('emailEnabled').checked
+                },
+                
+                // Backup Settings
+                backup: {
+                    frequency: document.getElementById('backupFrequency').value,
+                    location: document.getElementById('backupLocation').value,
+                    retention: parseInt(document.getElementById('backupRetention').value)
+                },
+                
+                // Metadata
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedBy: auth.currentUser.uid
+            };
+            
+            await db.collection('systemSettings').doc('main').set(settings, { merge: true });
+            showAlert("Settings saved successfully", "success");
+            console.log("Settings saved:", settings);
+        } catch (error) {
+            console.error("Error saving settings:", error);
+            showAlert("Failed to save settings: " + error.message, "danger");
+        }
+    }
+
+    async function createBackup() {
+        try {
+            createBackupBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Creating Backup...';
+            createBackupBtn.disabled = true;
+            
+            // In a real app, this would call your backend API
+            // For demo, we'll just simulate a delay
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            showAlert("Backup created successfully", "success");
+        } catch (error) {
+            console.error("Backup failed:", error);
+            showAlert("Backup failed: " + error.message, "danger");
+        } finally {
+            createBackupBtn.innerHTML = '<i class="bi bi-download me-2"></i>Create Backup Now';
+            createBackupBtn.disabled = false;
+        }
+    }
+
+    function showAlert(message, type = "info") {
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} alert-dismissible fade show`;
+        alert.role = "alert";
+        alert.innerHTML = `
+            <i class="bi ${type === 'danger' ? 'bi-exclamation-triangle-fill' : 'bi-info-circle-fill'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        const container = document.querySelector('.content');
+        container.insertBefore(alert, container.firstChild);
+        
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }, 5000);
+    }
+
+    logoutBtn.addEventListener('click', async () => {
+        try {
+            await auth.signOut();
+            window.location.href = '/';
+        } catch (error) {
+            console.error("Logout error:", error);
+            showAlert("Logout failed. Please try again.", "danger");
+        }
+    });
+
+    saveSettingsBtn.addEventListener('click', saveSettings);
+    createBackupBtn.addEventListener('click', createBackup);
+    
+    restoreBackupBtn.addEventListener('click', () => {
+        // In a real app, this would open a file dialog and upload a backup
+        showAlert("Backup restore functionality would be implemented here", "info");
+    });
+
+    console.log("System settings page initialized");
+    </script>
+</body>
+</html>
