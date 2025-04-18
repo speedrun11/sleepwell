@@ -871,57 +871,59 @@
     });
 
     exportDataBtn.addEventListener('click', async () => {
-        const user = auth.currentUser;
-        if (!user) {
-            showAlert("You need to be logged in to export data.", "danger");
+    const user = auth.currentUser;
+    if (!user) {
+        showAlert("You need to be logged in to export data.", "danger");
+        return;
+    }
+
+    try {
+        exportDataBtn.innerHTML = '<span class="loading-spinner"></span> Preparing...';
+        exportDataBtn.disabled = true;
+
+        const entries = await db.collection('sleepEntries')
+            .where('userId', '==', user.uid)
+            .orderBy('date', 'desc')
+            .get();
+
+        if (entries.empty) {
+            showAlert("No sleep data available to export.", "info");
             return;
         }
 
-        try {
-            exportDataBtn.innerHTML = '<span class="loading-spinner"></span> Preparing...';
-            exportDataBtn.disabled = true;
-
-            const entries = await db.collection('sleepEntries')
-                .where('userId', '==', user.uid)
-                .orderBy('date', 'desc')
-                .get();
-
-            if (entries.empty) {
-                showAlert("No sleep data available to export.", "info");
-                return;
-            }
-
-            let csv = 'Date,Bedtime,Wakeup,Duration (hours),Quality,Screen Time Before Bed,Caffeine Before Bed\n';
+        let csv = 'Date,Bedtime Date,Bedtime Time,Wakeup Date,Wakeup Time,Duration (hours),Quality,Screen Time Before Bed,Caffeine Before Bed\n';
+        
+        entries.forEach(doc => {
+            const data = doc.data();
+            const date = data.date.toDate().toISOString().split('T')[0];
+            const bedtimeDate = data.bedtime.toDate().toISOString().split('T')[0];
+            const bedtimeTime = data.bedtime.toDate().toISOString().split('T')[1].split('.')[0];
+            const wakeupDate = data.wakeupTime.toDate().toISOString().split('T')[0];
+            const wakeupTime = data.wakeupTime.toDate().toISOString().split('T')[1].split('.')[0];
             
-            entries.forEach(doc => {
-                const data = doc.data();
-                const date = data.date.toDate().toISOString().split('T')[0];
-                const bedtime = data.bedtime.toDate().toLocaleTimeString();
-                const wakeup = data.wakeupTime.toDate().toLocaleTimeString();
-                
-                csv += `${date},${bedtime},${wakeup},${data.duration},${data.quality},${data.screenHoursBeforeBed},${data.caffeineHoursBeforeBed}\n`;
-            });
+            csv += `${date},${bedtimeDate},${bedtimeTime},${wakeupDate},${wakeupTime},${data.duration},${data.quality},${data.screenHoursBeforeBed},${data.caffeineHoursBeforeBed}\n`;
+        });
 
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `sleepwell-data-${new Date().toISOString().split('T')[0]}.csv`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            showAlert("Data exported successfully!", "success");
-            
-        } catch (error) {
-            console.error("Error exporting data:", error);
-            showAlert("Failed to export data. Please try again.", "danger");
-        } finally {
-            exportDataBtn.innerHTML = '<i class="bi bi-download"></i> Export Sleep Data';
-            exportDataBtn.disabled = false;
-        }
-    });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `sleepwell-data-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showAlert("Data exported successfully!", "success");
+        
+    } catch (error) {
+        console.error("Error exporting data:", error);
+        showAlert("Failed to export data. Please try again.", "danger");
+    } finally {
+        exportDataBtn.innerHTML = '<i class="bi bi-download"></i> Export Sleep Data';
+        exportDataBtn.disabled = false;
+    }
+});
 
     deleteAccountBtn.addEventListener('click', async () => {
         const user = auth.currentUser;
