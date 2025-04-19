@@ -43,7 +43,6 @@ def admin_required(f):
             return redirect(url_for('home'))
         try:
             decoded_claims = auth.verify_session_cookie(token)
-            # Verify admin status through claims
             if not decoded_claims.get('admin'):
                 return redirect(url_for('dashboard'))
             return f(*args, **kwargs)
@@ -86,9 +85,8 @@ def dashboard():
         app.logger.error(f"Dashboard error: {str(e)}")
         return redirect(url_for('home'))
 
-# Add this with your other routes
 @app.route("/admin/admindashboard.html")
-@admin_required  # Use the new decorator
+@admin_required
 def admin_dashboard():
     try:
         session_cookie = request.cookies.get('session')
@@ -98,7 +96,7 @@ def admin_dashboard():
         return render_template("admin/admindashboard.html", user={
             'email': user.email,
             'name': user.display_name or "Admin",
-            'is_admin': True  # Explicitly pass admin status
+            'is_admin': True
         })
         
     except Exception as e:
@@ -124,18 +122,16 @@ def user_management():
         return redirect(url_for('admin_dashboard'))
 
 @app.route('/api/createUser', methods=['POST'])
-@admin_required  # Your admin verification decorator
+@admin_required
 def create_user():
     try:
         data = request.get_json()
         
-        # Create the user using Firebase Admin SDK
         user = auth.create_user(
             email=data['email'],
             password=data['password']
         )
         
-        # Set user data in Firestore
         db.collection('users').document(user.uid).set({
             'userId': user.uid,
             'firstName': data['firstName'],
@@ -160,20 +156,17 @@ def create_user():
 @handle_errors
 def delete_user(user_id):
     try:
-        # Verify the user exists in Firebase Auth
         try:
             auth.get_user(user_id)
         except auth.UserNotFoundError:
             return jsonify({"error": "User not found in authentication system"}), 404
 
-        # Delete all sleep entries for this user
         entries_ref = db.collection('sleepEntries').where('userId', '==', user_id)
         entries = entries_ref.stream()
         
-        # Batch delete entries (Firestore has limit of 500 operations per batch)
         batch = db.batch()
         batch_count = 0
-        max_batch_size = 400  # conservative number to stay under limit
+        max_batch_size = 400
         
         for entry in entries:
             if batch_count >= max_batch_size:
@@ -186,11 +179,9 @@ def delete_user(user_id):
         if batch_count > 0:
             batch.commit()
 
-        # Delete user document from Firestore
         user_ref = db.collection('users').document(user_id)
         user_ref.delete()
 
-        # Delete the auth user
         auth.delete_user(user_id)
 
         return jsonify({
@@ -210,10 +201,8 @@ def delete_user(user_id):
 @handle_errors
 def delete_user_sleep_entries(user_id):
     try:
-        # Verify user exists
         auth.get_user(user_id)
         
-        # Delete all sleep entries
         entries_ref = db.collection('sleepEntries').where('userId', '==', user_id)
         entries = entries_ref.stream()
         
@@ -232,7 +221,6 @@ def delete_user_sleep_entries(user_id):
         if batch_count > 0:
             batch.commit()
 
-        # Update user's entries count
         db.collection('users').document(user_id).update({
             'entriesCount': 0,
             'updatedAt': firestore.SERVER_TIMESTAMP
@@ -395,10 +383,8 @@ def login():
         return jsonify({"error": "Missing ID token"}), 400
     
     try:
-        # Verify the ID token first
         decoded_token = auth.verify_id_token(data["idToken"], clock_skew_seconds=10)
         
-        # Then create session cookie
         session_cookie = auth.create_session_cookie(
             data["idToken"], 
             expires_in=3600
@@ -413,7 +399,7 @@ def login():
             'session',
             session_cookie,
             httponly=True,
-            secure=False,  # Change to True in production with HTTPS
+            secure=False,
             samesite='Lax',
             max_age=3600
         )
@@ -430,21 +416,17 @@ def admin_login():
     data = request.get_json()
     
     try:
-        # Verify the ID token
         decoded_token = auth.verify_id_token(data["idToken"], clock_skew_seconds=10)
         user = auth.get_user(decoded_token['uid'])
         
-        # Check if this is an admin user (by email or existing claims)
         is_admin = decoded_token.get('admin') or user.email == "admin@sleepwell.com"
         
         if not is_admin:
             return jsonify({"error": "Admin access only"}), 403
         
-        # Set custom claims if not already set
         if not decoded_token.get('admin'):
             auth.set_custom_user_claims(decoded_token['uid'], {'admin': True})
         
-        # Create session cookie
         session_cookie = auth.create_session_cookie(
             data["idToken"], 
             expires_in=3600

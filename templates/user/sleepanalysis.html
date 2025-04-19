@@ -400,7 +400,6 @@
 </head>
 <body>
 
-    <!-- Top Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark px-4 fixed-top">
         <a class="navbar-brand" href="#">SleepWell</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -423,7 +422,6 @@
     </nav>
 
     <div class="d-flex">
-        <!-- Sidebar -->
         <div class="sidebar">
             <div class="user-info">
                 <h5 id="sidebar-username">Loading user...</h5>
@@ -452,7 +450,6 @@
             </nav>
         </div>
 
-        <!-- Main Content -->
         <div class="content">
             <div class="d-flex align-items-center gap-3 mb-4">
                 <div class="bg-primary rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
@@ -818,7 +815,7 @@
     }
 
     function calculateConsistencyScore(stdDev) {
-        const maxDeviation = 120; // 2 hours in minutes
+        const maxDeviation = 120;
         return Math.max(0, 100 - (stdDev / maxDeviation * 100)).toFixed(0) + '%';
     }
 

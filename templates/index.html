@@ -156,7 +156,6 @@
             display: block;
         }
 
-        /* Improved modal styling */
         .modal {
             z-index: 1060 !important;
         }
@@ -166,7 +165,6 @@
             background-color: rgba(0, 0, 0, 0.5) !important;
         }
 
-        /* Fix for modal transitions */
         .modal.fade .modal-dialog {
             transition: transform 0.3s ease-out, opacity 0.3s ease;
             transform: translate(0, -50px);
@@ -181,7 +179,6 @@
 </head>
 <body>
 
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-black px-4 fixed-top" id="navbar">
         <a class="navbar-brand" href="#">SleepWell</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -202,7 +199,6 @@
         </div>
     </nav>
 
-    <!-- Sign Up Modal -->
     <div class="modal fade" id="signupModal" tabindex="-1" aria-labelledby="signupModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content bg-dark text-white rounded-4 shadow-lg">
@@ -254,7 +250,6 @@
         </div>
     </div>
 
-    <!-- Sign In Modal -->
     <div class="modal fade" id="signinModal" tabindex="-1" aria-labelledby="signinModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content bg-dark text-white rounded-4 shadow-lg">
@@ -282,7 +277,6 @@
         </div>
     </div>
 
-    <!-- Admin Sign In Modal -->
     <div class="modal fade" id="adminSigninModal" tabindex="-1" aria-labelledby="adminSigninModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content bg-dark text-white rounded-4 shadow-lg">
@@ -310,7 +304,6 @@
         </div>
     </div>
 
-    <!-- Terms and Conditions Modal -->
     <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content bg-dark text-white rounded-4 shadow-lg">
@@ -345,7 +338,6 @@
         </div>
     </div>
 
-    <!-- Hero Section -->
     <section id="home" class="hero-section">
         <div class="overlay"></div>
         <div class="hero-content">
@@ -355,7 +347,6 @@
         </div>
     </section>
 
-    <!-- About Section -->
     <section id="about" class="section">
         <div class="container">
             <h2 class="text-center fw-bold">About SleepWell</h2>
@@ -381,7 +372,6 @@
         </div>
     </section>
 
-    <!-- How It Works Section -->
     <section id="how-it-works" class="section">
         <div class="container">
             <h2 class="text-center fw-bold">How SleepWell Works</h2>
@@ -407,7 +397,6 @@
         </div>
     </section>
 
-    <!-- FAQ Section -->
     <section id="faq" class="section faq-section">
         <div class="container">
             <h2 class="text-center fw-bold">Frequently Asked Questions</h2>
@@ -437,7 +426,6 @@
         </div>
     </section>
 
-    <!-- Footer -->
     <footer class="footer bg-black text-white py-4">
         <div class="container d-flex justify-content-between align-items-start">
             <div>
@@ -468,7 +456,6 @@
     
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        // Initialize Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDSKYsYwvM-0zof2rHtiKodp4z0HUTNiI4",
             authDomain: "sleepwell-7ec3a.firebaseapp.com",
@@ -479,7 +466,6 @@
         };
         firebase.initializeApp(firebaseConfig);
 
-        // Password validation function
         function validatePassword(password) {
             const minLength = 8;
             const hasUpperCase = /[A-Z]/.test(password);
@@ -494,7 +480,6 @@
                    hasSpecialChars;
         }
 
-        // Password toggle function
         function togglePassword(inputId) {
             const input = document.getElementById(inputId);
             const icon = input.nextElementSibling;
@@ -503,15 +488,12 @@
             icon.classList.toggle('bi-eye-slash');
         }
 
-        // Modal management
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize all modals
             const signupModal = new bootstrap.Modal(document.getElementById('signupModal'));
             const signinModal = new bootstrap.Modal(document.getElementById('signinModal'));
             const adminModal = new bootstrap.Modal(document.getElementById('adminSigninModal'));
             const termsModal = new bootstrap.Modal(document.getElementById('termsModal'));
 
-            // Handle modal transitions
             document.querySelectorAll('[data-bs-toggle="modal"]').forEach(trigger => {
                 trigger.addEventListener('click', function(e) {
                     const targetModal = this.getAttribute('data-bs-target');
@@ -529,7 +511,6 @@
                 });
             });
 
-            // Terms acceptance handling
             document.getElementById('acceptTerms')?.addEventListener('click', function() {
                 document.getElementById('termsCheckbox').checked = true;
                 termsModal.hide();
@@ -539,7 +520,6 @@
                 }, { once: true });
             });
 
-            // Form validation
             $("#signupPassword").on("input", function() {
                 const password = $(this).val();
                 const isValid = validatePassword(password);
@@ -554,7 +534,6 @@
                 }
             });
 
-            // Terms checkbox validation
             $("#termsCheckbox").on("change", function() {
                 if (!this.checked) {
                     $(this).addClass("is-invalid");
@@ -563,11 +542,9 @@
                 }
             });
 
-            // Signup form submission
             $("#signupForm").submit(async function (event) {
                 event.preventDefault();
                 
-                // Validate terms checkbox
                 if (!$("#termsCheckbox").is(":checked")) {
                     $("#termsCheckbox").addClass("is-invalid");
                     return;
@@ -578,7 +555,6 @@
                 const email = $("input[name='email']").val().trim();
                 const password = $("input[name='password']").val();
                 
-                // Validate password
                 if (!validatePassword(password)) {
                     $("#signupPassword").addClass("is-invalid");
                     $("#passwordError").text("Password must contain at least 8 characters, including uppercase, lowercase, numbers, or symbols");
@@ -589,28 +565,22 @@
                 submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Creating...');
                 
                 try {
-                    // Check if email exists in Firebase
                     const methods = await firebase.auth().fetchSignInMethodsForEmail(email);
                     if (methods && methods.length > 0) {
                         throw new Error("This email is already registered. Please sign in.");
                     }
                     
-                    // Create user in Firebase Authentication
                     const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
                     const user = userCredential.user;
                     
-                    // Update user profile with display name
                     await user.updateProfile({
                         displayName: `${firstName} ${lastName}`
                     });
                     
-                    // Get current timestamp
                     const timestamp = firebase.firestore.FieldValue.serverTimestamp();
                     
-                    // Initialize Firestore
                     const db = firebase.firestore();
                     
-                    // Create user document in Firestore with all required fields
                     await db.collection("users").doc(user.uid).set({
                         userId: user.uid,
                         firstName: firstName,
@@ -625,10 +595,8 @@
                         lastLogin: timestamp
                     }, { merge: false });
                     
-                    // Get ID token for backend verification
                     const idToken = await user.getIdToken();
                     
-                    // Send user data to backend (if needed)
                     try {
                         const response = await $.ajax({
                             url: "/signup",
@@ -644,14 +612,12 @@
 
                         const data = typeof response === 'string' ? JSON.parse(response) : response;
                         
-                        // Success - show alert and redirect
                         alert("Account created successfully!");
                         signupModal.hide();
                         window.location.href = data.redirect || "/user/dashboard.html";
                         
                     } catch (error) {
                         console.error("Backend signup error:", error);
-                        // Even if backend fails, the user is created in Firebase and Firestore
                         alert("Account created successfully!");
                         signupModal.hide();
                         window.location.href = "/user/dashboard.html";
@@ -660,7 +626,6 @@
                 } catch (error) {
                     console.error("Signup Error:", error);
                     
-                    // Handle Firebase errors
                     if (error.code) {
                         let errorMessage = "Registration failed. Please try again.";
                         
@@ -681,7 +646,6 @@
                         
                         alert(errorMessage);
                     } else {
-                        // Handle other errors
                         alert(error.message || "Registration failed. Please try again.");
                     }
                 } finally {
@@ -689,7 +653,6 @@
                 }
             });
             
-            // Sign In Form Handling
             document.getElementById("signinForm").addEventListener("submit", async function(event) {
                 event.preventDefault();
                 
@@ -701,11 +664,9 @@
                     submitBtn.disabled = true;
                     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Signing in...';
 
-                    // Sign in with Firebase
                     const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
                     const idToken = await userCredential.user.getIdToken();
                     
-                    // Send token to backend
                     const response = await fetch("/login", {
                         method: "POST",
                         headers: {
@@ -720,7 +681,6 @@
                         throw new Error(data.error || "Login failed");
                     }
                     
-                    // Hide modal and redirect
                     signinModal.hide();
                     window.location.href = data.redirect || "/user/dashboard.html";
                     
@@ -728,7 +688,6 @@
                     console.error("Login error:", error);
                     let errorMessage = "Login failed. Please check your credentials.";
                     
-                    // Handle specific Firebase errors
                     if (error.code) {
                         switch (error.code) {
                             case 'auth/user-not-found':
@@ -751,7 +710,6 @@
                 }
             });
 
-            // Admin Sign In Form Handling
             document.getElementById("adminSigninForm").addEventListener("submit", async function(event) {
                 event.preventDefault();
                 
@@ -763,11 +721,9 @@
                     submitBtn.disabled = true;
                     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Signing in...';
 
-                    // Sign in with Firebase
                     const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
                     const idToken = await userCredential.user.getIdToken();
                     
-                    // Send to backend admin login endpoint
                     const response = await fetch("/admin/login", {
                         method: "POST",
                         headers: {
@@ -783,19 +739,15 @@
                         throw new Error(data.error || "Admin verification failed");
                     }
                     
-                    // Close the modal
                     adminModal.hide();
                     
-                    // Wait a brief moment to ensure cookie is set
                     await new Promise(resolve => setTimeout(resolve, 100));
                     
-                    // Use the redirect URL from the backend or fallback to /admin/admindashboard.html";
                     window.location.href = data.redirect || "/admin/admindashboard.html";
                     
                 } catch (error) {
                     console.error("Admin login error:", error);
                     
-                    // Sign out from Firebase if admin verification failed
                     try {
                         await firebase.auth().signOut();
                     } catch (signOutError) {

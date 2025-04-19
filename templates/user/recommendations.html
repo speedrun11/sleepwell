@@ -878,7 +878,7 @@
         }
 
         const avgBedtimeHour = entries.reduce((sum, entry) => sum + entry.bedtime.getHours(), 0) / entries.length;
-        if (avgBedtimeHour >= 23) { // 11pm or later
+        if (avgBedtimeHour >= 23) {
             recommendations.push({
                 title: "Earlier Bedtime",
                 description: `Your average bedtime is after 11pm. Research suggests earlier bedtimes (10pm-11pm) may correlate with better sleep quality.`,
@@ -1023,11 +1023,11 @@
         
         const progressFill = document.getElementById(`${category}-progress`);
         if (percentage >= 75) {
-            progressFill.style.background = "#10b981"; // Green
+            progressFill.style.background = "#10b981";
         } else if (percentage >= 50) {
-            progressFill.style.background = "#eab308"; // Yellow
+            progressFill.style.background = "#eab308";
         } else {
-            progressFill.style.background = "#ef4444"; // Red
+            progressFill.style.background = "#ef4444";
         }
     }
 

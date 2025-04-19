@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SLEEPWELL - FEEDBACK</title>
     
-    <!-- Same dependencies as dashboard -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
@@ -256,7 +255,6 @@
     </style>
 </head>
 <body>
-    <!-- Same navbar as dashboard -->
     <nav class="navbar navbar-expand-lg navbar-dark px-4 fixed-top">
         <a class="navbar-brand" href="#">SleepWell</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -279,7 +277,6 @@
     </nav>
 
     <div class="d-flex">
-        <!-- Same sidebar as dashboard -->
         <div class="sidebar">
             <div class="user-info">
                 <h5 id="sidebar-username">Loading user...</h5>
@@ -308,7 +305,6 @@
             </nav>
         </div>
 
-        <!-- Main Content -->
         <div class="content">
             <div class="feedback-card">
                 <div class="card stat-card">
@@ -370,17 +366,14 @@
         </div>
     </div>
 
-    <!-- Same scripts as dashboard -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
     <script>
-        // Firebase initialization function
         function initializeFirebase() {
             try {
                 const firebaseConfig = {
@@ -415,7 +408,6 @@
             }
         }
     
-        // Initialize Firebase services
         let db, auth;
         try {
             const firebaseServices = initializeFirebase();
@@ -432,7 +424,6 @@
             `;
         }
     
-        // Update user info in sidebar
         function updateUserInfo(user) {
             const displayName = user.displayName || "User";
             const email = user.email || "No email";
@@ -440,7 +431,6 @@
             document.getElementById('sidebar-email').textContent = email;
         }
     
-        // Auth state listener
         auth.onAuthStateChanged(user => {
             if (!user) {
                 window.location.href = "/";
@@ -449,7 +439,6 @@
             updateUserInfo(user);
         });
     
-        // Star rating functionality
         document.querySelectorAll('.star').forEach(star => {
             star.addEventListener('click', function() {
                 const value = parseInt(this.dataset.value);
@@ -463,7 +452,6 @@
             });
         });
     
-        // Feedback form submission
 document.getElementById('feedbackForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const user = auth.currentUser;
@@ -472,7 +460,6 @@ document.getElementById('feedbackForm').addEventListener('submit', async (e) => 
         return;
     }
 
-    // Get form values
     const form = e.target;
     const subject = form.subject.value.trim();
     const category = form.category.value;
@@ -480,7 +467,6 @@ document.getElementById('feedbackForm').addEventListener('submit', async (e) => 
     const rating = parseInt(form.rating.value);
     const allowContact = form.allowContact.checked;
 
-    // Validation
     if (!subject || !category || !message || isNaN(rating) || rating < 1 || rating > 5) {
         showAlert("Please fill all required fields and select a valid rating", "warning");
         return;
@@ -495,8 +481,8 @@ document.getElementById('feedbackForm').addEventListener('submit', async (e) => 
         userId: user.uid,
         userName: user.displayName || "Anonymous",
         userEmail: user.email || "No email",
-        status: "unread", // Default status
-        priority: "normal", // Default priority
+        status: "unread",
+        priority: "normal",
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
@@ -507,12 +493,10 @@ document.getElementById('feedbackForm').addEventListener('submit', async (e) => 
         submitBtn.innerHTML = '<span class="loading-spinner"></span> Submitting...';
         submitBtn.disabled = true;
 
-        // Add timeout for Firebase operation
         const timeoutPromise = new Promise((_, reject) => 
             setTimeout(() => reject(new Error("Submission timed out. Please check your connection.")), 10000)
         );
 
-        // Submit to Firebase
         await Promise.race([
             db.collection('feedback').add(formData),
             timeoutPromise
@@ -543,7 +527,6 @@ document.getElementById('feedbackForm').addEventListener('submit', async (e) => 
     }
 });
     
-        // Show alert function
         function showAlert(message, type = "info") {
             const alert = document.createElement('div');
             alert.className = `alert alert-${type} alert-dismissible fade show`;
@@ -563,7 +546,6 @@ document.getElementById('feedbackForm').addEventListener('submit', async (e) => 
             }, 5000);
         }
     
-        // Logout handler
         document.getElementById('logout-btn').addEventListener('click', async () => {
             try {
                 await auth.signOut();
@@ -574,7 +556,6 @@ document.getElementById('feedbackForm').addEventListener('submit', async (e) => 
             }
         });
     
-        // Initialize user info on page load
         document.addEventListener('DOMContentLoaded', () => {
             const user = auth.currentUser;
             if (user) {

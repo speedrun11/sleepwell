@@ -447,7 +447,6 @@
 </head>
 <body>
 
-    <!-- Top Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark px-4 fixed-top">
         <a class="navbar-brand" href="#">SleepWell <span class="badge badge-admin ms-2">ADMIN</span></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -470,7 +469,6 @@
     </nav>
 
     <div class="d-flex">
-        <!-- Sidebar -->
         <div class="sidebar">
             <div class="-userinfo">
                 <h5 id="sidebar-username">Loading admin...</h5>
@@ -496,7 +494,6 @@
             </nav>
         </div>
 
-        <!-- Main Content -->
         <div class="content">
             <div id="user-greeting" class="mb-4">
                 <div class="d-flex align-items-center gap-3 mb-3">
@@ -632,7 +629,6 @@
             <div class="tab-content" id="feedbackTabsContent">
                 <div class="tab-pane fade show active" id="list-tab-pane" role="tabpanel">
                     <div id="feedback-list">
-                        <!-- Feedback items will be loaded here -->
                         <div class="empty-state">
                             <i class="bi bi-chat-square-text"></i>
                             <h5>No Feedback Yet</h5>
@@ -698,7 +694,6 @@
         </div>
     </div>
 
-    <!-- Feedback Detail Modal -->
     <div class="modal fade" id="feedbackModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content" style="background: var(--surface); color: var(--text);">
@@ -707,7 +702,6 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="feedback-modal-content">
-                    <!-- Content will be loaded dynamically -->
                 </div>
                 <div class="modal-footer">
                     <div class="me-auto">
@@ -735,7 +729,6 @@
         </div>
     </div>
 
-    <!-- Reply Modal -->
     <div class="modal fade" id="replyModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content" style="background: var(--surface); color: var(--text);">
@@ -855,7 +848,6 @@
             return;
         }
         
-        // Verify admin status
         verifyAdminStatus(user.uid);
         
         console.log("Admin authenticated:", user.uid);
@@ -890,11 +882,9 @@
         try {
             showLoadingState(true);
             
-            // First verify admin status
             const isAdmin = await verifyAdminStatus(auth.currentUser.uid);
             if (!isAdmin) return;
             
-            // Load stats
             const [totalCount, unreadCount, avgRating, urgentCount] = await Promise.all([
                 getFeedbackCount(),
                 getUnreadFeedbackCount(),
@@ -907,7 +897,6 @@
             document.getElementById('avg-rating').textContent = avgRating;
             document.getElementById('urgent-feedback').textContent = urgentCount;
             
-            // Load feedback items
             const feedbackItems = await getFeedbackItems(currentFilter);
             updateFeedbackList(feedbackItems);
             updateFeedbackTable(feedbackItems);
@@ -924,7 +913,7 @@
         try {
             const collectionRef = db.collection('feedback');
             const snapshot = await collectionRef.get();
-            return snapshot.size; // Returns the number of documents in the collection
+            return snapshot.size;
         } catch (error) {
             console.error("Error getting feedback count:", error);
             return "N/A";
@@ -933,14 +922,12 @@
 
     async function getUnreadFeedbackCount() {
     try {
-        // First verify admin status
         const isAdmin = await verifyAdminStatus(auth.currentUser.uid);
         if (!isAdmin) {
             console.warn("User doesn't have admin privileges");
             return 0;
         }
         
-        // Get count of unread feedback
         const collectionRef = db.collection('feedback');
         const query = collectionRef.where('status', '==', 'unread');
         const snapshot = await query.get();
@@ -950,7 +937,6 @@
     } catch (error) {
         console.error("Error getting unread feedback count:", error);
         
-        // Specific error handling
         if (error.code === 'permission-denied') {
             console.warn("Permission denied - insufficient privileges");
             return 0;
@@ -995,14 +981,12 @@
 
     async function getUrgentFeedbackCount() {
         try {
-            // First verify admin status
             const isAdmin = await verifyAdminStatus(auth.currentUser.uid);
             if (!isAdmin) {
                 console.warn("User doesn't have admin privileges");
                 return 0;
             }
             
-            // Get count of urgent feedback
             const collectionRef = db.collection('feedback');
             const query = collectionRef.where('priority', '==', 'high');
             const snapshot = await query.get();
@@ -1012,7 +996,6 @@
         } catch (error) {
             console.error("Error getting urgent feedback count:", error);
             
-            // Specific error handling
             if (error.code === 'permission-denied') {
                 console.warn("Permission denied - insufficient privileges");
                 return 0;
@@ -1216,7 +1199,6 @@ function updateFeedbackTable(feedbackItems) {
         feedback.id = doc.id;
         currentFeedback = feedback;
         
-        // Mark as read if unread
         if (feedback.status === 'unread') {
             await db.collection('feedback').doc(feedbackId).update({
                 status: 'read',
@@ -1225,7 +1207,6 @@ function updateFeedbackTable(feedbackItems) {
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             
-            // Update the UI immediately for both list and table views
             const feedbackElements = document.querySelectorAll(`[data-feedback-id="${feedbackId}"]`);
             feedbackElements.forEach(feedbackElement => {
                 feedbackElement.classList.remove('unread');
@@ -1236,16 +1217,13 @@ function updateFeedbackTable(feedbackItems) {
                 }
             });
             
-            // Update counters
             updateUnreadCount();
         }
         
-        // Safely handle dates
         const createdAt = feedback.createdAt ? (feedback.createdAt.toDate ? feedback.createdAt.toDate() : new Date(feedback.createdAt)) : new Date();
         const updatedAt = feedback.updatedAt ? (feedback.updatedAt.toDate ? feedback.updatedAt.toDate() : new Date(feedback.updatedAt)) : null;
         const resolvedAt = feedback.resolvedAt ? (feedback.resolvedAt.toDate ? feedback.resolvedAt.toDate() : new Date(feedback.resolvedAt)) : null;
         
-        // Display feedback details
         feedbackModalContent.innerHTML = `
             <div class="row">
                 <div class="col-md-8">
@@ -1327,10 +1305,8 @@ function updateFeedbackTable(feedbackItems) {
             ` : ''}
         `;
         
-        // Update the priority dropdown to show current priority
         updatePriorityDropdown(feedback.priority || 'normal');
         
-        // Set up event listeners for this specific feedback item
         setupFeedbackModalActions(feedbackId);
 
         feedbackModal.show();
@@ -1364,17 +1340,14 @@ function updateFeedbackTable(feedbackItems) {
     }
 
     function setupFeedbackModalActions(feedbackId) {
-    // Get fresh references to elements inside the modal
         const modalArchiveBtn = document.getElementById('archive-feedback');
         const modalPriorityDropdown = document.getElementById('priorityDropdown');
         const modalPriorityOptions = document.querySelectorAll('.priority-option');
         
-        // Clear previous event listeners by cloning elements
         if (modalArchiveBtn) {
             const newArchiveBtn = modalArchiveBtn.cloneNode(true);
             modalArchiveBtn.parentNode.replaceChild(newArchiveBtn, modalArchiveBtn);
             
-            // Set up archive button
             newArchiveBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 if (confirm("Are you sure you want to archive this feedback?")) {
@@ -1397,7 +1370,6 @@ function updateFeedbackTable(feedbackItems) {
             });
         }
         
-        // Set up priority options
         if (modalPriorityOptions && modalPriorityOptions.length > 0) {
             modalPriorityOptions.forEach(option => {
                 const newOption = option.cloneNode(true);
@@ -1506,9 +1478,7 @@ function updateFeedbackTable(feedbackItems) {
     });
 
     feedbackSearch.addEventListener('input', () => {
-        // Implement search functionality
         console.log("Searching for:", feedbackSearch.value);
-        // You would typically filter the existing data or make a new query
     });
 
     feedbackType.addEventListener('change', () => {
@@ -1555,7 +1525,6 @@ function updateFeedbackTable(feedbackItems) {
         }, 5000);
     }
 
-    // Initialize
     showLoadingState(true);
     console.log("Feedback management initialized");
     </script>

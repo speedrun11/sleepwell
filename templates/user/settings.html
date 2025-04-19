@@ -326,7 +326,6 @@
 </head>
 <body>
 
-    <!-- Top Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark px-4 fixed-top">
         <a class="navbar-brand" href="#">SleepWell</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -349,7 +348,6 @@
     </nav>
 
     <div class="d-flex">
-        <!-- Sidebar -->
         <div class="sidebar">
             <div class="user-info">
                 <h5 id="sidebar-username">Loading user...</h5>
@@ -378,7 +376,6 @@
             </nav>
         </div>
 
-        <!-- Main Content -->
         <div class="content">
             <div class="profile-header">
                 <div class="profile-pic" id="profile-pic">
@@ -741,7 +738,6 @@
     try {
         await user.updateProfile({ displayName });
 
-        // Separate try for email
         if (email !== user.email) {
             try {
                 await user.updateEmail(email);

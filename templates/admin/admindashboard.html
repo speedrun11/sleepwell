@@ -394,7 +394,6 @@
 </head>
 <body>
 
-    <!-- Top Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark px-4 fixed-top">
         <a class="navbar-brand" href="#">SleepWell <span class="badge badge-admin ms-2">ADMIN</span></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -417,7 +416,6 @@
     </nav>
 
     <div class="d-flex">
-        <!-- Sidebar -->
         <div class="sidebar">
             <div class="-userinfo">
                 <h5 id="sidebar-username">Loading admin...</h5>
@@ -443,7 +441,6 @@
             </nav>
         </div>
 
-        <!-- Main Content -->
         <div class="content">
             <div id="user-greeting" class="mb-4">
                 <div class="d-flex align-items-center gap-3 mb-3">
@@ -720,7 +717,6 @@
             return;
         }
         
-        // Verify admin status
         verifyAdminStatus(user.uid);
         
         console.log("Admin authenticated:", user.uid);
@@ -769,11 +765,9 @@
     try {
         showLoadingState(true);
         
-        // First verify admin status
         const isAdmin = await verifyAdminStatus(auth.currentUser.uid);
         if (!isAdmin) return;
         
-        // Load stats
         const [usersCount, entriesCount, avgQuality, avgDuration] = await Promise.all([
             getUsersCount(),
             getEntriesCount(),
@@ -786,11 +780,9 @@
         document.getElementById('avg-quality').textContent = avgQuality;
         document.getElementById('avg-duration').textContent = avgDuration;
         
-        // Load recent users
         const recentUsers = await getRecentUsers();
         updateRecentUsersTable(recentUsers);
         
-        // Load charts
         const usersChartData = await getUsersChartData(currentPeriod);
         updateUsersChart(usersChartData);
         
@@ -805,20 +797,17 @@
     }
 }
 
-// Add debug logging to Firestore rules (temporarily)
 function isAdmin() {
   return request.auth.token.admin == true;
-  // return true; // TEMPORARY DEBUG - REMOVE AFTER TESTING
 }
 
 async function getUsersCount() {
   try {
-    // Count only non-admin users
     const snapshot = await db.collection('users')
       .where('isAdmin', '==', false)
       .get();
     
-    return snapshot.size || 0; // Return 0 if empty
+    return snapshot.size || 0;
   } catch (error) {
     console.error("Error getting users count:", error);
     return "N/A";
@@ -838,7 +827,7 @@ async function getEntriesCount() {
 async function getAverageQuality() {
     try {
         const snapshot = await db.collection('sleepEntries')
-            .get({ source: 'server' }); // Force server-side query
+            .get({ source: 'server' });
         
         if (snapshot.empty) return "N/A";
         
@@ -887,7 +876,7 @@ async function getAverageQuality() {
         const snapshot = await db.collection('users')
             .orderBy('lastLogin', 'desc')
             .limit(limit)
-            .get({ source: 'server' }); // Force server-side query
+            .get({ source: 'server' });
         
         return snapshot.docs.map(doc => {
             const data = doc.data();
@@ -965,7 +954,7 @@ async function getAverageQuality() {
 
     async function getUsersChartData(period) {
     try {
-        console.log(`Fetching user growth data for period: ${period}`); // Debug
+        console.log(`Fetching user growth data for period: ${period}`);
         const now = new Date();
         let startDate;
         
@@ -974,7 +963,6 @@ async function getAverageQuality() {
         } else if (period === 'year') {
             startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
         } else {
-            // All time - get first user creation date
             const firstUser = await db.collection('users')
                 .orderBy('createdAt')
                 .limit(1)
@@ -984,7 +972,6 @@ async function getAverageQuality() {
                     new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
         }
         
-        // For month view, get daily counts
         if (period === 'month') {
             const days = [];
             const counts = [];
@@ -1007,7 +994,6 @@ async function getAverageQuality() {
             
             return { labels: days, data: counts };
         }
-        // For year view, get monthly counts
         else if (period === 'year') {
             const months = [];
             const counts = [];
@@ -1028,7 +1014,6 @@ async function getAverageQuality() {
             
             return { labels: months, data: counts };
         }
-        // For all time, get quarterly counts
         else {
             const quarters = [];
             const counts = [];
@@ -1059,7 +1044,7 @@ async function getAverageQuality() {
             
             return { labels: quarters, data: counts };
         }
-        console.log('User growth data:', { labels: chartData.labels, data: chartData.data }); // Debug
+        console.log('User growth data:', { labels: chartData.labels, data: chartData.data });
         return chartData
     } catch (error) {
         console.error("Error getting users chart data:", error);
@@ -1069,7 +1054,7 @@ async function getAverageQuality() {
 
 async function getQualityDistribution() {
     try {
-        console.log("Fetching sleep quality distribution"); // Debug
+        console.log("Fetching sleep quality distribution");
         const snapshot = await db.collection('sleepEntries')
             .select('quality')
             .get();
@@ -1096,7 +1081,7 @@ async function getQualityDistribution() {
         console.log('Quality distribution data:', { 
             labels: Object.keys(distribution), 
             data: Object.values(distribution) 
-        }); // Debug
+        });
         return {
             labels: Object.keys(distribution),
             data: Object.values(distribution),
@@ -1109,9 +1094,9 @@ async function getQualityDistribution() {
 }
 
 function updateUsersChart(chartData) {
-    console.log("Updating users chart with data:", chartData); // Debug
+    console.log("Updating users chart with data:", chartData);
     if (usersChart) {
-        console.log("Destroying existing users chart"); // Debug
+        console.log("Destroying existing users chart");
         usersChart.destroy();
     }
     
@@ -1189,10 +1174,10 @@ function updateUsersChart(chartData) {
 }
 
 function updateQualityChart(chartData) {
-    console.log("Updating quality chart with data:", chartData); // Debug
+    console.log("Updating quality chart with data:", chartData);
     
     if (qualityChart) {
-        console.log("Destroying existing quality chart"); // Debug
+        console.log("Destroying existing quality chart");
         qualityChart.destroy();
     }
     
@@ -1304,20 +1289,16 @@ function updateQualityChart(chartData) {
         });
     });
 
-// Add to your existing event listener for user actions
 document.addEventListener('click', async (e) => {
     if (e.target.closest('[data-user-id]')) {
         const userId = e.target.closest('[data-user-id]').getAttribute('data-user-id');
         const action = e.target.closest('button').querySelector('i').className;
         
         if (action.includes('bi-eye')) {
-            // View user details
             await viewUserDetails(userId);
         } else if (action.includes('bi-pencil')) {
-            // Edit user
             await editUser(userId);
         } else if (action.includes('bi-trash')) {
-            // Delete user
             await deleteUser(userId);
         }
     }
@@ -1332,7 +1313,6 @@ async function viewUserDetails(userId) {
         }
         
         const userData = userDoc.data();
-        // Display user details in a modal or dedicated section
         showUserModal(userData);
     } catch (error) {
         console.error("Error viewing user:", error);
@@ -1349,7 +1329,7 @@ async function editUser(userId) {
         }
         
         const userData = userDoc.data();
-        userData.id = userId; // Include the document ID
+        userData.id = userId;
         showEditForm(userData);
     } catch (error) {
         console.error("Error editing user:", error);
@@ -1364,7 +1344,7 @@ async function deleteUser(userId) {
         }
         
         const idToken = await auth.currentUser.getIdToken();
-        const response = // Delete user completely
+        const response =
 await fetch(`/api/users/${userId}`, {
     method: 'DELETE',
     headers: {
@@ -1373,7 +1353,6 @@ await fetch(`/api/users/${userId}`, {
     }
 });
 
-// Delete only sleep entries
 await fetch(`/api/users/${userId}/sleep-entries`, {
     method: 'DELETE',
     headers: {
@@ -1382,7 +1361,6 @@ await fetch(`/api/users/${userId}/sleep-entries`, {
     }
 });
         
-        // Check if response is JSON
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             const text = await response.text();
@@ -1404,7 +1382,6 @@ await fetch(`/api/users/${userId}/sleep-entries`, {
 }
 
 function showUserModal(userData) {
-    // Create and show a modal with user details
     const modalHtml = `
         <div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
@@ -1447,14 +1424,12 @@ function showUserModal(userData) {
     const modal = new bootstrap.Modal(document.getElementById('userModal'));
     modal.show();
     
-    // Remove modal when closed
     document.getElementById('userModal').addEventListener('hidden.bs.modal', () => {
         document.getElementById('userModal').remove();
     });
 }
 
 function showEditForm(userData) {
-    // Create and show a modal with edit form
     const modalHtml = `
         <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
@@ -1508,7 +1483,6 @@ function showEditForm(userData) {
     const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
     modal.show();
     
-    // Handle save changes
     document.getElementById('saveUserChanges').addEventListener('click', async () => {
         try {
             const userId = document.getElementById('editUserId').value;
@@ -1537,14 +1511,13 @@ function showEditForm(userData) {
             
             showAlert("User updated successfully", "success");
             modal.hide();
-            loadAdminData(); // Refresh the data
+            loadAdminData();
         } catch (error) {
             console.error("Error updating user:", error);
             showAlert(`Failed to update user: ${error.message}`, "danger");
         }
     });
     
-    // Remove modal when closed
     document.getElementById('editUserModal').addEventListener('hidden.bs.modal', () => {
         document.getElementById('editUserModal').remove();
     });

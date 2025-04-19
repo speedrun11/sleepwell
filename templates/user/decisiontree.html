@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SLEEPWELL - DECISION TREE</title>
     
-    <!-- Stylesheets -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     
@@ -285,7 +284,6 @@
             margin-right: 0.5rem;
         }
 
-        /* Responsive adjustments */
         @media (max-width: 992px) {
             .sidebar {
                 width: 240px;
@@ -341,7 +339,6 @@
     </style>
 </head>
 <body>
-    <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark px-4 fixed-top">
         <a class="navbar-brand" href="#">SleepWell</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -448,7 +445,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
     <script>
-    // Initialize Firebase with proper error handling
     function initializeFirebase() {
         try {
             const firebaseConfig = {
@@ -499,7 +495,6 @@
         `;
     }
 
-    // Handle auth state changes with proper user management
     auth.onAuthStateChanged(user => {
         if (!user) {
             window.location.href = "/";
@@ -509,7 +504,6 @@
         console.log("User authenticated:", user.uid);
         updateUserInfo(user);
         
-        // Test Firestore connection
         db.collection('test').doc('test').get()
             .then(() => {
                 console.log("Firestore connection successful");
@@ -527,7 +521,6 @@
         document.getElementById('sidebar-username').textContent = displayName;
         document.getElementById('sidebar-email').textContent = email;
         
-        // Get additional user info from Firestore if needed
         db.collection("users").doc(user.uid).get()
             .then(doc => {
                 if (doc.exists) {
@@ -571,14 +564,11 @@
         const fileInfo = document.getElementById('fileInfo');
         let csvData = null;
 
-        // Show format info on hover
         dropZone.addEventListener('mouseenter', () => formatInfo.style.display = 'block');
         dropZone.addEventListener('mouseleave', () => formatInfo.style.display = 'none');
 
-        // Click to browse files
         dropZone.addEventListener('click', () => csvInput.click());
 
-        // Drag and drop handling
         ['dragenter', 'dragover'].forEach(eventName => {
             dropZone.addEventListener(eventName, (e) => {
                 e.preventDefault();
@@ -615,7 +605,6 @@
         clearFile.addEventListener('click', resetFileInput);
         showResults.addEventListener('click', visualizeDecisionTree);
 
-    // Logout Handler
     document.getElementById('logout-btn').addEventListener('click', async () => {
         try {
             await auth.signOut();
@@ -627,13 +616,12 @@
     });
 
         function handleFile(file) {
-            // Validate file type and size
             if (!file.name.endsWith('.csv')) {
                 showError('Please upload a valid CSV file');
                 return;
             }
 
-            if (file.size > 5 * 1024 * 1024) { // 5MB limit
+            if (file.size > 5 * 1024 * 1024) {
                 showError('File size exceeds 5MB limit');
                 return;
             }
@@ -643,7 +631,6 @@
             showResults.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
             clearFile.disabled = false;
             
-            // Update the drop zone UI
             const dropContent = dropZone.querySelector('.drop-content');
             if (dropContent) {
                 dropContent.innerHTML = `
@@ -653,14 +640,12 @@
                 `;
             }
             
-            // Update file info display
             fileInfo.style.display = 'block';
             fileInfo.innerHTML = `
                 <strong>Selected file:</strong> ${file.name} (${(file.size / 1024).toFixed(1)} KB)<br>
                 <strong>Last modified:</strong> ${new Date(file.lastModified).toLocaleString()}
             `;
 
-            // Parse the CSV file
             Papa.parse(file, {
                 header: true,
                 skipEmptyLines: true,
@@ -671,7 +656,6 @@
                         return;
                     }
 
-                    // Validate required columns
                     const headers = results.meta.fields;
                     if (!headers || !headers.includes('Duration (hours)') || !headers.includes('Quality')) {
                         showError('CSV file must contain "Duration (hours)" and "Quality" columns');
@@ -679,7 +663,6 @@
                         return;
                     }
 
-                    // Filter out invalid rows
                     csvData = results.data.filter(row => {
                         return !isNaN(parseFloat(row['Duration (hours)'])) && 
                                !isNaN(parseFloat(row['Quality']));
@@ -739,7 +722,6 @@
         return;
     }
 
-    // Clean the data - remove rows with invalid duration or quality
     const cleanData = csvData.filter(d => {
         const duration = parseFloat(d['Duration (hours)']);
         const quality = parseFloat(d['Quality']);
@@ -754,7 +736,6 @@
     const container = d3.select("#tree-container");
     container.html('<div class="text-center py-5"><div class="spinner-border text-primary"></div><p>Generating visualization...</p></div>');
     
-    // Calculate averages
     const avgDuration = d3.mean(cleanData, d => parseFloat(d['Duration (hours)']));
     const avgQuality = d3.mean(cleanData, d => parseFloat(d['Quality']));
     const hasScreenTime = cleanData.some(d => d['Screen Time Before Bed'] !== undefined);
@@ -762,14 +743,12 @@
     const hasCaffeine = cleanData.some(d => d['Caffeine Before Bed'] !== undefined);
     const avgCaffeine = hasCaffeine ? d3.mean(cleanData, d => parseFloat(d['Caffeine Before Bed'] || 0)) : 0;
     
-    // Create tree structure
     const root = {
         name: `Sleep Analysis (${cleanData.length} nights)`,
         value: `Avg: ${avgDuration.toFixed(1)}h sleep, ${avgQuality.toFixed(1)}/10 quality`,
         children: []
     };
 
-    // First level split: Duration
     const longSleep = cleanData.filter(d => parseFloat(d['Duration (hours)']) > avgDuration);
     const shortSleep = cleanData.filter(d => parseFloat(d['Duration (hours)']) <= avgDuration);
 
@@ -779,7 +758,6 @@
         children: []
     };
 
-    // Second level for long sleep: Quality split
     const goodQualityLong = longSleep.filter(d => parseFloat(d['Quality']) >= avgQuality);
     const poorQualityLong = longSleep.filter(d => parseFloat(d['Quality']) < avgQuality);
 
@@ -795,7 +773,6 @@
 
     root.children.push(durationSplit);
 
-    // First level split: Duration <= avg
     const shortDurationSplit = {
         name: `Duration ≤ ${avgDuration.toFixed(1)}h`,
         value: `${shortSleep.length} nights (${(shortSleep.length/cleanData.length*100).toFixed(1)}%)`,
@@ -803,7 +780,6 @@
     };
 
     if (hasScreenTime) {
-        // Second level for short sleep: Screen time split
         const lowScreenTime = shortSleep.filter(d => parseFloat(d['Screen Time Before Bed'] || 0) < avgScreenTime);
         const highScreenTime = shortSleep.filter(d => parseFloat(d['Screen Time Before Bed'] || 0) >= avgScreenTime);
 
@@ -825,7 +801,6 @@
 
     root.children.push(shortDurationSplit);
 
-    // If caffeine data exists, add another level
     if (hasCaffeine) {
         const caffeineSplit = {
             name: `Caffeine Intake Analysis`,
@@ -849,7 +824,6 @@
         root.children.push(caffeineSplit);
     }
 
-    // Visualization code remains the same...
     const margin = {top: 40, right: 120, bottom: 40, left: 120};
     const width = container.node().clientWidth - margin.left - margin.right;
     const height = Math.min(600, cleanData.length * 30) - margin.top - margin.bottom;
@@ -866,7 +840,6 @@
     const rootNode = d3.hierarchy(root);
     const treeData = treeLayout(rootNode);
 
-    // Draw links
     svg.selectAll(".link")
         .data(treeData.links())
         .enter()
@@ -876,7 +849,6 @@
             .x(d => d.x)
             .y(d => d.y));
 
-    // Create node groups
     const nodes = svg.selectAll(".node")
         .data(treeData.descendants())
         .enter()
@@ -884,7 +856,6 @@
         .attr("class", "node")
         .attr("transform", d => `translate(${d.x},${d.y})`);
 
-    // Add circles to nodes
     nodes.append("circle")
         .attr("r", 10)
         .on('mouseover', function(event, d) {
@@ -892,14 +863,12 @@
         })
         .on('mouseout', hideTooltip);
 
-    // Add labels to nodes
     nodes.append("text")
         .attr("dy", ".35em")
         .attr("x", d => d.children ? -15 : 15)
         .style("text-anchor", d => d.children ? "end" : "start")
         .text(d => d.data.name);
 
-    // Add small text for values
     nodes.append("text")
         .attr("dy", "1.5em")
         .attr("x", d => d.children ? -15 : 15)

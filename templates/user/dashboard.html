@@ -353,7 +353,6 @@
 </head>
 <body>
 
-    <!-- Top Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark px-4 fixed-top">
         <a class="navbar-brand" href="#">SleepWell</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -376,7 +375,6 @@
     </nav>
 
     <div class="d-flex">
-<!-- Sidebar -->
 <div class="sidebar">
     <div class="user-info">
         <h5 id="sidebar-username">Loading user...</h5>
@@ -405,7 +403,6 @@
     </nav>
 </div>
 
-        <!-- Main Content -->
         <div class="content">
             <div id="user-greeting" class="mb-4">
                 <div class="d-flex align-items-center gap-3 mb-3">
@@ -642,18 +639,15 @@
 
     async function saveSleepEntry(entryData, retries = 3) {
         try {
-            // Validate input data
             if (!entryData.userId || !entryData.bedtime || !entryData.wakeupTime) {
                 throw new Error("Invalid sleep entry data");
             }
 
-            // Calculate duration
             const duration = (entryData.wakeupTime.toDate() - entryData.bedtime.toDate()) / (1000 * 60 * 60);
             if (duration <= 0) {
                 throw new Error("Wake-up time must be after bedtime");
             }
 
-            // Prepare sleep entry document
             const entry = {
                 userId: entryData.userId,
                 bedtime: entryData.bedtime,
@@ -669,26 +663,21 @@
             let lastError;
             for (let i = 0; i < retries; i++) {
                 try {
-                    // Get user document first
                     const userRef = db.collection('users').doc(entryData.userId);
                     const userDoc = await userRef.get();
                     
-                    // Prepare user updates - ONLY the allowed fields
                     const userUpdates = {
                         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                         entriesCount: (userDoc.exists ? (userDoc.data().entriesCount || 0) : 0) + 1
                     };
                     
-                    // If creating new user document, add minimum required fields
                     if (!userDoc.exists) {
                         userUpdates.createdAt = firebase.firestore.FieldValue.serverTimestamp();
                         userUpdates.userId = entryData.userId;
                     }
                     
-                    // Create sleep entry first
                     const sleepEntryRef = await db.collection('sleepEntries').add(entry);
                     
-                    // Then update user document
                     await userRef.set(userUpdates, { merge: true });
                     
                     console.log("Entry saved and count updated");

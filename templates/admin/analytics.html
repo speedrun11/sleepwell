@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 <style>
-    /* Inherit all styles from admin_dashboard.html */
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
     
     :root {
@@ -283,7 +282,6 @@
         font-size: 1.1rem;
     }
 
-    /* Analytics-specific styles */
     .filter-card {
         background: var(--surface) !important;
         border: 1px solid rgba(255,255,255,0.1);
@@ -343,7 +341,7 @@
         position: relative;
         height: 100%;
         min-height: 300px;
-        background: #000; /* Black background for charts */
+        background: #000;
         border-radius: 8px;
         padding: 10px;
     }
@@ -475,7 +473,6 @@
         color: var(--text-muted);
     }
 
-    /* Make sidebar email white */
     #sidebar-email {
         color: white !important;
     }
@@ -487,7 +484,6 @@
 </head>
 <body>
 
-    <!-- Top Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark px-4 fixed-top">
         <a class="navbar-brand" href="#">SleepWell <span class="badge badge-admin ms-2">ADMIN</span></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -510,7 +506,6 @@
     </nav>
 
     <div class="d-flex">
-        <!-- Sidebar -->
         <div class="sidebar">
             <div class="-userinfo">
                 <h5 id="sidebar-username">Loading admin...</h5>
@@ -536,7 +531,6 @@
             </nav>
         </div>
 
-        <!-- Main Content -->
         <div class="content">
             <div id="user-greeting" class="mb-4">
                 <div class="d-flex align-items-center gap-3 mb-3">
@@ -555,7 +549,6 @@
                 <div>Detailed sleep analytics and insights. Filter by time period or specific users to analyze sleep patterns.</div>
             </div>
 
-            <!-- Filters Card -->
             <div class="card filter-card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div>
@@ -608,7 +601,6 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <!-- More users would be populated by JavaScript -->
                                 </div>
                             </div>
                         </div>
@@ -629,7 +621,6 @@
                 </div>
             </div>
 
-            <!-- Key Metrics -->
             <div class="row">
                 <div class="col-md-3">
                     <div class="card metric-card">
@@ -689,7 +680,6 @@
                 </div>
             </div>
 
-            <!-- Main Charts Row -->
             <div class="row mt-4">
                 <div class="col-md-8">
                     <div class="card stat-card">
@@ -748,7 +738,6 @@
                 </div>
             </div>
 
-            <!-- Second Charts Row -->
             <div class="row mt-4">
                 <div class="col-md-6">
                     <div class="card stat-card">
@@ -796,7 +785,6 @@
                 </div>
             </div>
 
-            <!-- Correlation Matrix -->
             <div class="card mt-4 stat-card">
                 <div class="card-header d-flex align-items-center">
                     <i class="bi bi-grid-3x3-gap"></i>
@@ -877,7 +865,6 @@
                 </div>
             </div>
 
-            <!-- User Comparison -->
             <div class="card mt-4 stat-card">
                 <div class="card-header d-flex align-items-center">
                     <i class="bi bi-people-fill"></i>
@@ -900,7 +887,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.0.2"></script>
 
     <script>
-    // Reuse Firebase initialization from admin_dashboard.html
     function initializeFirebase() {
         try {
             const firebaseConfig = {
@@ -952,10 +938,8 @@
         `;
     }
 
-    // Chart instances
     let sleepPatternsChart, sleepStagesChart, weeklyPatternsChart, sleepScoreChart, userComparisonChart;
 
-    // DOM elements
     const userGreeting = document.getElementById('user-greeting');
     const greetingText = document.getElementById('greeting-text');
     const lastLogin = document.getElementById('last-login');
@@ -968,7 +952,6 @@
     const timeFilterButtons = document.querySelectorAll('[data-period]');
     const metricButtons = document.querySelectorAll('[data-metric]');
 
-    // Current filter state
     let currentFilters = {
         period: '7d',
         users: 'all',
@@ -977,7 +960,6 @@
         metric: 'duration'
     };
 
-    // Initialize the page
     auth.onAuthStateChanged(user => {
         if (!user) {
             window.location.href = "/";
@@ -1021,7 +1003,6 @@
     }
 
     function setupEventListeners() {
-        // Logout button
         logoutBtn.addEventListener('click', async () => {
             try {
                 await auth.signOut();
@@ -1032,7 +1013,6 @@
             }
         });
 
-        // User selection dropdown
         userSelectionDropdown.addEventListener('change', (e) => {
             if (e.target.value === 'custom') {
                 customUserSelect.style.display = 'block';
@@ -1042,7 +1022,6 @@
             }
         });
 
-        // Time period filter buttons
         timeFilterButtons.forEach(button => {
             button.addEventListener('click', () => {
                 timeFilterButtons.forEach(btn => btn.classList.remove('active'));
@@ -1052,7 +1031,6 @@
             });
         });
 
-        // Metric selection buttons
         metricButtons.forEach(button => {
             button.addEventListener('click', () => {
                 metricButtons.forEach(btn => btn.classList.remove('active'));
@@ -1062,14 +1040,12 @@
             });
         });
 
-        // Apply filters button
         applyFiltersBtn.addEventListener('click', () => {
             loadAnalyticsData();
         });
     }
 
     function initializeCharts() {
-        // Sleep Patterns Chart
         const sleepPatternsCtx = document.getElementById('sleepPatternsChart').getContext('2d');
         sleepPatternsChart = new Chart(sleepPatternsCtx, {
             type: 'line',
@@ -1088,7 +1064,6 @@
             options: getChartOptions('Hours of sleep per night')
         });
 
-        // Sleep Stages Chart
         const sleepStagesCtx = document.getElementById('sleepStagesChart').getContext('2d');
         sleepStagesChart = new Chart(sleepStagesCtx, {
             type: 'doughnut',
@@ -1121,7 +1096,6 @@
             }
         });
 
-        // Weekly Patterns Chart
         const weeklyPatternsCtx = document.getElementById('weeklyPatternsChart').getContext('2d');
         weeklyPatternsChart = new Chart(weeklyPatternsCtx, {
             type: 'bar',
@@ -1138,7 +1112,6 @@
             options: getChartOptions('Average hours per weekday')
         });
 
-        // Sleep Score Chart
         const sleepScoreCtx = document.getElementById('sleepScoreChart').getContext('2d');
         sleepScoreChart = new Chart(sleepScoreCtx, {
             type: 'bar',
@@ -1167,7 +1140,6 @@
             options: getChartOptions('Number of users in each score range')
         });
 
-        // User Comparison Chart
         const userComparisonCtx = document.getElementById('userComparisonChart').getContext('2d');
         userComparisonChart = new Chart(userComparisonCtx, {
             type: 'radar',
@@ -1280,11 +1252,9 @@
         try {
             showLoadingState(true);
             
-            // Verify admin status
             const isAdmin = await verifyAdminStatus(auth.currentUser.uid);
             if (!isAdmin) return;
             
-            // Load all analytics data
             const [
                 avgDuration,
                 qualityScore,
@@ -1307,19 +1277,16 @@
                 getUserComparisonData()
             ]);
             
-            // Update metrics
             document.getElementById('avg-duration-metric').textContent = avgDuration.value;
             document.getElementById('quality-score-metric').textContent = qualityScore.value;
             document.getElementById('efficiency-metric').textContent = efficiency.value;
             document.getElementById('consistency-metric').textContent = consistency.value;
             
-            // Update trend indicators
             updateTrendIndicator('avg-duration-metric', avgDuration.trend);
             updateTrendIndicator('quality-score-metric', qualityScore.trend);
             updateTrendIndicator('efficiency-metric', efficiency.trend);
             updateTrendIndicator('consistency-metric', consistency.trend);
             
-            // Update charts
             updateSleepPatternsChart(sleepPatterns);
             updateSleepStagesChart(sleepStages);
             updateWeeklyPatternsChart(weeklyPatterns);
@@ -1351,7 +1318,6 @@
     }
 
     async function getAverageDuration() {
-        // Simulate API call
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve({
@@ -1363,7 +1329,6 @@
     }
 
     async function getAverageQualityScore() {
-        // Simulate API call
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve({
@@ -1375,7 +1340,6 @@
     }
 
     async function getAverageEfficiency() {
-        // Simulate API call
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve({
@@ -1387,7 +1351,6 @@
     }
 
     async function getConsistencyScore() {
-        // Simulate API call
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve({
@@ -1399,7 +1362,6 @@
     }
 
     async function getSleepPatternsData() {
-        // Simulate API call with different data based on period
         const days = currentFilters.period === '7d' ? 7 : 
                     currentFilters.period === '30d' ? 30 : 
                     currentFilters.period === '90d' ? 90 : 365;
@@ -1416,7 +1378,6 @@
     }
 
     async function getSleepStagesData() {
-        // Simulate API call
         return {
             labels: ['Deep Sleep', 'REM Sleep', 'Light Sleep', 'Awake'],
             data: [22, 18, 45, 15],
@@ -1425,7 +1386,6 @@
     }
 
     async function getWeeklyPatternsData() {
-        // Simulate API call
         return {
             labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
             data: [7.2, 6.8, 7.5, 7.1, 6.5, 8.2, 8.5]
@@ -1433,7 +1393,6 @@
     }
 
     async function getSleepScoresData() {
-        // Simulate API call
         return {
             labels: ['0-59', '60-69', '70-79', '80-89', '90-100'],
             data: [5, 15, 30, 35, 15],
@@ -1442,7 +1401,6 @@
     }
 
     async function getUserComparisonData() {
-        // Simulate API call
         return {
             labels: ['Duration', 'Quality', 'Consistency', 'Efficiency', 'Bedtime', 'Wake Time'],
             userData: [85, 82, 78, 80, 75, 88],
@@ -1452,7 +1410,6 @@
 
     function updateSleepPatternsChart(data) {
         if (!data) {
-            // Get current data from chart if none provided
             data = {
                 labels: sleepPatternsChart.data.labels,
                 data: sleepPatternsChart.data.datasets[0].data
@@ -1461,7 +1418,6 @@
         
         sleepPatternsChart.data.labels = data.labels;
         
-        // Update dataset based on selected metric
         const dataset = sleepPatternsChart.data.datasets[0];
         dataset.data = data.data;
         
@@ -1550,13 +1506,11 @@
     }
 
     function showLoadingState(isLoading) {
-        // Show/hide loading indicators
         const elements = document.querySelectorAll('.loading-spinner');
         elements.forEach(el => {
             el.style.visibility = isLoading ? 'visible' : 'hidden';
         });
         
-        // Disable/enable buttons
         applyFiltersBtn.disabled = isLoading;
     }
 

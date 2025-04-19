@@ -414,7 +414,6 @@
 </head>
 <body>
 
-    <!-- Top Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark px-4 fixed-top">
         <a class="navbar-brand" href="#">SleepWell <span class="badge badge-admin ms-2">ADMIN</span></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -437,7 +436,6 @@
     </nav>
 
     <div class="d-flex">
-        <!-- Sidebar -->
         <div class="sidebar">
             <div class="userinfo">
                 <h5 id="sidebar-username">Loading admin...</h5>
@@ -463,7 +461,6 @@
             </nav>
         </div>
 
-        <!-- Main Content -->
         <div class="content">
             <div id="user-greeting" class="mb-4">
                 <div class="d-flex align-items-center gap-3 mb-3">
@@ -541,7 +538,6 @@
         </div>
     </div>
 
-    <!-- Add User Modal -->
     <div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content" style="background: var(--surface); color: var(--text);">
@@ -583,7 +579,6 @@
         </div>
     </div>
 
-    <!-- User Details Modal -->
     <div class="modal fade" id="userDetailsModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content" style="background: var(--surface); color: var(--text);">
@@ -601,7 +596,6 @@
         </div>
     </div>
 
-    <!-- Edit User Modal -->
     <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content" style="background: var(--surface); color: var(--text);">
@@ -610,7 +604,6 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="edit-user-content">
-                    <!-- Content will be dynamically populated -->
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -624,7 +617,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // Initialize Firebase
         const DEBUG = true;
         function debugLog(...args) {
             if (DEBUG) console.log('[DEBUG]', ...args);
@@ -636,7 +628,6 @@
         let listenersAttached = false;
         let isLoading = false;
         
-        // DOM Elements
         const sidebarUsername = document.getElementById('sidebar-username');
         const sidebarEmail = document.getElementById('sidebar-email');
         const logoutBtn = document.getElementById('logout-btn');
@@ -648,12 +639,10 @@
         const filterButtons = document.querySelectorAll('[data-filter]');
         const pagination = document.getElementById('pagination');
     
-        // Modals
         const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
         const userDetailsModal = new bootstrap.Modal(document.getElementById('userDetailsModal'));
         const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal'));
     
-        // State
         let allUsers = [];
         let filteredUsers = [];
         let currentPage = 1;
@@ -697,7 +686,6 @@
             }
         }
     
-        // Enable persistence
         async function enablePersistence() {
             try {
                 await db.enablePersistence()
@@ -713,7 +701,6 @@
             }
         }
     
-        // Check Firebase connection
         async function checkFirebaseConnection() {
             try {
                 debugLog("Checking Firestore connection...");
@@ -769,7 +756,6 @@
                 debugLog("Loading users...");
                 showLoading(true);
                 
-                // Clear the array before loading
                 allUsers = [];
                 
                 const usersSnapshot = await db.collection('users').get();
@@ -1036,7 +1022,6 @@
             return;
         }
 
-        // Get admin auth token first
         const adminUser = auth.currentUser;
         if (!adminUser) {
             showAlert("Session expired. Please log in again.", "danger");
@@ -1045,7 +1030,6 @@
         
         const idToken = await adminUser.getIdToken();
 
-        // Use Firebase Admin SDK through a backend endpoint
         const response = await fetch('/api/createUser', {
             method: 'POST',
             headers: {
@@ -1223,7 +1207,6 @@
             return;
         }
 
-        // Get current admin user's token for authorization
         const adminUser = auth.currentUser;
         if (!adminUser) {
             showAlert("Session expired. Please log in again.", "danger");
@@ -1232,7 +1215,6 @@
 
         const idToken = await adminUser.getIdToken();
         
-        // Call the API endpoint to handle the deletion
         const response = await fetch(`/api/users/${userId}`, {
             method: 'DELETE',
             headers: {
@@ -1241,7 +1223,6 @@
             }
         });
 
-        // Check if response is JSON
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             const text = await response.text();
@@ -1255,7 +1236,7 @@
         }
 
         showAlert("User and all associated data deleted successfully", "success");
-        loadUsers(); // Refresh the user list
+        loadUsers();
     } catch (error) {
         console.error("Detailed deletion error:", error);
         showAlert(`Failed to delete user: ${error.message}`, "danger");
@@ -1265,19 +1246,14 @@
         function setupEventListeners() {
             if (listenersAttached) return;
             
-            // Logout button
             logoutBtn.addEventListener('click', handleLogout);
             
-            // Add user button
             addUserBtn.addEventListener('click', showAddUserModal);
             
-            // Save new user button
             saveNewUserBtn.addEventListener('click', handleSaveNewUser);
             
-            // Save user changes button
             saveUserChangesBtn.addEventListener('click', handleSaveUserChanges);
             
-            // Search functionality
             userSearch.addEventListener('input', () => {
                 clearTimeout(searchDebounce);
                 searchDebounce = setTimeout(() => {
@@ -1289,7 +1265,6 @@
                 }, 300);
             });
             
-            // Filter buttons
             filterButtons.forEach(button => {
                 button.addEventListener('click', () => {
                     filterButtons.forEach(btn => btn.classList.remove('active'));
@@ -1303,7 +1278,6 @@
                 });
             });
             
-            // Table actions (delegated)
             document.addEventListener('click', async (e) => {
                 if (e.target.closest('.view-user')) {
                     const userId = e.target.closest('.view-user').getAttribute('data-user-id');
@@ -1334,7 +1308,6 @@
             listenersAttached = true;
         }
     
-        // Start the app
         document.addEventListener('DOMContentLoaded', async () => {
             debugLog("DOM loaded, initializing app...");
             const initialized = await initializeApp();
@@ -1353,7 +1326,6 @@
                 debugLog("User authenticated:", user.uid);
                 
                 try {
-                    // Check if user is admin
                     const userDoc = await db.collection('users').doc(user.uid).get();
                     if (!userDoc.exists || !userDoc.data().isAdmin) {
                         showAlert("You don't have admin privileges. Redirecting...", "danger");

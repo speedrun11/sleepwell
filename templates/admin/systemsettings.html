@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
-        /* Inherit all styles from admin dashboard */
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
         
         :root {
@@ -270,7 +269,6 @@
             font-size: 0.85rem;
         }
 
-        /* Additional styles specific to settings page */
         .settings-section {
             margin-bottom: 30px;
         }
@@ -361,7 +359,6 @@
 </head>
 <body>
 
-    <!-- Top Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark px-4 fixed-top">
         <a class="navbar-brand" href="#">SleepWell <span class="badge badge-admin ms-2">ADMIN</span></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -384,7 +381,6 @@
     </nav>
 
     <div class="d-flex">
-        <!-- Sidebar -->
         <div class="sidebar">
             <div class="-userinfo">
                 <h5 id="sidebar-username">Loading admin...</h5>
@@ -410,7 +406,6 @@
             </nav>
         </div>
 
-        <!-- Main Content -->
         <div class="content">
             <div id="user-greeting" class="mb-4">
                 <div class="d-flex align-items-center gap-3 mb-3">
@@ -429,7 +424,6 @@
                 <div>Configure system-wide settings and application preferences. Changes may require a restart to take effect.</div>
             </div>
 
-            <!-- General Settings -->
             <div class="card settings-card">
                 <div class="card-header">
                     <i class="bi bi-sliders"></i>
@@ -463,7 +457,6 @@
                 </div>
             </div>
 
-            <!-- User Settings -->
             <div class="card settings-card mt-4">
                 <div class="card-header">
                     <i class="bi bi-people"></i>
@@ -496,7 +489,6 @@
                 </div>
             </div>
 
-            <!-- Data & Privacy -->
             <div class="card settings-card mt-4">
                 <div class="card-header">
                     <i class="bi bi-database"></i>
@@ -531,7 +523,6 @@
                 </div>
             </div>
 
-            <!-- Email Settings -->
             <div class="card settings-card mt-4">
                 <div class="card-header">
                     <i class="bi bi-envelope"></i>
@@ -584,7 +575,6 @@
                 </div>
             </div>
 
-            <!-- Backup & Restore -->
             <div class="card settings-card mt-4">
                 <div class="card-header">
                     <i class="bi bi-archive"></i>
@@ -631,7 +621,6 @@
                 </div>
             </div>
 
-            <!-- Danger Zone -->
             <div class="card border-danger mt-4">
                 <div class="card-header bg-danger bg-opacity-10 text-danger">
                     <i class="bi bi-exclamation-triangle"></i>
@@ -662,7 +651,6 @@
                 </div>
             </div>
 
-            <!-- Save Button -->
             <button class="btn btn-primary settings-save-btn" id="saveSettingsBtn">
                 <i class="bi bi-save me-2"></i>Save All Changes
             </button>
@@ -740,7 +728,6 @@
             return;
         }
         
-        // Verify admin status
         verifyAdminStatus(user.uid);
         
         console.log("Admin authenticated:", user.uid);
@@ -784,7 +771,6 @@
         const settingsDoc = await settingsRef.get();
         
         if (!settingsDoc.exists) {
-            // Create default settings if they don't exist
             const defaultSettings = {
                 appName: 'SleepWell',
                 timezone: 'UTC',
@@ -839,22 +825,18 @@
 }
 
 function applySettingsToUI(settings) {
-    // General Settings
     document.getElementById('appName').value = settings.appName || 'SleepWell';
     document.getElementById('timezone').value = settings.timezone || 'UTC';
     document.getElementById('maintenanceMode').checked = settings.maintenanceMode || false;
     
-    // User Settings
     document.getElementById('allowRegistrations').checked = settings.allowRegistrations !== false;
     document.getElementById('emailVerification').checked = settings.emailVerification !== false;
     document.getElementById('defaultUserRole').value = settings.defaultUserRole || 'user';
     
-    // Data & Privacy
     document.getElementById('dataRetention').value = settings.dataRetention || 90;
     document.getElementById('anonymizeData').checked = settings.anonymizeData || false;
     document.getElementById('gdprCompliance').checked = settings.gdprCompliance !== false;
     
-    // Email Settings
     document.getElementById('smtpHost').value = settings.email?.smtpHost || '';
     document.getElementById('smtpPort').value = settings.email?.smtpPort || 587;
     document.getElementById('smtpSecurity').value = settings.email?.smtpSecurity || 'tls';
@@ -862,7 +844,6 @@ function applySettingsToUI(settings) {
     document.getElementById('fromEmail').value = settings.email?.fromEmail || '';
     document.getElementById('emailEnabled').checked = settings.email?.enabled !== false;
     
-    // Backup Settings
     document.getElementById('backupFrequency').value = settings.backup?.frequency || 'weekly';
     document.getElementById('backupLocation').value = settings.backup?.location || '/var/backups/sleepwell';
     document.getElementById('backupRetention').value = settings.backup?.retention || 14;
@@ -871,22 +852,18 @@ function applySettingsToUI(settings) {
     async function saveSettings() {
         try {
             const settings = {
-                // General Settings
                 appName: document.getElementById('appName').value,
                 timezone: document.getElementById('timezone').value,
                 maintenanceMode: document.getElementById('maintenanceMode').checked,
                 
-                // User Settings
                 allowRegistrations: document.getElementById('allowRegistrations').checked,
                 emailVerification: document.getElementById('emailVerification').checked,
                 defaultUserRole: document.getElementById('defaultUserRole').value,
                 
-                // Data & Privacy
                 dataRetention: parseInt(document.getElementById('dataRetention').value),
                 anonymizeData: document.getElementById('anonymizeData').checked,
                 gdprCompliance: document.getElementById('gdprCompliance').checked,
                 
-                // Email Settings
                 email: {
                     smtpHost: document.getElementById('smtpHost').value,
                     smtpPort: parseInt(document.getElementById('smtpPort').value),
@@ -896,14 +873,12 @@ function applySettingsToUI(settings) {
                     enabled: document.getElementById('emailEnabled').checked
                 },
                 
-                // Backup Settings
                 backup: {
                     frequency: document.getElementById('backupFrequency').value,
                     location: document.getElementById('backupLocation').value,
                     retention: parseInt(document.getElementById('backupRetention').value)
                 },
                 
-                // Metadata
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                 updatedBy: auth.currentUser.uid
             };
@@ -922,8 +897,6 @@ function applySettingsToUI(settings) {
             createBackupBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Creating Backup...';
             createBackupBtn.disabled = true;
             
-            // In a real app, this would call your backend API
-            // For demo, we'll just simulate a delay
             await new Promise(resolve => setTimeout(resolve, 2000));
             
             showAlert("Backup created successfully", "success");
@@ -969,7 +942,6 @@ function applySettingsToUI(settings) {
     createBackupBtn.addEventListener('click', createBackup);
     
     restoreBackupBtn.addEventListener('click', () => {
-        // In a real app, this would open a file dialog and upload a backup
         showAlert("Backup restore functionality would be implemented here", "info");
     });
 
