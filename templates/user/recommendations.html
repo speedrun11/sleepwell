@@ -242,6 +242,41 @@
             color: var(--accent);
         }
 
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .action-btn {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-complete {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid #10b981;
+        }
+
+        .action-complete:hover {
+            background: rgba(16, 185, 129, 0.3);
+        }
+
+        .action-skip {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            border: 1px solid var(--text-muted);
+        }
+
+        .action-skip:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
         @media (max-width: 992px) {
             .sidebar {
                 width: 100%;
@@ -341,11 +376,44 @@
             50% { opacity: 0.6; }
         }
 
-.content h2 + small.text-muted {
-    color: #e0e0e0 !important;
-    font-size: 1rem;
-    opacity: 0.9;
-}
+        .content h2 + small.text-muted {
+            color: #e0e0e0 !important;
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .user-stats {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: var(--surface-light);
+            padding: 16px;
+            border-radius: 8px;
+            flex: 1;
+            min-width: 200px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .stat-card h5 {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .stat-card p {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0;
+        }
+
+        .stat-card small {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
     </style>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -400,6 +468,7 @@
                 </a>
                 <a class="nav-link" href="{{ url_for('settings') }}">
                     <i class="bi bi-gear"></i> Settings
+                </a>
             </nav>
         </div>
 
@@ -417,6 +486,9 @@
             <div class="alert alert-info d-flex align-items-center">
                 <i class="bi bi-info-circle-fill me-2"></i>
                 <div>These recommendations are tailored based on your sleep patterns and habits.</div>
+            </div>
+
+            <div class="user-stats" id="user-stats-container">
             </div>
 
             <div class="row">
@@ -603,6 +675,7 @@
     const logoutBtn = document.getElementById('logout-btn');
     const refreshBtn = document.getElementById('refresh-recommendations');
     const recommendationsList = document.getElementById('recommendations-list');
+    const userStatsContainer = document.getElementById('user-stats-container');
 
     auth.onAuthStateChanged(user => {
         if (!user) {
@@ -624,67 +697,131 @@
     }
 
     async function loadRecommendations(uid) {
-        try {
-            refreshBtn.classList.add('refreshing');
-            
-            const entries = await getSleepEntries(uid);
-            
-            const stats = calculateSleepStats(entries);
-            
-            const recommendations = generateRecommendations(entries);
-            
-            updateRecommendationsUI(recommendations);
-            
-            updateProgressTracking(recommendations);
-            
-        } catch (error) {
-            console.error("Error loading recommendations:", error);
-            showAlert("Failed to load recommendations. Please try again.", "danger");
-            
+    try {
+        refreshBtn.classList.add('refreshing');
+        
+        console.log("Fetching sleep entries...");
+        const entries = await getSleepEntries(uid);
+        console.log("Found entries:", entries.length);
+        
+        if (entries.length === 0) {
+            showAlert("No sleep entries found. Please log some sleep data first.", "info");
             recommendationsList.innerHTML = `
                 <div class="empty-state">
-                    <i class="bi bi-emoji-frown"></i>
-                    <h5>Couldn't load recommendations</h5>
-                    <p class="text-muted">${error.message || 'Please try refreshing the page'}</p>
+                    <i class="bi bi-moon-stars"></i>
+                    <h5>No Sleep Data Found</h5>
+                    <p class="text-muted">Log your sleep data to get personalized recommendations</p>
+                    <a href="/sleep_analysis" class="btn btn-primary mt-3">Log Sleep Data</a>
                 </div>
             `;
-        } finally {
-            refreshBtn.classList.remove('refreshing');
+            return;
         }
+        
+        console.log("Calculating stats...");
+        const stats = calculateSleepStats(entries);
+        
+        console.log("Updating UI...");
+        updateUserStats(stats);
+        
+        console.log("Generating recommendations...");
+        const recommendations = generateRecommendations(entries);
+        
+        updateRecommendationsUI(recommendations);
+        updateProgressTracking(recommendations);
+        
+    } catch (error) {
+        console.error("Error in loadRecommendations:", error);
+        showAlert(`Failed to load recommendations: ${error.message}`, "danger");
+        
+        recommendationsList.innerHTML = `
+            <div class="empty-state">
+                <i class="bi bi-emoji-frown"></i>
+                <h5>Error Loading Recommendations</h5>
+                <p class="text-muted">${error.message || 'Please try refreshing the page'}</p>
+                <button id="retry-btn" class="btn btn-primary mt-3">
+                    <i class="bi bi-arrow-repeat"></i> Try Again
+                </button>
+            </div>
+        `;
+        
+        document.getElementById('retry-btn')?.addEventListener('click', () => {
+            loadRecommendations(uid);
+        });
+    } finally {
+        refreshBtn.classList.remove('refreshing');
+    }
+}
+
+    function updateUserStats(stats) {
+        userStatsContainer.innerHTML = `
+            <div class="stat-card">
+                <h5><i class="bi bi-clock"></i> Avg. Sleep Duration</h5>
+                <p>${stats.avgDuration} <small>hours</small></p>
+                <small class="${stats.avgDuration < 7 ? 'text-danger' : stats.avgDuration < 8 ? 'text-warning' : 'text-success'}">
+                    ${stats.avgDuration < 7 ? 'Below recommended' : stats.avgDuration < 8 ? 'Moderate' : 'Optimal'}
+                </small>
+            </div>
+            <div class="stat-card">
+                <h5><i class="bi bi-star"></i> Sleep Quality</h5>
+                <p>${stats.quality}</p>
+                <small class="${stats.quality === 'Very Poor' || stats.quality === 'Poor' ? 'text-danger' : 
+                              stats.quality === 'Average' ? 'text-warning' : 'text-success'}">
+                    ${stats.quality === 'Very Poor' ? 'Needs improvement' : 
+                     stats.quality === 'Poor' ? 'Could be better' : 
+                     stats.quality === 'Average' ? 'Moderate' : 'Excellent'}
+                </small>
+            </div>
+            <div class="stat-card">
+                <h5><i class="bi bi-phone"></i> Screen Time</h5>
+                <p>${stats.avgScreenTime} <small>hours before bed</small></p>
+                <small class="${stats.avgScreenTime > 2 ? 'text-danger' : stats.avgScreenTime > 1 ? 'text-warning' : 'text-success'}">
+                    ${stats.avgScreenTime > 2 ? 'Too close to bedtime' : 
+                     stats.avgScreenTime > 1 ? 'Moderate' : 'Optimal'}
+                </small>
+            </div>
+            <div class="stat-card">
+                <h5><i class="bi bi-cup-hot"></i> Caffeine Intake</h5>
+                <p>${stats.avgCaffeineTime} <small>hours before bed</small></p>
+                <small class="${stats.avgCaffeineTime < 6 ? 'text-danger' : stats.avgCaffeineTime < 8 ? 'text-warning' : 'text-success'}">
+                    ${stats.avgCaffeineTime < 6 ? 'Too close to bedtime' : 
+                     stats.avgCaffeineTime < 8 ? 'Moderate' : 'Optimal'}
+                </small>
+            </div>
+        `;
     }
 
     async function getSleepEntries(uid) {
-        try {
-            const snapshot = await db.collection('sleepEntries')
-                .where('userId', '==', uid)
-                .orderBy('date', 'desc')
-                .limit(30)
-                .get();
-            
-            if (snapshot.empty) {
-                console.log("No sleep entries found for this user");
-                return [];
-            }
-            
-            return snapshot.docs.map(doc => {
-                const data = doc.data();
-                return {
-                    id: doc.id,
-                    userId: data.userId,
-                    quality: parseInt(data.quality) || 3,
-                    duration: parseFloat(data.duration) || 0,
-                    screenHoursBeforeBed: parseFloat(data.screenHoursBeforeBed) || 0,
-                    caffeineHoursBeforeBed: parseFloat(data.caffeineHoursBeforeBed) || 0,
-                    date: safeConvertToDate(data.date),
-                    bedtime: safeConvertToDate(data.bedtime),
-                    wakeupTime: safeConvertToDate(data.wakeupTime)
-                };
-            });
-        } catch (error) {
-            console.error("Error getting sleep entries:", error);
-            throw error;
+    try {
+        console.log("Attempting to fetch sleep entries for user:", uid);
+        const snapshot = await db.collection('sleepEntries')
+            .where('userId', '==', uid)
+            .orderBy('date', 'asc')
+            .limit(30)
+            .get();
+        
+        console.log("Received snapshot:", snapshot);
+        
+        if (snapshot.empty) {
+            console.log("No sleep entries found for this user");
+            return [];
         }
+        
+        return snapshot.docs.map(doc => {
+            const data = doc.data();
+            console.log("Processing document:", doc.id, data);
+            return {
+                id: doc.id,
+                ...data,
+                date: data.date.toDate(),
+                bedtime: data.bedtime.toDate(),
+                wakeupTime: data.wakeupTime.toDate()
+            };
+        });
+    } catch (error) {
+        console.error("Detailed error getting sleep entries:", error);
+        throw error;
     }
+}
 
     function safeConvertToDate(timestamp) {
         try {
@@ -753,204 +890,325 @@
     }
 
     function generateRecommendations(entries) {
-        const stats = calculateSleepStats(entries);
-        const recommendations = [];
-        
-        if (stats.avgDuration < 6) {
-            recommendations.push({
-                title: "Prioritize More Sleep",
-                description: `Your average sleep duration is only ${stats.avgDuration} hours, which is significantly below the recommended 7-9 hours. Try gradually increasing your sleep time by 15-30 minutes each night.`,
-                category: "routine",
-                priority: "high",
-                timeRequired: "30 min/day",
-                startTime: "Start tonight",
-                impact: "High impact"
-            });
-        } else if (stats.avgDuration < 7) {
-            recommendations.push({
-                title: "Increase Sleep Duration",
-                description: `Your average of ${stats.avgDuration} hours is slightly below the optimal range. Consider going to bed 30 minutes earlier or sleeping in a bit longer when possible.`,
-                category: "routine",
-                priority: "medium",
-                timeRequired: "30 min/day",
-                startTime: "Start tonight",
-                impact: "Medium impact"
-            });
-        } else if (stats.avgDuration > 9.5) {
-            recommendations.push({
-                title: "Evaluate Oversleeping",
-                description: `Your average ${stats.avgDuration} hours might be excessive. Oversleeping can sometimes indicate underlying health issues or poor sleep quality. Consider tracking how you feel upon waking.`,
-                category: "routine",
-                priority: "medium",
-                timeRequired: "0 min/day",
-                startTime: "Start tomorrow",
-                impact: "Medium impact"
-            });
-        }
-
-        const consistencyPercent = parseInt(stats.consistency);
-        if (consistencyPercent < 30) {
-            recommendations.push({
-                title: "Establish a Sleep Routine",
-                description: `Your sleep schedule varies significantly (only ${consistencyPercent}% consistency). Try setting a fixed bedtime and wake-up time, even on weekends, to regulate your body's internal clock.`,
-                category: "routine",
-                priority: "high",
-                timeRequired: "5 min/day",
-                startTime: "Start tonight",
-                impact: "High impact"
-            });
-        } else if (consistencyPercent < 50) {
-            recommendations.push({
-                title: "Improve Schedule Consistency",
-                description: `Your sleep schedule could be more regular (${consistencyPercent}% consistency). Aim for bedtime variations of no more than 1 hour for better sleep quality.`,
-                category: "routine",
-                priority: "medium",
-                timeRequired: "5 min/day",
-                startTime: "Start tonight",
-                impact: "Medium impact"
-            });
-        }
-
-        if (stats.quality === 'Very Poor') {
-            recommendations.push({
-                title: "Address Sleep Quality Issues",
-                description: "Your sleep quality is rated as very poor. Consider evaluating your sleep environment (darkness, noise, temperature), stress levels, and potential sleep disorders.",
-                category: "environment",
-                priority: "high",
-                timeRequired: "15 min/day",
-                startTime: "Start tonight",
-                impact: "High impact"
-            });
-        } else if (stats.quality === 'Poor') {
-            recommendations.push({
-                title: "Improve Sleep Quality",
-                description: "Your sleep could be more restorative. Try relaxation techniques before bed, ensure your mattress/pillows are comfortable, and avoid alcohol before sleep.",
-                category: "environment",
-                priority: "medium",
-                timeRequired: "10 min/day",
-                startTime: "Start tonight",
-                impact: "Medium impact"
-            });
-        }
-
-        if (stats.lateScreenPercentage > 70) {
-            recommendations.push({
-                title: "Digital Sunset",
-                description: `You use screens within 2 hours of bedtime ${stats.lateScreenPercentage}% of nights. Try implementing a "digital sunset" 1-2 hours before bed to reduce blue light exposure.`,
-                category: "environment",
-                priority: "high",
-                timeRequired: "60 min/day",
-                startTime: "Start tonight",
-                impact: "High impact"
-            });
-        } else if (stats.lateScreenPercentage > 50) {
-            recommendations.push({
-                title: "Reduce Evening Screen Time",
-                description: `You're on screens before bed ${stats.lateScreenPercentage}% of nights. Consider using blue light filters or switching to reading a book instead.`,
-                category: "environment",
-                priority: "medium",
-                timeRequired: "60 min/day",
-                startTime: "Start tonight",
-                impact: "Medium impact"
-            });
-        }
-
-        if (stats.lateCaffeinePercentage > 70) {
-            recommendations.push({
-                title: "Earlier Caffeine Cut-off",
-                description: `You consume caffeine within 6 hours of bedtime ${stats.lateCaffeinePercentage}% of nights. Try moving your last caffeine intake to at least 8 hours before bed.`,
-                category: "nutrition",
-                priority: "high",
-                timeRequired: "0 min/day",
-                startTime: "Start tomorrow",
-                impact: "High impact"
-            });
-        } else if (stats.lateCaffeinePercentage > 50) {
-            recommendations.push({
-                title: "Monitor Caffeine Timing",
-                description: `You have caffeine relatively late ${stats.lateCaffeinePercentage}% of nights. Consider tracking how late caffeine affects your sleep quality.`,
-                category: "nutrition",
-                priority: "medium",
-                timeRequired: "0 min/day",
-                startTime: "Start tomorrow",
-                impact: "Medium impact"
-            });
-        }
-
-        const avgBedtimeHour = entries.reduce((sum, entry) => sum + entry.bedtime.getHours(), 0) / entries.length;
-        if (avgBedtimeHour >= 23) {
-            recommendations.push({
-                title: "Earlier Bedtime",
-                description: `Your average bedtime is after 11pm. Research suggests earlier bedtimes (10pm-11pm) may correlate with better sleep quality.`,
-                category: "routine",
-                priority: "medium",
-                timeRequired: "0 min/day",
-                startTime: "Start tonight",
-                impact: "Medium impact"
-            });
-        }
-
-        const weekdayEntries = entries.filter(e => e.date.getDay() >= 1 && e.date.getDay() <= 5);
-        const weekendEntries = entries.filter(e => e.date.getDay() === 0 || e.date.getDay() === 6);
-        
-        if (weekdayEntries.length > 3 && weekendEntries.length > 3) {
-            const weekdayAvg = weekdayEntries.reduce((sum, e) => sum + e.duration, 0) / weekdayEntries.length;
-            const weekendAvg = weekendEntries.reduce((sum, e) => sum + e.duration, 0) / weekendEntries.length;
-            
-            if (Math.abs(weekdayAvg - weekendAvg) > 2) {
-                recommendations.push({
-                    title: "Balance Sleep Schedule",
-                    description: `Your sleep duration differs significantly between weekdays (${weekdayAvg.toFixed(1)}h) and weekends (${weekendAvg.toFixed(1)}h). Try to minimize this "social jetlag".`,
-                    category: "routine",
-                    priority: "medium",
-                    timeRequired: "0 min/day",
-                    startTime: "This weekend",
-                    impact: "Medium impact"
-                });
-            }
-        }
-
-        if (entries.length >= 20) {
-            recommendations.push({
-                title: "AI-Powered Insights Available",
-                description: "Our machine learning model can predict how different habits affect your sleep. Try adjusting variables in the predictor to see recommendations!",
-                category: "ai",
-                priority: "low",
-                timeRequired: "5 min/day",
-                startTime: "Anytime",
-                impact: "Low impact"
-            });
-        }
-
-        if (recommendations.length === 0) {
-            recommendations.push({
-                title: "Maintain Your Healthy Habits",
-                description: "Your sleep patterns are excellent! Keep up your consistent routine and good sleep hygiene practices.",
-                category: "routine",
-                priority: "low",
-                timeRequired: "0 min/day",
-                startTime: "Continue",
-                impact: "Low impact"
-            });
-        }
-
-        const priorityOrder = { high: 1, medium: 2, low: 3 };
-        recommendations.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
-
-        return recommendations;
+    const stats = calculateSleepStats(entries);
+    const recommendations = [];
+    
+    if (stats.avgDuration < 6) {
+        recommendations.push({
+            title: "Prioritize More Sleep",
+            description: `Your average sleep duration is only ${stats.avgDuration} hours, which is significantly below the recommended 7-9 hours. Try gradually increasing your sleep time by 15-30 minutes each night.`,
+            category: "routine",
+            priority: "high",
+            timeRequired: "30 min/day",
+            startTime: "Start tonight",
+            impact: "High impact"
+        });
+    } else if (stats.avgDuration < 7) {
+        recommendations.push({
+            title: "Increase Sleep Duration",
+            description: `Your average of ${stats.avgDuration} hours is slightly below the optimal range. Consider going to bed 30 minutes earlier or sleeping in a bit longer when possible.`,
+            category: "routine",
+            priority: "medium",
+            timeRequired: "30 min/day",
+            startTime: "Start tonight",
+            impact: "Medium impact"
+        });
+    } else if (stats.avgDuration > 9.5) {
+        recommendations.push({
+            title: "Evaluate Oversleeping",
+            description: `Your average ${stats.avgDuration} hours might be excessive. Oversleeping can sometimes indicate underlying health issues or poor sleep quality. Consider tracking how you feel upon waking.`,
+            category: "routine",
+            priority: "medium",
+            timeRequired: "0 min/day",
+            startTime: "Start tomorrow",
+            impact: "Medium impact"
+        });
     }
 
-    function updateRecommendationsUI(recommendations) {
-        if (!recommendations || recommendations.length === 0) {
-            recommendationsList.innerHTML = `
-                <div class="empty-state">
-                    <i class="bi bi-emoji-frown"></i>
-                    <h5>No recommendations yet</h5>
-                    <p class="text-muted">Complete your sleep analysis to get personalized suggestions</p>
-                </div>
-            `;
-            return;
+    if (stats.avgDuration >= 8.5 && stats.quality === 'Average') {
+        recommendations.push({
+            title: "Enhance Sleep Quality",
+            description: "You're getting enough sleep but the quality is only average. Consider optimizing your sleep environment - ensure complete darkness, comfortable temperature (18-22°C), and reduce any disruptive noises.",
+            category: "environment",
+            priority: "medium",
+            timeRequired: "10 min/day",
+            startTime: "Tonight",
+            impact: "High impact"
+        });
+    }
+
+    const consistencyPercent = parseInt(stats.consistency);
+    if (consistencyPercent < 30) {
+        recommendations.push({
+            title: "Establish a Sleep Routine",
+            description: `Your sleep schedule varies significantly (only ${consistencyPercent}% consistency). Try setting a fixed bedtime and wake-up time, even on weekends, to regulate your body's internal clock.`,
+            category: "routine",
+            priority: "high",
+            timeRequired: "5 min/day",
+            startTime: "Start tonight",
+            impact: "High impact"
+        });
+    } else if (consistencyPercent < 50) {
+        recommendations.push({
+            title: "Improve Schedule Consistency",
+            description: `Your sleep schedule could be more regular (${consistencyPercent}% consistency). Aim for bedtime variations of no more than 1 hour for better sleep quality.`,
+            category: "routine",
+            priority: "medium",
+            timeRequired: "5 min/day",
+            startTime: "Start tonight",
+            impact: "Medium impact"
+        });
+    }
+
+    if (stats.quality === 'Very Poor') {
+        recommendations.push({
+            title: "Address Sleep Quality Issues",
+            description: "Your sleep quality is rated as very poor. Consider evaluating your sleep environment (darkness, noise, temperature), stress levels, and potential sleep disorders.",
+            category: "environment",
+            priority: "high",
+            timeRequired: "15 min/day",
+            startTime: "Start tonight",
+            impact: "High impact"
+        });
+    } else if (stats.quality === 'Poor') {
+        recommendations.push({
+            title: "Improve Sleep Quality",
+            description: "Your sleep could be more restorative. Try relaxation techniques before bed, ensure your mattress/pillows are comfortable, and avoid alcohol before sleep.",
+            category: "environment",
+            priority: "medium",
+            timeRequired: "10 min/day",
+            startTime: "Start tonight",
+            impact: "Medium impact"
+        });
+    }
+
+    if (stats.lateScreenPercentage > 70) {
+        recommendations.push({
+            title: "Digital Sunset",
+            description: `You use screens within 2 hours of bedtime ${stats.lateScreenPercentage}% of nights. Try implementing a "digital sunset" 1-2 hours before bed to reduce blue light exposure.`,
+            category: "environment",
+            priority: "high",
+            timeRequired: "60 min/day",
+            startTime: "Start tonight",
+            impact: "High impact"
+        });
+    } else if (stats.lateScreenPercentage > 50) {
+        recommendations.push({
+            title: "Reduce Evening Screen Time",
+            description: `You're on screens before bed ${stats.lateScreenPercentage}% of nights. Consider using blue light filters or switching to reading a book instead.`,
+            category: "environment",
+            priority: "medium",
+            timeRequired: "60 min/day",
+            startTime: "Start tonight",
+            impact: "Medium impact"
+        });
+    }
+
+    if (stats.lateCaffeinePercentage > 70) {
+        recommendations.push({
+            title: "Earlier Caffeine Cut-off",
+            description: `You consume caffeine within 6 hours of bedtime ${stats.lateCaffeinePercentage}% of nights. Try moving your last caffeine intake to at least 8 hours before bed.`,
+            category: "nutrition",
+            priority: "high",
+            timeRequired: "0 min/day",
+            startTime: "Start tomorrow",
+            impact: "High impact"
+        });
+    } else if (stats.lateCaffeinePercentage > 50) {
+        recommendations.push({
+            title: "Monitor Caffeine Timing",
+            description: `You have caffeine relatively late ${stats.lateCaffeinePercentage}% of nights. Consider tracking how late caffeine affects your sleep quality.`,
+            category: "nutrition",
+            priority: "medium",
+            timeRequired: "0 min/day",
+            startTime: "Start tomorrow",
+            impact: "Medium impact"
+        });
+    }
+
+    const shallowSleepEntries = entries.filter(e => e.sleepDepth <= 2).length;
+    if (shallowSleepEntries / entries.length > 0.5) {
+        recommendations.push({
+            title: "Improve Deep Sleep",
+            description: "Your sleep tends to be lighter. Try relaxation techniques before bed, reduce stress, and consider magnesium-rich foods to promote deeper sleep stages.",
+            category: "nutrition",
+            priority: "medium",
+            timeRequired: "15 min/day",
+            startTime: "Tonight",
+            impact: "Medium impact"
+        });
+    }
+
+    if (stats.avgSleepLatency >= 15 && stats.avgSleepLatency < 30) {
+        recommendations.push({
+            title: "Optimize Sleep Onset",
+            description: "It takes you about 15 minutes to fall asleep. While this is normal, you could improve it with a consistent wind-down routine and avoiding stimulating activities before bed.",
+            category: "routine",
+            priority: "low",
+            timeRequired: "20 min/day",
+            startTime: "Tonight",
+            impact: "Medium impact"
+        });
+    }
+
+    const noExerciseEntries = entries.filter(e => !e.exercise).length;
+    if (noExerciseEntries / entries.length > 0.7) {
+        recommendations.push({
+            title: "Incorporate Daily Movement",
+            description: "Regular physical activity can significantly improve sleep quality. Aim for at least 30 minutes of moderate exercise daily, preferably earlier in the day.",
+            category: "activity",
+            priority: "medium",
+            timeRequired: "30 min/day",
+            startTime: "Tomorrow",
+            impact: "High impact"
+        });
+    }
+
+    const avgBedtimeHour = entries.reduce((sum, entry) => sum + entry.bedtime.getHours(), 0) / entries.length;
+    if (avgBedtimeHour >= 23) {
+        recommendations.push({
+            title: "Consider Earlier Bedtime",
+            description: "Your bedtime is after 11pm. Research suggests earlier bedtimes (10pm-11pm) may correlate with better sleep quality.",
+            category: "routine",
+            priority: "medium",
+            timeRequired: "0 min/day",
+            startTime: "Tonight",
+            impact: "Medium impact"
+        });
+    }
+
+    const weekdayEntries = entries.filter(e => e.date.getDay() >= 1 && e.date.getDay() <= 5);
+    const weekendEntries = entries.filter(e => e.date.getDay() === 0 || e.date.getDay() === 6);
+    
+    if (weekdayEntries.length > 3 && weekendEntries.length > 3) {
+        const weekdayAvg = weekdayEntries.reduce((sum, e) => sum + e.duration, 0) / weekdayEntries.length;
+        const weekendAvg = weekendEntries.reduce((sum, e) => sum + e.duration, 0) / weekendEntries.length;
+        
+        if (Math.abs(weekdayAvg - weekendAvg) > 2) {
+            recommendations.push({
+                title: "Balance Sleep Schedule",
+                description: `Your sleep duration differs significantly between weekdays (${weekdayAvg.toFixed(1)}h) and weekends (${weekendAvg.toFixed(1)}h). Try to minimize this "social jetlag".`,
+                category: "routine",
+                priority: "medium",
+                timeRequired: "0 min/day",
+                startTime: "This weekend",
+                impact: "Medium impact"
+            });
         }
+    }
+
+    const alcoholEntries = entries.filter(e => e.alcohol).length;
+    if (alcoholEntries / entries.length > 0.3) {
+        recommendations.push({
+            title: "Reduce Alcohol Before Bed",
+            description: "You consume alcohol before bed on " + Math.round((alcoholEntries / entries.length) * 100) + "% of nights. While alcohol may help you fall asleep, it reduces sleep quality later in the night.",
+            category: "nutrition",
+            priority: "medium",
+            timeRequired: "0 min/day",
+            startTime: "Tonight",
+            impact: "High impact"
+        });
+    }
+
+    const stressEntries = entries.filter(e => e.stress).length;
+    if (stressEntries / entries.length > 0.5) {
+        recommendations.push({
+            title: "Stress Management",
+            description: "You report feeling stressed on " + Math.round((stressEntries / entries.length) * 100) + "% of nights. Consider relaxation techniques like meditation or journaling before bed.",
+            category: "activity",
+            priority: "medium",
+            timeRequired: "15 min/day",
+            startTime: "Tonight",
+            impact: "Medium impact"
+        });
+    }
+
+    recommendations.push({
+        title: "Optimize Bedroom Temperature",
+        description: "The ideal sleep temperature is between 18-22°C (64-72°F). Consider adjusting your thermostat or bedding to maintain this range for better sleep quality.",
+        category: "environment",
+        priority: "low",
+        timeRequired: "5 min/day",
+        startTime: "Tonight",
+        impact: "Medium impact"
+    });
+
+    recommendations.push({
+        title: "Establish a Relaxing Pre-Sleep Routine",
+        description: "Develop a 30-60 minute wind-down routine with calming activities like reading, light stretching, or meditation to signal your body it's time to sleep.",
+        category: "routine",
+        priority: "medium",
+        timeRequired: "30 min/day",
+        startTime: "Tonight",
+        impact: "High impact"
+    });
+
+    recommendations.push({
+        title: "Balance Evening Hydration",
+        description: "While staying hydrated is important, try to reduce liquid intake 1-2 hours before bed to minimize nighttime awakenings while maintaining daytime hydration.",
+        category: "nutrition",
+        priority: "low",
+        timeRequired: "0 min/day",
+        startTime: "Tonight",
+        impact: "Medium impact"
+    });
+
+    if (entries.length >= 20) {
+        recommendations.push({
+            title: "AI-Powered Insights Available",
+            description: "Our machine learning model can predict how different habits affect your sleep. Try adjusting variables in the predictor to see recommendations!",
+            category: "ai",
+            priority: "low",
+            timeRequired: "5 min/day",
+            startTime: "Anytime",
+            impact: "Low impact"
+        });
+    }
+
+    if (recommendations.length === 0) {
+        recommendations.push({
+            title: "Maintain Your Healthy Habits",
+            description: "Your sleep patterns are excellent! Keep up your consistent routine and good sleep hygiene practices.",
+            category: "routine",
+            priority: "low",
+            timeRequired: "0 min/day",
+            startTime: "Continue",
+            impact: "Low impact"
+        });
+    }
+
+    const priorityOrder = { high: 1, medium: 2, low: 3 };
+    recommendations.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+
+    return recommendations;
+}
+
+    function updateRecommendationsUI(recommendations) {
+    if (!recommendations || recommendations.length === 0) {
+        recommendationsList.innerHTML = `
+            <div class="empty-state">
+                <i class="bi bi-moon-stars"></i>
+                <h5>No Recommendations Available</h5>
+                <p class="text-muted">We couldn't generate recommendations based on your current sleep data.</p>
+                <div class="mt-3">
+                    <a href="/sleep_analysis" class="btn btn-primary me-2">
+                        <i class="bi bi-plus-circle"></i> Add Sleep Data
+                    </a>
+                    <button id="refresh-btn" class="btn btn-outline-light">
+                        <i class="bi bi-arrow-repeat"></i> Refresh
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('refresh-btn')?.addEventListener('click', () => {
+            const user = auth.currentUser;
+            if (user) {
+                loadRecommendations(user.uid);
+            }
+        });
+        return;
+    }
         
         recommendationsList.innerHTML = recommendations.map((rec, index) => `
             <div class="recommendation-item">
@@ -971,44 +1229,83 @@
                         <span><i class="bi bi-calendar"></i> ${rec.startTime}</span>
                         <span><i class="bi bi-star"></i> ${rec.impact}</span>
                     </div>
+                    <div class="action-buttons">
+                        <button class="action-btn action-complete" data-id="${index}">
+                            <i class="bi bi-check"></i> Mark Complete
+                        </button>
+                        <button class="action-btn action-skip" data-id="${index}">
+                            <i class="bi bi-x"></i> Skip
+                        </button>
+                    </div>
                 </div>
             </div>
         `).join('');
+
+        document.querySelectorAll('.action-complete').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.dataset.id;
+                const item = btn.closest('.recommendation-item');
+                item.style.opacity = '0.6';
+                item.style.borderLeftColor = '#10b981';
+                btn.disabled = true;
+                btn.nextElementSibling.disabled = true;
+                showAlert("Recommendation marked as completed! Your progress has been updated.", "success");
+                updateProgressTracking(recommendations, id);
+            });
+        });
+
+        document.querySelectorAll('.action-skip').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.dataset.id;
+                const item = btn.closest('.recommendation-item');
+                item.style.opacity = '0.6';
+                item.style.borderLeftColor = '#a0a0a0';
+                btn.disabled = true;
+                btn.previousElementSibling.disabled = true;
+            });
+        });
     }
 
-    function updateProgressTracking(recommendations) {
-        if (!recommendations || recommendations.length === 0) return;
-        
-        const categoryCounts = {
-            routine: 0,
-            environment: 0,
-            nutrition: 0,
-            activity: 0,
-            ai: 0
-        };
-        
-        recommendations.forEach(rec => {
-            if (categoryCounts.hasOwnProperty(rec.category)) {
-                categoryCounts[rec.category]++;
-            }
-        });
-        
-        const implementedCounts = {
-            routine: Math.min(2, categoryCounts.routine),
-            environment: Math.min(1, categoryCounts.environment),
-            nutrition: 0,
-            activity: 0,
-            ai: 0
-        };
-        
-        const totalImplemented = Object.values(implementedCounts).reduce((a, b) => a + b, 0);
-        document.getElementById('implemented-count').textContent = totalImplemented;
-        
-        updateCategoryProgress('routine', implementedCounts.routine, categoryCounts.routine);
-        updateCategoryProgress('environment', implementedCounts.environment, categoryCounts.environment);
-        updateCategoryProgress('nutrition', implementedCounts.nutrition, categoryCounts.nutrition);
-        updateCategoryProgress('activity', implementedCounts.activity, categoryCounts.activity);
+    function updateProgressTracking(recommendations, completedId = null) {
+    if (!recommendations || recommendations.length === 0) return;
+    
+    const categoryCounts = {
+        routine: 0,
+        environment: 0,
+        nutrition: 0,
+        activity: 0,
+        ai: 0
+    };
+    
+    recommendations.forEach(rec => {
+        if (categoryCounts.hasOwnProperty(rec.category)) {
+            categoryCounts[rec.category]++;
+        }
+    });
+    
+    const implementedCounts = {
+        routine: 0,
+        environment: 0,
+        nutrition: 0,
+        activity: 0,
+        ai: 0
+    };
+    
+    if (completedId !== null && completedId < recommendations.length) {
+        const category = recommendations[completedId].category;
+        if (implementedCounts.hasOwnProperty(category)) {
+            implementedCounts[category] = Math.min(implementedCounts[category] + 1, categoryCounts[category]);
+        }
     }
+    
+    const totalImplemented = Object.values(implementedCounts).reduce((a, b) => a + b, 0);
+    document.getElementById('implemented-count').textContent = totalImplemented;
+    
+    updateCategoryProgress('routine', implementedCounts.routine, categoryCounts.routine);
+    updateCategoryProgress('environment', implementedCounts.environment, categoryCounts.environment);
+    updateCategoryProgress('nutrition', implementedCounts.nutrition, categoryCounts.nutrition);
+    updateCategoryProgress('activity', implementedCounts.activity, categoryCounts.activity);
+}
 
     function updateCategoryProgress(category, implemented, total) {
         if (total === 0) {

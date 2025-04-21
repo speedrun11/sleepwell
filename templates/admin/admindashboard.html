@@ -850,52 +850,133 @@ async function getAverageQuality() {
     }
 }
 
-    async function getAverageDuration() {
-        try {
-            const snapshot = await db.collection('sleepEntries')
-                .select('duration')
-                .get();
-            
-            if (snapshot.empty) return "N/A";
-            
-            let total = 0;
-            snapshot.forEach(doc => {
-                total += parseFloat(doc.data().duration) || 0;
-            });
-            
-            const avg = total / snapshot.size;
-            return avg.toFixed(1) + "h";
-        } catch (error) {
-            console.error("Error getting average duration:", error);
+async function getAverageDuration() {
+    try {
+        console.log("[DEBUG] Fetching sleep entries for duration calculation...");
+        const snapshot = await db.collection('sleepEntries').get();
+        
+        console.log(`[DEBUG] Found ${snapshot.size} entries`);
+        
+        if (snapshot.empty) {
+            console.log("[DEBUG] No sleep entries found");
             return "N/A";
         }
-    }
 
-    async function getRecentUsers(limit = 10) {
-    try {
-        const snapshot = await db.collection('users')
-            .orderBy('lastLogin', 'desc')
-            .limit(limit)
-            .get({ source: 'server' });
-        
-        return snapshot.docs.map(doc => {
+        let totalHours = 0;
+        let validEntries = 0;
+
+        snapshot.forEach(doc => {
             const data = doc.data();
-            return {
-                id: doc.id,
-                name: data.displayName || "Unknown",
-                email: data.email || "No email",
-                lastLogin: data.lastLogin?.toDate() || new Date(0),
-                isAdmin: data.isAdmin || false,
-                entriesCount: data.entriesCount || 0
-            };
+            console.log(`[DEBUG] Entry ${doc.id}:`, data);
+            
+            const duration = parseFloat(data.duration);
+            
+            if (!isNaN(duration) && duration > 0) {
+                totalHours += duration;
+                validEntries++;
+                console.log(`[DEBUG] Valid duration: ${duration} hours`);
+            } else {
+                console.log(`[DEBUG] Invalid duration in entry ${doc.id}:`, data.duration);
+            }
         });
+
+        console.log(`[DEBUG] Valid entries: ${validEntries}, Total hours: ${totalHours}`);
+
+        if (validEntries === 0) {
+            console.log("[DEBUG] No entries with valid duration found");
+            return "N/A";
+        }
+
+        const avgDuration = totalHours / validEntries;
+        console.log(`[DEBUG] Calculated average: ${avgDuration.toFixed(1)} hours`);
+        return avgDuration.toFixed(1) + "h";
+        
     } catch (error) {
-        console.error("Error getting recent users:", error);
-        return [];
+        console.error("[ERROR] in getAverageDuration:", error);
+        return "N/A";
     }
 }
 
-    function updateRecentUsersTable(users) {
+
+async function getRecentUsers(limit = 10) {
+    try {
+        console.log("[DEBUG] Starting to fetch recent users...");
+        
+        const usersSnapshot = await db.collection('users')
+            .orderBy('lastLogin', 'desc')
+            .limit(limit)
+            .get();
+        
+        console.log(`[DEBUG] Found ${usersSnapshot.size} users in Firestore`);
+
+        if (usersSnapshot.empty) {
+            console.log("[DEBUG] No users found in Firestore");
+            return [];
+        }
+
+        const users = [];
+        
+        for (const doc of usersSnapshot.docs) {
+            try {
+                const userData = doc.data();
+                const userId = doc.id;
+                
+                console.log(`[DEBUG] Processing user ${userId}`);
+
+                let authInfo = null;
+                try {
+                    authInfo = await auth.getUser(userId);
+                    console.log(`[DEBUG] Auth info found for ${userId}`);
+                } catch (authError) {
+                    console.warn(`[WARNING] Auth data not found for ${userId}:`, authError.message);
+                }
+
+                const authLastSignIn = authInfo?.metadata?.lastSignInTime 
+                    ? new Date(authInfo.metadata.lastSignInTime)
+                    : null;
+                
+                const firestoreLastLogin = userData.lastLogin?.toDate() || new Date(0);
+                
+                const lastActive = authLastSignIn > firestoreLastLogin 
+                    ? authLastSignIn 
+                    : firestoreLastLogin;
+
+                if (authLastSignIn && authLastSignIn > firestoreLastLogin) {
+                    try {
+                        await db.collection('users').doc(userId).update({
+                            lastLogin: authLastSignIn
+                        });
+                        console.log(`[DEBUG] Updated lastLogin for ${userId}`);
+                    } catch (updateError) {
+                        console.warn(`[WARNING] Failed to update lastLogin for ${userId}:`, updateError.message);
+                    }
+                }
+
+                users.push({
+                    id: userId,
+                    name: userData.displayName || userData.email?.split('@')[0] || "User",
+                    email: userData.email || "No email",
+                    lastActive,
+                    isAdmin: userData.isAdmin || false,
+                    entriesCount: userData.entriesCount || 0,
+                    isActive: userData.isActive !== false
+                });
+                
+            } catch (userError) {
+                console.error(`[ERROR] Failed to process user ${doc.id}:`, userError);
+            }
+        }
+
+        console.log("[DEBUG] Successfully processed", users.length, "users");
+        return users.sort((a, b) => b.lastActive - a.lastActive);
+        
+    } catch (error) {
+        console.error("[CRITICAL] Error in getRecentUsers:", error);
+        throw new Error("Failed to load user activity: " + error.message);
+    }
+}
+
+function updateRecentUsersTable(users) {
     if (users.length === 0) {
         recentUsersTable.innerHTML = `
             <tr>
@@ -905,7 +986,29 @@ async function getAverageQuality() {
         return;
     }
     
-    recentUsersTable.innerHTML = users.map(user => `
+    recentUsersTable.innerHTML = users.map(user => {
+        const lastActiveDate = user.lastActive || new Date(0);
+        
+        let lastActiveText;
+        try {
+            const now = new Date();
+            const diffDays = Math.floor((now - lastActiveDate) / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 0) {
+                lastActiveText = "Today";
+            } else if (diffDays === 1) {
+                lastActiveText = "Yesterday";
+            } else if (diffDays < 7) {
+                lastActiveText = `${diffDays} days ago`;
+            } else {
+                lastActiveText = lastActiveDate.toLocaleDateString();
+            }
+        } catch (e) {
+            console.error("Error formatting date:", e);
+            lastActiveText = "Unknown";
+        }
+        
+        return `
         <tr>
             <td>
                 <div class="d-flex align-items-center">
@@ -918,10 +1021,12 @@ async function getAverageQuality() {
                 </div>
             </td>
             <td>${user.email}</td>
-            <td>${formatDate(user.lastLogin)}</td>
+            <td>${lastActiveText}</td>
             <td>${user.entriesCount}</td>
             <td>
-                <span class="badge bg-success">Active</span>
+                <span class="badge ${user.isActive ? 'bg-success' : 'bg-secondary'}">
+                    ${user.isActive ? 'Active' : 'Inactive'}
+                </span>
             </td>
             <td>
                 <div class="user-actions">
@@ -937,8 +1042,11 @@ async function getAverageQuality() {
                 </div>
             </td>
         </tr>
-    `).join('');
+        `;
+    }).join('');
 }
+
+
     function formatDate(date) {
         if (date?.toDate) date = date.toDate();
         
@@ -969,83 +1077,94 @@ async function getAverageQuality() {
                 .get();
             
             startDate = firstUser.docs[0]?.data()?.createdAt?.toDate() || 
-                    new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+                      new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
         }
-        
+
+        const usersSnapshot = await db.collection('users')
+            .where('createdAt', '>=', startDate)
+            .orderBy('createdAt')
+            .get();
+
+        if (usersSnapshot.empty) {
+            console.log("No users found in the selected period");
+            return { labels: [], data: [] };
+        }
+
+        let labels = [];
+        let data = [];
+        let dateMap = {};
+
         if (period === 'month') {
-            const days = [];
-            const counts = [];
-            
             for (let i = 0; i < 30; i++) {
-                const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+                const date = new Date(now.getTime() - (29 - i) * 24 * 60 * 60 * 1000);
                 date.setHours(0, 0, 0, 0);
-                
-                const nextDate = new Date(date.getTime() + 24 * 60 * 60 * 1000);
-                
-                const snapshot = await db.collection('users')
-                    .where('createdAt', '>=', date)
-                    .where('createdAt', '<', nextDate)
-                    .count()
-                    .get();
-                
-                days.unshift(date.toLocaleDateString([], { month: 'short', day: 'numeric' }));
-                counts.unshift(snapshot.data().count);
+                const dateKey = date.toISOString().split('T')[0];
+                labels.push(date.toLocaleDateString([], { month: 'short', day: 'numeric' }));
+                dateMap[dateKey] = 0;
             }
-            
-            return { labels: days, data: counts };
-        }
+        } 
         else if (period === 'year') {
-            const months = [];
-            const counts = [];
-            
             for (let i = 0; i < 12; i++) {
-                const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-                const nextDate = new Date(date.getFullYear(), date.getMonth() + 1, 1);
-                
-                const snapshot = await db.collection('users')
-                    .where('createdAt', '>=', date)
-                    .where('createdAt', '<', nextDate)
-                    .count()
-                    .get();
-                
-                months.unshift(date.toLocaleDateString([], { month: 'short' }));
-                counts.unshift(snapshot.data().count);
+                const date = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1);
+                const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+                labels.push(date.toLocaleDateString([], { month: 'short', year: 'numeric' }));
+                dateMap[monthKey] = 0;
             }
-            
-            return { labels: months, data: counts };
-        }
+        } 
         else {
-            const quarters = [];
-            const counts = [];
-            const quarterMonths = 3;
-            
             let currentDate = new Date(startDate);
-            currentDate.setDate(1);
+            currentDate.setMonth(Math.floor(currentDate.getMonth() / 3) * 3, 1);
             currentDate.setHours(0, 0, 0, 0);
             
             while (currentDate <= now) {
-                const nextDate = new Date(
-                    currentDate.getFullYear(),
-                    currentDate.getMonth() + quarterMonths,
-                    1
-                );
+                const quarter = Math.floor(currentDate.getMonth() / 3) + 1;
+                const label = `${currentDate.getFullYear()} Q${quarter}`;
+                labels.push(label);
+                dateMap[label] = 0;
                 
-                const snapshot = await db.collection('users')
-                    .where('createdAt', '>=', currentDate)
-                    .where('createdAt', '<', nextDate)
-                    .count()
-                    .get();
-                
-                quarters.push(`${currentDate.getFullYear()} Q${Math.floor(currentDate.getMonth() / 3) + 1}`);
-                counts.push(snapshot.data().count);
-                
-                currentDate = nextDate;
+                currentDate.setMonth(currentDate.getMonth() + 3);
             }
-            
-            return { labels: quarters, data: counts };
         }
-        console.log('User growth data:', { labels: chartData.labels, data: chartData.data });
-        return chartData
+
+        usersSnapshot.forEach(doc => {
+            const userData = doc.data();
+            const createdAt = userData.createdAt?.toDate() || new Date();
+            
+            if (period === 'month') {
+                const dateKey = createdAt.toISOString().split('T')[0];
+                if (dateMap.hasOwnProperty(dateKey)) {
+                    dateMap[dateKey]++;
+                }
+            } 
+            else if (period === 'year') {
+                const monthKey = `${createdAt.getFullYear()}-${createdAt.getMonth()}`;
+                if (dateMap.hasOwnProperty(monthKey)) {
+                    dateMap[monthKey]++;
+                }
+            } 
+            else {
+                const quarter = Math.floor(createdAt.getMonth() / 3) + 1;
+                const label = `${createdAt.getFullYear()} Q${quarter}`;
+                if (dateMap.hasOwnProperty(label)) {
+                    dateMap[label]++;
+                }
+            }
+        });
+
+        data = Object.values(dateMap);
+
+        if (period === 'all') {
+            let cumulative = 0;
+            data = data.map(count => {
+                cumulative += count;
+                return cumulative;
+            });
+        } else {
+            data = data.map(count => count);
+        }
+
+        console.log('User growth data:', { labels, data });
+        return { labels, data };
     } catch (error) {
         console.error("Error getting users chart data:", error);
         return { labels: [], data: [] };
@@ -1056,7 +1175,6 @@ async function getQualityDistribution() {
     try {
         console.log("Fetching sleep quality distribution");
         const snapshot = await db.collection('sleepEntries')
-            .select('quality')
             .get();
         
         if (snapshot.empty) return { labels: [], data: [] };
@@ -1070,7 +1188,19 @@ async function getQualityDistribution() {
         };
         
         snapshot.forEach(doc => {
-            const quality = parseInt(doc.data().quality) || 3;
+            const data = doc.data();
+            let quality = data.quality;
+            
+            if (typeof quality === 'string') {
+                quality = parseInt(quality);
+            }
+            
+            if (isNaN(quality)) {
+                quality = 3;
+            }
+            
+            quality = Math.max(1, Math.min(5, quality));
+            
             if (quality === 5) distribution['Excellent (5)']++;
             else if (quality === 4) distribution['Good (4)']++;
             else if (quality === 3) distribution['Average (3)']++;
@@ -1382,6 +1512,16 @@ await fetch(`/api/users/${userId}/sleep-entries`, {
 }
 
 function showUserModal(userData) {
+    const formatDateSafe = (date) => {
+        try {
+            if (!date) return 'Unknown';
+            const d = date?.toDate ? date.toDate() : new Date(date);
+            return isNaN(d.getTime()) ? 'Unknown' : d.toLocaleString();
+        } catch (e) {
+            return 'Unknown';
+        }
+    };
+
     const modalHtml = `
         <div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
@@ -1401,11 +1541,11 @@ function showUserModal(userData) {
                         </div>
                         <div class="mb-3">
                             <h6>Account Created</h6>
-                            <p>${userData.createdAt?.toDate().toLocaleString() || 'Unknown'}</p>
+                            <p>${formatDateSafe(userData.createdAt)}</p>
                         </div>
                         <div class="mb-3">
                             <h6>Last Login</h6>
-                            <p>${userData.lastLogin?.toDate().toLocaleString() || 'Never'}</p>
+                            <p>${formatDateSafe(userData.lastLogin)}</p>
                         </div>
                         <div class="mb-3">
                             <h6>Sleep Entries</h6>

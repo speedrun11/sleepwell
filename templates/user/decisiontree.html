@@ -417,8 +417,9 @@
                         <strong>CSV Format Requirements:</strong>
                         <ul class="mb-1">
                             <li>First row should contain headers</li>
-                            <li>Required columns: "Duration (hours)", "Quality"</li>
-                            <li>Optional columns: "Screen Time Before Bed", "Stress Level"</li>
+                            <li>Required columns: "Duration (hours)" (number), "Quality (1-5)" (number)</li>
+                            <li>Optional columns: "Screen Hours Before Bed", "Caffeine Hours Before Bed", "Stress", "Exercise"</li>
+                            <li>Boolean fields should use "Yes"/"No" values</li>
                             <li>File size limit: 5MB</li>
                         </ul>
                     </div>
@@ -496,23 +497,28 @@
     }
 
     auth.onAuthStateChanged(user => {
-        if (!user) {
-            window.location.href = "/";
-            return;
-        }
-        
-        console.log("User authenticated:", user.uid);
-        updateUserInfo(user);
-        
-        db.collection('test').doc('test').get()
-            .then(() => {
-                console.log("Firestore connection successful");
-            })
-            .catch(error => {
-                console.error("Firestore connection test failed:", error);
-                showAlert("Failed to connect to database. Please refresh the page or contact support if this continues.", "danger");
-            });
-    });
+    if (!user) {
+        window.location.href = "/";
+        return;
+    }
+    
+    console.log("User authenticated:", user.uid);
+    updateUserInfo(user);
+    
+    db.collection('users').doc(user.uid).get()
+        .then((doc) => {
+            if (doc.exists) {
+                console.log("user document found");
+            } else {
+                console.log("No user document found");
+            }
+        })
+        .catch(error => {
+            console.error("Firestore error:", error);
+            showAlert(`Database error: ${error.message}`, "danger");
+        });
+});
+
         
     function updateUserInfo(user) {
         const displayName = user.displayName || "User";
@@ -615,75 +621,79 @@
         }
     });
 
-        function handleFile(file) {
-            if (!file.name.endsWith('.csv')) {
-                showError('Please upload a valid CSV file');
+    function handleFile(file) {
+    if (!file.name.endsWith('.csv')) {
+        showError('Please upload a valid CSV file');
+        return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+        showError('File size exceeds 5MB limit');
+        return;
+    }
+
+    errorAlert.classList.add('d-none');
+    showResults.disabled = true;
+    showResults.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
+    clearFile.disabled = false;
+    
+    const dropContent = dropZone.querySelector('.drop-content');
+    if (dropContent) {
+        dropContent.innerHTML = `
+            <i class="bi bi-file-earmark-check fs-1 text-success"></i>
+            <p>${file.name}</p>
+            <small class="text-muted">${(file.size / 1024).toFixed(1)} KB</small>
+        `;
+    }
+    
+    fileInfo.style.display = 'block';
+    fileInfo.innerHTML = `
+        <strong>Selected file:</strong> ${file.name} (${(file.size / 1024).toFixed(1)} KB)<br>
+        <strong>Last modified:</strong> ${new Date(file.lastModified).toLocaleString()}
+    `;
+
+    Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        dynamicTyping: true,
+        complete: (results) => {
+            if (results.data.length === 0) {
+                showError('CSV file is empty');
+                resetDropZone();
                 return;
             }
 
-            if (file.size > 5 * 1024 * 1024) {
-                showError('File size exceeds 5MB limit');
+            const headers = results.meta.fields;
+            if (!headers || 
+                !headers.some(h => h.includes('Duration (hours)')) || 
+                !headers.some(h => h.includes('Quality (1-5)'))) {
+                showError('CSV file must contain "Duration (hours)" and "Quality (1-5)" columns');
+                resetDropZone();
                 return;
             }
 
-            errorAlert.classList.add('d-none');
-            showResults.disabled = true;
-            showResults.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
-            clearFile.disabled = false;
-            
-            const dropContent = dropZone.querySelector('.drop-content');
-            if (dropContent) {
-                dropContent.innerHTML = `
-                    <i class="bi bi-file-earmark-check fs-1 text-success"></i>
-                    <p>${file.name}</p>
-                    <small class="text-muted">${(file.size / 1024).toFixed(1)} KB</small>
-                `;
-            }
-            
-            fileInfo.style.display = 'block';
-            fileInfo.innerHTML = `
-                <strong>Selected file:</strong> ${file.name} (${(file.size / 1024).toFixed(1)} KB)<br>
-                <strong>Last modified:</strong> ${new Date(file.lastModified).toLocaleString()}
-            `;
-
-            Papa.parse(file, {
-                header: true,
-                skipEmptyLines: true,
-                complete: (results) => {
-                    if (results.data.length === 0) {
-                        showError('CSV file is empty');
-                        resetDropZone();
-                        return;
-                    }
-
-                    const headers = results.meta.fields;
-                    if (!headers || !headers.includes('Duration (hours)') || !headers.includes('Quality')) {
-                        showError('CSV file must contain "Duration (hours)" and "Quality" columns');
-                        resetDropZone();
-                        return;
-                    }
-
-                    csvData = results.data.filter(row => {
-                        return !isNaN(parseFloat(row['Duration (hours)'])) && 
-                               !isNaN(parseFloat(row['Quality']));
-                    });
-
-                    if (csvData.length === 0) {
-                        showError('No valid data found in CSV file');
-                        resetDropZone();
-                        return;
-                    }
-
-                    showResults.disabled = false;
-                    showResults.innerHTML = '<i class="bi bi-diagram-3"></i> Generate Decision Tree';
-                },
-                error: (error) => {
-                    console.error('CSV parsing error:', error);
-                    showError('Error loading CSV file. Please check the format.');
-                    resetDropZone();
-                }
+            csvData = results.data.filter(row => {
+                const duration = parseFloat(String(row['Duration (hours)']).replace(/"/g, ''));
+                const quality = parseFloat(String(row['Quality (1-5)']).replace(/"/g, ''));
+                return !isNaN(duration) && !isNaN(quality) && duration > 0 && duration < 24;
             });
+
+            if (csvData.length === 0) {
+                showError('No valid data found in CSV file');
+                resetDropZone();
+                return;
+            }
+
+            showResults.disabled = false;
+            showResults.innerHTML = '<i class="bi bi-diagram-3"></i> Generate Decision Tree';
+        },
+        error: (error) => {
+            console.error('CSV parsing error:', error);
+            showError('Error loading CSV file. Please check the format.');
+            resetDropZone();
         }
+    });
+}
 
         function resetFileInput() {
             csvInput.value = '';
@@ -723,8 +733,8 @@
     }
 
     const cleanData = csvData.filter(d => {
-        const duration = parseFloat(d['Duration (hours)']);
-        const quality = parseFloat(d['Quality']);
+        const duration = parseFloat(String(d['Duration (hours)']).replace(/"/g, ''));
+        const quality = parseFloat(String(d['Quality (1-5)']).replace(/"/g, ''));
         return !isNaN(duration) && !isNaN(quality) && duration > 0 && duration < 24;
     });
 
@@ -737,15 +747,25 @@
     container.html('<div class="text-center py-5"><div class="spinner-border text-primary"></div><p>Generating visualization...</p></div>');
     
     const avgDuration = d3.mean(cleanData, d => parseFloat(d['Duration (hours)']));
-    const avgQuality = d3.mean(cleanData, d => parseFloat(d['Quality']));
-    const hasScreenTime = cleanData.some(d => d['Screen Time Before Bed'] !== undefined);
-    const avgScreenTime = hasScreenTime ? d3.mean(cleanData, d => parseFloat(d['Screen Time Before Bed'] || 0)) : 0;
-    const hasCaffeine = cleanData.some(d => d['Caffeine Before Bed'] !== undefined);
-    const avgCaffeine = hasCaffeine ? d3.mean(cleanData, d => parseFloat(d['Caffeine Before Bed'] || 0)) : 0;
+    const avgQuality = d3.mean(cleanData, d => parseFloat(d['Quality (1-5)']));
+    const hasScreenTime = cleanData.some(d => d['Screen Hours Before Bed'] !== undefined);
+    const avgScreenTime = hasScreenTime ? d3.mean(cleanData, d => parseFloat(d['Screen Hours Before Bed'] || 0)) : 0;
+    const hasCaffeine = cleanData.some(d => d['Caffeine Hours Before Bed'] !== undefined);
+    const avgCaffeine = hasCaffeine ? d3.mean(cleanData, d => parseFloat(d['Caffeine Hours Before Bed'] || 0)) : 0;
+    const hasStress = cleanData.some(d => d['Stress'] !== undefined);
+    const hasExercise = cleanData.some(d => d['Exercise'] !== undefined);
+    const hasAlcohol = cleanData.some(d => d['Alcohol'] !== undefined);
+    const hasAwakenings = cleanData.some(d => d['Awakenings'] !== undefined);
+    const avgAwakenings = hasAwakenings ? d3.mean(cleanData, d => parseFloat(d['Awakenings'] || 0)) : 0;
+    const hasNap = cleanData.some(d => d['Nap'] !== undefined);
+    const hasSleepDepth = cleanData.some(d => d['Sleep Depth (1-3)'] !== undefined);
+    const avgSleepDepth = hasSleepDepth ? d3.mean(cleanData, d => parseFloat(d['Sleep Depth (1-3)'] || 0)) : 0;
+    const hasSleepLatency = cleanData.some(d => d['Sleep Latency (minutes)'] !== undefined);
+    const avgSleepLatency = hasSleepLatency ? d3.mean(cleanData, d => parseFloat(d['Sleep Latency (minutes)'] || 0)) : 0;
     
     const root = {
         name: `Sleep Analysis (${cleanData.length} nights)`,
-        value: `Avg: ${avgDuration.toFixed(1)}h sleep, ${avgQuality.toFixed(1)}/10 quality`,
+        value: `Avg: ${avgDuration.toFixed(1)}h sleep, ${avgQuality.toFixed(1)}/5 quality`,
         children: []
     };
 
@@ -758,8 +778,8 @@
         children: []
     };
 
-    const goodQualityLong = longSleep.filter(d => parseFloat(d['Quality']) >= avgQuality);
-    const poorQualityLong = longSleep.filter(d => parseFloat(d['Quality']) < avgQuality);
+    const goodQualityLong = longSleep.filter(d => parseFloat(d['Quality (1-5)']) >= avgQuality);
+    const poorQualityLong = longSleep.filter(d => parseFloat(d['Quality (1-5)']) < avgQuality);
 
     durationSplit.children.push({
         name: `Quality ≥ ${avgQuality.toFixed(1)}`,
@@ -780,8 +800,8 @@
     };
 
     if (hasScreenTime) {
-        const lowScreenTime = shortSleep.filter(d => parseFloat(d['Screen Time Before Bed'] || 0) < avgScreenTime);
-        const highScreenTime = shortSleep.filter(d => parseFloat(d['Screen Time Before Bed'] || 0) >= avgScreenTime);
+        const lowScreenTime = shortSleep.filter(d => parseFloat(d['Screen Hours Before Bed'] || 0) < avgScreenTime);
+        const highScreenTime = shortSleep.filter(d => parseFloat(d['Screen Hours Before Bed'] || 0) >= avgScreenTime);
 
         shortDurationSplit.children.push({
             name: `Screen Time < ${avgScreenTime.toFixed(1)}h`,
@@ -792,10 +812,20 @@
             name: `Screen Time ≥ ${avgScreenTime.toFixed(1)}h`,
             value: `${highScreenTime.length} nights (${(highScreenTime.length/shortSleep.length*100).toFixed(1)}%)`
         });
-    } else {
+    }
+
+    if (hasStress) {
+        const stressed = shortSleep.filter(d => d['Stress'] === 'Yes');
+        const notStressed = shortSleep.filter(d => d['Stress'] === 'No');
+
         shortDurationSplit.children.push({
-            name: 'No screen time data',
-            value: 'Additional factors not recorded'
+            name: `Stress`,
+            value: `${stressed.length} nights (${(stressed.length/shortSleep.length*100).toFixed(1)}%)`
+        });
+
+        shortDurationSplit.children.push({
+            name: `No Stress`,
+            value: `${notStressed.length} nights (${(notStressed.length/shortSleep.length*100).toFixed(1)}%)`
         });
     }
 
@@ -804,24 +834,139 @@
     if (hasCaffeine) {
         const caffeineSplit = {
             name: `Caffeine Intake Analysis`,
-            value: `Avg: ${avgCaffeine.toFixed(1)}mg before bed`,
+            value: `Avg: ${avgCaffeine.toFixed(1)}h before bed`,
             children: []
         };
 
-        const highCaffeine = cleanData.filter(d => parseFloat(d['Caffeine Before Bed'] || 0) >= avgCaffeine);
-        const lowCaffeine = cleanData.filter(d => parseFloat(d['Caffeine Before Bed'] || 0) < avgCaffeine);
+        const highCaffeine = cleanData.filter(d => parseFloat(d['Caffeine Hours Before Bed'] || 0) >= avgCaffeine);
+        const lowCaffeine = cleanData.filter(d => parseFloat(d['Caffeine Hours Before Bed'] || 0) < avgCaffeine);
 
         caffeineSplit.children.push({
-            name: `Caffeine ≥ ${avgCaffeine.toFixed(1)}mg`,
+            name: `Caffeine ≥ ${avgCaffeine.toFixed(1)}h`,
             value: `${highCaffeine.length} nights (${(highCaffeine.length/cleanData.length*100).toFixed(1)}%)`
         });
 
         caffeineSplit.children.push({
-            name: `Caffeine < ${avgCaffeine.toFixed(1)}mg`,
+            name: `Caffeine < ${avgCaffeine.toFixed(1)}h`,
             value: `${lowCaffeine.length} nights (${(lowCaffeine.length/cleanData.length*100).toFixed(1)}%)`
         });
 
         root.children.push(caffeineSplit);
+    }
+
+    if (hasExercise) {
+        const exercised = cleanData.filter(d => d['Exercise'] === 'Yes');
+        const notExercised = cleanData.filter(d => d['Exercise'] === 'No');
+
+        const exerciseSplit = {
+            name: `Exercise`,
+            value: `${exercised.length} nights (${(exercised.length/cleanData.length*100).toFixed(1)}%)`,
+            children: []
+        };
+
+        exerciseSplit.children.push({
+            name: `Exercised`,
+            value: `Avg quality: ${d3.mean(exercised, d => parseFloat(d['Quality (1-5)'])).toFixed(1)}`
+        });
+
+        exerciseSplit.children.push({
+            name: `No Exercise`,
+            value: `Avg quality: ${d3.mean(notExercised, d => parseFloat(d['Quality (1-5)'])).toFixed(1)}`
+        });
+
+        root.children.push(exerciseSplit);
+    }
+
+    if (hasAlcohol) {
+        const alcohol = cleanData.filter(d => d['Alcohol'] === 'Yes');
+        const noAlcohol = cleanData.filter(d => d['Alcohol'] === 'No');
+
+        const alcoholSplit = {
+            name: `Alcohol Consumption`,
+            value: `${alcohol.length} nights (${(alcohol.length/cleanData.length*100).toFixed(1)}%)`,
+            children: []
+        };
+
+        alcoholSplit.children.push({
+            name: `Alcohol consumed`,
+            value: `Avg quality: ${d3.mean(alcohol, d => parseFloat(d['Quality (1-5)'])).toFixed(1)}`
+        });
+
+        alcoholSplit.children.push({
+            name: `No alcohol`,
+            value: `Avg quality: ${d3.mean(noAlcohol, d => parseFloat(d['Quality (1-5)'])).toFixed(1)}`
+        });
+
+        root.children.push(alcoholSplit);
+    }
+
+    if (hasAwakenings) {
+        const highAwakenings = cleanData.filter(d => parseFloat(d['Awakenings'] || 0) >= avgAwakenings);
+        const lowAwakenings = cleanData.filter(d => parseFloat(d['Awakenings'] || 0) < avgAwakenings);
+
+        const awakeningSplit = {
+            name: `Night Awakenings`,
+            value: `Avg: ${avgAwakenings.toFixed(1)} awakenings`,
+            children: []
+        };
+
+        awakeningSplit.children.push({
+            name: `≥ ${avgAwakenings.toFixed(1)} awakenings`,
+            value: `${highAwakenings.length} nights (${(highAwakenings.length/cleanData.length*100).toFixed(1)}%)`
+        });
+
+        awakeningSplit.children.push({
+            name: `< ${avgAwakenings.toFixed(1)} awakenings`,
+            value: `${lowAwakenings.length} nights (${(lowAwakenings.length/cleanData.length*100).toFixed(1)}%)`
+        });
+
+        root.children.push(awakeningSplit);
+    }
+
+    if (hasSleepDepth) {
+        const deepSleep = cleanData.filter(d => parseFloat(d['Sleep Depth (1-3)'] || 0) >= avgSleepDepth);
+        const lightSleep = cleanData.filter(d => parseFloat(d['Sleep Depth (1-3)'] || 0) < avgSleepDepth);
+
+        const sleepDepthSplit = {
+            name: `Sleep Depth`,
+            value: `Avg: ${avgSleepDepth.toFixed(1)}/3`,
+            children: []
+        };
+
+        sleepDepthSplit.children.push({
+            name: `≥ ${avgSleepDepth.toFixed(1)} depth`,
+            value: `${deepSleep.length} nights (${(deepSleep.length/cleanData.length*100).toFixed(1)}%)`
+        });
+
+        sleepDepthSplit.children.push({
+            name: `< ${avgSleepDepth.toFixed(1)} depth`,
+            value: `${lightSleep.length} nights (${(lightSleep.length/cleanData.length*100).toFixed(1)}%)`
+        });
+
+        root.children.push(sleepDepthSplit);
+    }
+
+    if (hasSleepLatency) {
+        const longLatency = cleanData.filter(d => parseFloat(d['Sleep Latency (minutes)'] || 0) >= avgSleepLatency);
+        const shortLatency = cleanData.filter(d => parseFloat(d['Sleep Latency (minutes)'] || 0) < avgSleepLatency);
+
+        const latencySplit = {
+            name: `Sleep Latency`,
+            value: `Avg: ${avgSleepLatency.toFixed(1)} minutes`,
+            children: []
+        };
+
+        latencySplit.children.push({
+            name: `≥ ${avgSleepLatency.toFixed(1)} minutes`,
+            value: `${longLatency.length} nights (${(longLatency.length/cleanData.length*100).toFixed(1)}%)`
+        });
+
+        latencySplit.children.push({
+            name: `< ${avgSleepLatency.toFixed(1)} minutes`,
+            value: `${shortLatency.length} nights (${(shortLatency.length/cleanData.length*100).toFixed(1)}%)`
+        });
+
+        root.children.push(latencySplit);
     }
 
     const margin = {top: 40, right: 120, bottom: 40, left: 120};
@@ -877,8 +1022,9 @@
         .style("fill", "#aaa")
         .text(d => d.data.value || "");
 }
+  
 
-        function showTooltip(event, d) {
+    function showTooltip(event, d) {
             d3.select("body")
                 .append("div")
                 .attr("class", "tooltip")

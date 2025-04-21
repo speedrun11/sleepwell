@@ -855,20 +855,28 @@
         loadFeedbackData();
     });
 
-    async function verifyAdminStatus(uid) {
-        try {
-            const userDoc = await db.collection('users').doc(uid).get();
+// In your feedbackmanage.html, update the verifyAdminStatus function:
+async function verifyAdminStatus(uid) {
+    try {
+        // Check if user exists in admins collection
+        const userDoc = await db.collection('users').doc(uid).get();
             if (userDoc.exists && userDoc.data().isAdmin) {
                 return true;
             }
-            showAlert("No admin privileges. Redirecting...", "danger");
-            setTimeout(() => window.location.href = "/", 3000);
-            return false;
-        } catch (error) {
-            console.error("Admin verification failed:", error);
-            return false;
+        // Check hardcoded UIDs
+        const hardcodedAdmins = ["NjHWGPGND7dyNgUjPOz3kCPBmo42", "admin-service-account"];
+        if (hardcodedAdmins.includes(uid)) {
+            return true;
         }
+        
+        showAlert("No admin privileges. Redirecting...", "danger");
+        setTimeout(() => window.location.href = "/", 3000);
+        return false;
+    } catch (error) {
+        console.error("Admin verification failed:", error);
+        return false;
     }
+}
 
     function updateUserInfo(user) {
         const displayName = user.displayName || "Admin User";
@@ -1021,12 +1029,27 @@
         }
         
         const snapshot = await query.get();
+        
+        if (snapshot.empty) {
+            return [];
+        }
+        
+        // Get user data for all feedback items in batch
+        const userIds = [...new Set(snapshot.docs.map(doc => doc.data().userId))];
+        const usersSnapshot = await db.collection('users').where(firebase.firestore.FieldPath.documentId(), 'in', userIds).get();
+        const usersData = {};
+        usersSnapshot.forEach(userDoc => {
+            usersData[userDoc.id] = userDoc.data();
+        });
+        
         return snapshot.docs.map(doc => {
             const data = doc.data();
+            const user = usersData[data.userId] || {};
+            
             return {
                 id: doc.id,
                 userId: data.userId,
-                userName: data.userName || data.userEmail.split('@')[0] || 'Anonymous',
+                userName: user.displayName || data.userEmail?.split('@')[0] || 'Anonymous',
                 userEmail: data.userEmail || 'No email',
                 category: data.category || 'other',
                 message: data.message || 'No message',
@@ -1044,6 +1067,15 @@
         });
     } catch (error) {
         console.error("Error getting feedback items:", error);
+        
+        if (error.code === 'permission-denied') {
+            showAlert("Permission denied. Please ensure you have admin privileges.", "danger");
+        } else if (error.code === 'resource-exhausted') {
+            showAlert("Too many requests. Please try again later.", "warning");
+        } else {
+            showAlert("Failed to load feedback items: " + error.message, "danger");
+        }
+        
         return [];
     }
 }

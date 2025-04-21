@@ -392,6 +392,33 @@
             border-radius: 8px;
             overflow: hidden;
         }
+        .sleep-diary-notes {
+            max-width: 300px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            background: rgba(255,255,255,0.05);
+            padding: 8px;
+            border-radius: 6px;
+            margin-top: 4px;
+        }
+        
+        .sleep-diary-factors {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 4px;
+        }
+        
+        .sleep-diary-factor {
+            background: rgba(255,255,255,0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+        
+        .table td.notes-cell {
+            max-width: 300px;
+        }
     </style>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -446,7 +473,7 @@
                 </a>
                 <a class="nav-link" href="{{ url_for('settings') }}">
                     <i class="bi bi-gear"></i> Settings
-            </nav>
+                </a>
             </nav>
         </div>
 
@@ -613,7 +640,8 @@
                                     <th>Wake-up</th>
                                     <th>Duration</th>
                                     <th>Quality</th>
-                                    <th>Notes</th>
+                                    <th>Factors</th>
+                                    <th class="notes-cell">Notes</th>
                                 </tr>
                             </thead>
                             <tbody id="sleep-diary">
@@ -681,12 +709,16 @@
         `;
     }
 
+    let unsubscribeRealtimeListener = null;
+
     const sidebarUsername = document.getElementById('sidebar-username');
     const sidebarEmail = document.getElementById('sidebar-email');
     const logoutBtn = document.getElementById('logout-btn');
     const sleepScore = document.getElementById('sleep-score');
     const scoreProgress = document.getElementById('score-progress');
     const sleepDiary = document.getElementById('sleep-diary');
+    const refreshBtn = document.getElementById('refreshBtn');
+
 
     let phaseChart;
 
@@ -709,20 +741,94 @@
         document.getElementById('sidebar-email').textContent = email;
     }
 
+    function showLoadingState(isLoading) {
+        const elements = document.querySelectorAll('.loading-spinner');
+        elements.forEach(el => {
+            el.style.visibility = isLoading ? 'visible' : 'hidden';
+        });
+        
+        if (refreshBtn) {
+            refreshBtn.disabled = isLoading;
+        }
+    }
+
+    refreshBtn.addEventListener('click', () => {
+        const user = auth.currentUser;
+        if (user) {
+            loadUserData(user.uid);
+        }
+    });
+
     async function getSleepEntries(uid) {
-        try {
-            const snapshot = await db.collection('sleepEntries')
-                .where('userId', '==', uid)
-                .orderBy('date', 'desc')
-                .limit(30)
-                .get();
-            
-            if (snapshot.empty) {
-                console.log("No sleep entries found for this user");
-                return [];
-            }
-            
-            return snapshot.docs.map(doc => {
+    try {
+        console.log("Attempting to fetch sleep entries for user:", uid);
+        const snapshot = await db.collection('sleepEntries')
+            .where('userId', '==', uid)
+            .orderBy('date', 'asc')
+            .limit(30)
+            .get();
+        
+        console.log("Received snapshot:", snapshot);
+        
+        if (snapshot.empty) {
+            console.log("No sleep entries found for this user");
+            return [];
+        }
+        
+        return snapshot.docs.map(doc => {
+            const data = doc.data();
+            console.log("Processing document:", doc.id, data);
+            return {
+                id: doc.id,
+                ...data,
+                date: data.date.toDate(),
+                bedtime: data.bedtime.toDate(),
+                wakeupTime: data.wakeupTime.toDate()
+            };
+        });
+    } catch (error) {
+        console.error("Detailed error getting sleep entries:", error);
+        throw error;
+    }
+}
+
+    
+async function loadSleepAnalysis(uid) {
+    try {
+        showLoadingState(true);
+        
+        const sleepEntries = await getSleepEntries(uid);
+        if (sleepEntries.length === 0) {
+            showAlert("No sleep entries found. Add entries to see analysis.", "info");
+            return;
+        }
+        
+        const stats = calculateSleepStats(sleepEntries);
+        updateSleepStats(stats);
+        updateSleepScore(stats);
+        updateSleepPhases(sleepEntries);
+        updateSleepDiary(sleepEntries);
+        updateCorrelations(sleepEntries);
+        
+        if (unsubscribeRealtimeListener) {
+            unsubscribeRealtimeListener();
+        }
+        unsubscribeRealtimeListener = setupRealtimeListener(uid);
+        
+    } catch (error) {
+        console.error("Error in loadSleepAnalysis:", error);
+        showAlert(`Failed to load sleep analysis: ${error.message}`, "danger");
+    } finally {
+        showLoadingState(false);
+    }
+}
+
+function setupRealtimeListener(uid) {
+    return db.collection('sleepEntries')
+        .where('userId', '==', uid)
+        .orderBy('date', 'asc')
+        .onSnapshot(snapshot => {
+            const entries = snapshot.docs.map(doc => {
                 const data = doc.data();
                 return {
                     id: doc.id,
@@ -732,40 +838,18 @@
                     wakeupTime: data.wakeupTime.toDate()
                 };
             });
-        } catch (error) {
-            console.error("Error getting sleep entries:", error);
-            throw error;
-        }
-    }
-
-    async function loadSleepAnalysis(uid) {
-        try {
-            showLoadingState(true);
             
-            const sleepEntries = await getSleepEntries(uid);
-            if (sleepEntries.length === 0) {
-                showAlert("No sleep entries found. Add entries to see analysis.", "info");
-                return;
-            }
-            
-            const stats = calculateSleepStats(sleepEntries);
+            const stats = calculateSleepStats(entries);
             updateSleepStats(stats);
-            
             updateSleepScore(stats);
-            
-            updateSleepPhases(sleepEntries);
-            
-            updateSleepDiary(sleepEntries);
-            
-            updateCorrelations(sleepEntries);
-            
-        } catch (error) {
-            console.error("Error in loadSleepAnalysis:", error);
-            showAlert("Failed to load sleep analysis. Please try again.", "danger");
-        } finally {
-            showLoadingState(false);
-        }
-    }
+            updateSleepPhases(entries);
+            updateSleepDiary(entries);
+            updateCorrelations(entries);
+        }, error => {
+            console.error("Realtime listener error:", error);
+            showAlert("Connection to sleep data interrupted. Some updates may not appear.", "warning");
+        });
+}
 
     function calculateSleepStats(entries) {
         if (entries.length === 0) return {};
@@ -783,6 +867,10 @@
         const wakeupStdDev = calculateStandardDeviation(wakeupTimes);
         const durationStdDev = calculateStandardDeviation(entries.map(e => e.duration * 60));
         
+        const avgScreenTime = entries.reduce((sum, entry) => sum + (entry.screenHoursBeforeBed || 0), 0) / entries.length;
+        const avgCaffeineTime = entries.reduce((sum, entry) => sum + (entry.caffeineHoursBeforeBed || 0), 0) / entries.length;
+        const avgQuality = entries.reduce((sum, entry) => sum + entry.quality, 0) / entries.length;
+        
         const phases = {
             light: avgDuration * 0.5,
             deep: avgDuration * 0.2, 
@@ -797,6 +885,9 @@
             bedtimeConsistency: calculateConsistencyScore(bedtimeStdDev),
             wakeupConsistency: calculateConsistencyScore(wakeupStdDev),
             durationConsistency: calculateConsistencyScore(durationStdDev),
+            avgScreenTime: avgScreenTime.toFixed(1),
+            avgCaffeineTime: avgCaffeineTime.toFixed(1),
+            avgQuality: avgQuality.toFixed(1),
             phases,
             entries
         };
@@ -928,19 +1019,28 @@
 
     function updateSleepDiary(entries) {
         sleepDiary.innerHTML = entries.map(entry => {
-            const bedtimeDate = new Date(entry.bedtime);
-            const wakeupDate = new Date(entry.wakeupTime);
+            const bedtimeDate = entry.bedtime;
+            const wakeupDate = entry.wakeupTime;
             
-            const displayDate = wakeupDate.getDate() !== bedtimeDate.getDate() && 
-                            bedtimeDate.getHours() < 6 
-                ? new Date(bedtimeDate.setDate(bedtimeDate.getDate() - 1))
-                : bedtimeDate;
+            const factors = [];
+            if (entry.alcohol) factors.push({icon: '🍷', text: 'Alcohol'});
+            if (entry.exercise) factors.push({icon: '🏋️', text: 'Exercise'});
+            if (entry.stress) factors.push({icon: '😫', text: 'Stress'});
+            if (entry.nap) factors.push({icon: '💤', text: 'Nap'});
+            if (entry.screenHoursBeforeBed) factors.push({icon: '📱', text: `${entry.screenHoursBeforeBed.toFixed(1)}h screen`});
+            if (entry.caffeineHoursBeforeBed) factors.push({icon: '☕', text: `${entry.caffeineHoursBeforeBed.toFixed(1)}h caffeine`});
             
             return `
                 <tr>
-                    <td>${displayDate.toLocaleDateString()}</td>
-                    <td>${entry.bedtime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
-                    <td>${entry.wakeupTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
+                    <td>${bedtimeDate.toLocaleDateString()}</td>
+                    <td>
+                        ${bedtimeDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}<br>
+                        <small class="text-muted">${bedtimeDate.toLocaleDateString()}</small>
+                    </td>
+                    <td>
+                        ${wakeupDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}<br>
+                        <small class="text-muted">${wakeupDate.toLocaleDateString()}</small>
+                    </td>
                     <td>${entry.duration.toFixed(1)} hrs</td>
                     <td>
                         <span class="badge ${getQualityBadgeClass(entry.quality)}">
@@ -948,10 +1048,20 @@
                         </span>
                     </td>
                     <td>
-                        <small class="text-muted">
-                            Screen: ${entry.screenHoursBeforeBed?.toFixed(1) || '--'}h before<br>
-                            Caffeine: ${entry.caffeineHoursBeforeBed?.toFixed(1) || '--'}h before
-                        </small>
+                        <div class="sleep-diary-factors">
+                            ${factors.map(f => `
+                                <span class="sleep-diary-factor" title="${f.text}">
+                                    ${f.icon}
+                                </span>
+                            `).join('')}
+                        </div>
+                    </td>
+                    <td class="notes-cell">
+                        ${entry.notes ? `
+                            <div class="sleep-diary-notes">
+                                ${entry.notes}
+                            </div>
+                        ` : '<small class="text-muted">No notes</small>'}
                     </td>
                 </tr>
             `;
@@ -981,24 +1091,65 @@
     }
 
     function updateCorrelations(entries) {
+        if (entries.length < 3) {
+            return;
+        }
         
-        document.getElementById('screen-correlation').textContent = '-0.65';
-        document.getElementById('caffeine-correlation').textContent = '-0.42';
-        document.getElementById('exercise-correlation').textContent = '+0.58';
-        document.getElementById('stress-correlation').textContent = '-0.71';
+        const screenCorr = calculateCorrelation(
+            entries.map(e => e.screenHoursBeforeBed || 0),
+            entries.map(e => e.quality)
+        );
         
-        document.getElementById('screen-last-week').textContent = '2.1h';
-        document.getElementById('caffeine-last-week').textContent = '4.5h';
-        document.getElementById('exercise-last-week').textContent = '3 days';
-        document.getElementById('stress-last-week').textContent = 'Medium';
+        const caffeineCorr = calculateCorrelation(
+            entries.map(e => e.caffeineHoursBeforeBed || 0),
+            entries.map(e => e.quality)
+        );
+        
+        const exerciseCorr = calculateCorrelation(
+            entries.map(e => e.exercise ? 1 : 0),
+            entries.map(e => e.quality)
+        );
+        
+        const stressCorr = calculateCorrelation(
+            entries.map(e => e.stress ? 1 : 0),
+            entries.map(e => e.quality)
+        );
+        
+        document.getElementById('screen-correlation').textContent = screenCorr.toFixed(2);
+        document.getElementById('caffeine-correlation').textContent = caffeineCorr.toFixed(2);
+        document.getElementById('exercise-correlation').textContent = exerciseCorr.toFixed(2);
+        document.getElementById('stress-correlation').textContent = stressCorr.toFixed(2);
+        
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        
+        const recentEntries = entries.filter(e => new Date(e.date) > oneWeekAgo);
+        if (recentEntries.length > 0) {
+            const avgScreen = recentEntries.reduce((sum, e) => sum + (e.screenHoursBeforeBed || 0), 0) / recentEntries.length;
+            const avgCaffeine = recentEntries.reduce((sum, e) => sum + (e.caffeineHoursBeforeBed || 0), 0) / recentEntries.length;
+            const exerciseDays = recentEntries.filter(e => e.exercise).length;
+            const stressDays = recentEntries.filter(e => e.stress).length;
+            
+            document.getElementById('screen-last-week').textContent = avgScreen.toFixed(1) + 'h';
+            document.getElementById('caffeine-last-week').textContent = avgCaffeine.toFixed(1) + 'h';
+            document.getElementById('exercise-last-week').textContent = exerciseDays + ' days';
+            document.getElementById('stress-last-week').textContent = stressDays + ' days';
+        }
     }
 
-    function showLoadingState(isLoading) {
-        const elements = document.querySelectorAll('.loading-spinner');
-        elements.forEach(el => {
-            el.style.visibility = isLoading ? 'visible' : 'hidden';
-        });
-    }
+    function calculateCorrelation(x, y) {
+    const n = x.length;
+    const sumX = x.reduce((a, b) => a + b, 0);
+    const sumY = y.reduce((a, b) => a + b, 0);
+    const sumXY = x.map((val, i) => val * y[i]).reduce((a, b) => a + b, 0);
+    const sumX2 = x.map(val => val * val).reduce((a, b) => a + b, 0);
+    const sumY2 = y.map(val => val * val).reduce((a, b) => a + b, 0);
+    
+    const numerator = sumXY - (sumX * sumY / n);
+    const denominator = Math.sqrt((sumX2 - (sumX * sumX / n))) * Math.sqrt((sumY2 - (sumY * sumY / n)));
+    
+    return denominator === 0 ? 0 : numerator / denominator;
+}
 
     function showAlert(message, type = "info") {
         const alert = document.createElement('div');
@@ -1021,6 +1172,9 @@
 
     logoutBtn.addEventListener('click', async () => {
         try {
+            if (unsubscribeRealtimeListener) {
+                unsubscribeRealtimeListener();
+            }
             await auth.signOut();
             window.location.href = '/';
         } catch (error) {

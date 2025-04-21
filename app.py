@@ -27,11 +27,20 @@ def auth_required(f):
     def decorated_function(*args, **kwargs):
         token = request.cookies.get('session')
         if not token:
+            app.logger.warning("No session token in auth_required")
             return redirect(url_for('home'))
         try:
-            decoded_claims = auth.verify_session_cookie(token)
+            decoded_claims = auth.verify_session_cookie(token, check_revoked=True)
+            app.logger.info(f"Authenticated user: {decoded_claims['uid']}")
             return f(*args, **kwargs)
-        except:
+        except auth.InvalidSessionCookieError:
+            app.logger.warning("Invalid session cookie")
+            return redirect(url_for('home'))
+        except auth.RevokedSessionCookieError:
+            app.logger.warning("Revoked session cookie")
+            return redirect(url_for('home'))
+        except Exception as e:
+            app.logger.error(f"Auth error: {str(e)}")
             return redirect(url_for('home'))
     return decorated_function
 
@@ -61,25 +70,65 @@ def handle_errors(f):
             return jsonify({"error": "Internal server error"}), 500
     return wrapper
 
+@app.route("/check-cookie")
+def check_cookie():
+    return jsonify({
+        'cookie_present': bool(request.cookies.get('session')),
+        'headers': dict(request.headers)
+    })
+
+@app.route("/time-check")
+def time_check():
+    import time
+    return {
+        "server_time": time.time(),
+        "server_clock": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()),
+        "message": "Compare with https://time.is"
+    }
+
+@app.route('/api/save-sleep-entry', methods=['POST'])
+@auth_required
+def save_sleep_entry():
+    try:
+        session_cookie = request.cookies.get('session')
+        decoded_claims = auth.verify_session_cookie(session_cookie)
+        user_id = decoded_claims['uid']
+        
+        user_ref = db.collection('users').document(user_id)
+        user_ref.update({
+            'entriesCount': firestore.Increment(1),
+            'updatedAt': firestore.SERVER_TIMESTAMP
+        })
+        
+        return jsonify({
+            "success": True,
+            "message": "User entries count updated successfully"
+        }), 200
+        
+    except Exception as e:
+        app.logger.error(f"Error updating user entries count: {str(e)}")
+        return jsonify({
+            "error": f"Failed to update entries count: {str(e)}"
+        }), 500
+
 @app.route("/")
 def home():
     return render_template("index.html")
 
 @app.route("/user/dashboard.html")
-@auth_required
 def dashboard():
     try:
         session_cookie = request.cookies.get('session')
         if not session_cookie:
             return redirect(url_for('home'))
             
-        decoded_claims = auth.verify_session_cookie(session_cookie)
+        decoded_claims = auth.verify_session_cookie(
+            session_cookie,
+            clock_skew_seconds=60,
+            check_revoked=False
+        )
         user = auth.get_user(decoded_claims['uid'])
-        
-        return render_template("/user/dashboard.html", user={
-            'email': user.email,
-            'name': user.display_name
-        })
+        return render_template("/user/dashboard.html")
         
     except Exception as e:
         app.logger.error(f"Dashboard error: {str(e)}")
@@ -383,7 +432,13 @@ def login():
         return jsonify({"error": "Missing ID token"}), 400
     
     try:
-        decoded_token = auth.verify_id_token(data["idToken"], clock_skew_seconds=10)
+        import time
+        time.sleep(1)
+        
+        decoded_token = auth.verify_id_token(
+            data["idToken"],
+            clock_skew_seconds=60
+        )
         
         session_cookie = auth.create_session_cookie(
             data["idToken"], 
@@ -401,14 +456,14 @@ def login():
             httponly=True,
             secure=False,
             samesite='Lax',
-            max_age=3600
+            max_age=86400,
+            path='/'
         )
         
         return response
         
-    except auth.InvalidIdTokenError:
-        return jsonify({"error": "Invalid credentials"}), 401
     except Exception as e:
+        app.logger.error(f"Login error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @app.route("/admin/login", methods=["POST"])

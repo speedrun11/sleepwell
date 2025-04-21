@@ -702,16 +702,42 @@
     }
 
     async function saveUserSettings(uid, settings) {
-        try {
-            await db.collection('userSettings').doc(uid).set(settings, { merge: true });
-            showAlert("Settings saved successfully!", "success");
-        } catch (error) {
-            console.error("Error saving settings:", error);
-            showAlert("Failed to save settings. Please try again.", "danger");
+    try {
+        if (!uid || typeof uid !== 'string') {
+            throw new Error("Invalid user ID");
         }
-    }
 
-    profileForm.addEventListener('submit', async (e) => {
+        if (!settings || typeof settings !== 'object') {
+            throw new Error("Invalid settings object");
+        }
+
+        const settingsData = {
+            ...settings,
+            userId: uid,
+            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        await db.collection('userSettings').doc(uid).set(settingsData, { merge: true });
+        
+        console.log("Settings saved successfully for user:", uid);
+        showAlert("Settings saved successfully!", "success");
+        return true;
+    } catch (error) {
+        console.error("Error saving settings:", error);
+        
+        let errorMessage = "Failed to save settings. Please try again.";
+        if (error.code === 'permission-denied') {
+            errorMessage = "You don't have permission to update settings.";
+        } else if (error.code === 'unavailable') {
+            errorMessage = "Network error. Check your connection and try again.";
+        }
+        
+        showAlert(errorMessage, "danger");
+        return false;
+    }
+}
+
+profileForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const user = auth.currentUser;
@@ -725,8 +751,18 @@
     const email = emailInput.value.trim();
     const displayName = `${firstName} ${lastName}`.trim();
 
-    if (!firstName || !lastName || !email) {
-        showAlert("Please fill in all fields.", "warning");
+    if (!firstName || !lastName) {
+        showAlert("Please enter both first and last name.", "warning");
+        return;
+    }
+
+    if (!email) {
+        showAlert("Please enter a valid email address.", "warning");
+        return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showAlert("Please enter a valid email address format.", "warning");
         return;
     }
 
@@ -736,40 +772,52 @@
     submitBtn.disabled = true;
 
     try {
-        await user.updateProfile({ displayName });
-
-        if (email !== user.email) {
-            try {
-                await user.updateEmail(email);
-            } catch (emailError) {
-                console.warn("Email update failed:", emailError);
-                if (emailError.code === 'auth/requires-recent-login') {
-                    showAlert("To change your email, please re-authenticate.", "warning");
-                    return;
-                } else if (emailError.code === 'auth/email-already-in-use') {
-                    showAlert("That email is already in use.", "warning");
-                    return;
-                } else {
-                    showAlert("Couldn't update email. Other changes were saved.", "warning");
-                }
-            }
+        const updatePromises = [];
+        
+        if (displayName !== user.displayName) {
+            updatePromises.push(user.updateProfile({ displayName }));
         }
 
-        await db.collection('users').doc(user.uid).set({
-            displayName,
-            email,
+        if (email !== user.email) {
+            if (!confirm("You're changing your email address. Are you sure?")) {
+                throw new Error("Email change cancelled");
+            }
+            updatePromises.push(user.updateEmail(email));
+        }
+
+        const userDocUpdate = {
             firstName,
             lastName,
+            email,
+            displayName,
             lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
+        };
+        
+        updatePromises.push(
+            db.collection('users').doc(user.uid).set(userDocUpdate, { merge: true })
+        );
 
+        await Promise.all(updatePromises);
+        
         await user.reload();
         updateUserInfo(auth.currentUser);
 
         showAlert("Profile updated successfully!", "success");
     } catch (error) {
-        console.error("Unexpected error:", error);
-        showAlert("Failed to update profile. Please try again.", "success");
+        console.error("Profile update error:", error);
+        
+        let errorMessage = "Failed to update profile. Please try again.";
+        if (error.message === "Email change cancelled") {
+            errorMessage = "Profile update cancelled.";
+        } else if (error.code === 'auth/requires-recent-login') {
+            errorMessage = "For security, please re-authenticate to update your profile.";
+        } else if (error.code === 'auth/email-already-in-use') {
+            errorMessage = "That email is already in use by another account.";
+        } else if (error.code === 'auth/invalid-email') {
+            errorMessage = "Please enter a valid email address.";
+        }
+        
+        showAlert(errorMessage, "danger");
     } finally {
         submitBtn.innerHTML = originalBtnText;
         submitBtn.disabled = false;
@@ -866,6 +914,38 @@
         }
     });
 
+    function isValidEntry(data) {
+    return data && 
+           data.date && 
+           data.duration !== undefined && 
+           data.quality !== undefined;
+}
+
+        async function exportDataInBatches(userId, batchSize = 100) {
+        let allData = [];
+        let lastDoc = null;
+        
+        do {
+            let query = db.collection('sleepEntries')
+                .where('userId', '==', userId)
+                .orderBy('date')
+                .limit(batchSize);
+                
+            if (lastDoc) {
+                query = query.startAfter(lastDoc);
+            }
+            
+            const snapshot = await query.get();
+            if (snapshot.empty) break;
+            
+            allData = allData.concat(snapshot.docs.map(doc => doc.data()));
+            lastDoc = snapshot.docs[snapshot.docs.length - 1];
+        } while (true);
+        
+        return allData;
+    }
+
+
     exportDataBtn.addEventListener('click', async () => {
     const user = auth.currentUser;
     if (!user) {
@@ -877,49 +957,93 @@
         exportDataBtn.innerHTML = '<span class="loading-spinner"></span> Preparing...';
         exportDataBtn.disabled = true;
 
-        const entries = await db.collection('sleepEntries')
+        const querySnapshot = await db.collection('sleepEntries')
             .where('userId', '==', user.uid)
-            .orderBy('date', 'desc')
+            .orderBy('date', 'asc')
             .get();
 
-        if (entries.empty) {
-            showAlert("No sleep data available to export.", "info");
+        if (querySnapshot.empty) {
+            showAlert("No sleep entries found for this user.", "info");
             return;
         }
 
-        let csv = 'Date,Bedtime Date,Bedtime Time,Wakeup Date,Wakeup Time,Duration (hours),Quality,Screen Time Before Bed,Caffeine Before Bed\n';
+        let csv = [
+            'Date',
+            'Bedtime Date',
+            'Bedtime Time',
+            'Wakeup Date', 
+            'Wakeup Time',
+            'Duration (hours)',
+            'Quality (1-5)',
+            'Screen Hours Before Bed',
+            'Caffeine Hours Before Bed',
+            'Stress',
+            'Exercise',
+            'Alcohol',
+            'Awakenings',
+            'Nap',
+            'Sleep Depth (1-3)',
+            'Sleep Latency (minutes)'
+        ].join(',') + '\n';
         
-        entries.forEach(doc => {
+        querySnapshot.forEach(doc => {
             const data = doc.data();
-            const date = data.date.toDate().toISOString().split('T')[0];
-            const bedtimeDate = data.bedtime.toDate().toISOString().split('T')[0];
-            const bedtimeTime = data.bedtime.toDate().toISOString().split('T')[1].split('.')[0];
-            const wakeupDate = data.wakeupTime.toDate().toISOString().split('T')[0];
-            const wakeupTime = data.wakeupTime.toDate().toISOString().split('T')[1].split('.')[0];
             
-            csv += `${date},${bedtimeDate},${bedtimeTime},${wakeupDate},${wakeupTime},${data.duration},${data.quality},${data.screenHoursBeforeBed},${data.caffeineHoursBeforeBed}\n`;
+            const bedtime = data.bedtime?.toDate ? data.bedtime.toDate() : new Date(data.bedtime);
+            const wakeupTime = data.wakeupTime?.toDate ? data.wakeupTime.toDate() : new Date(data.wakeupTime);
+            
+            const entryDate = bedtime.toISOString().split('T')[0];
+            const bedtimeDate = bedtime.toISOString().split('T')[0];
+            const bedtimeTime = bedtime.toTimeString().split(' ')[0];
+            const wakeupDate = wakeupTime.toISOString().split('T')[0];
+            const wakeupTimeStr = wakeupTime.toTimeString().split(' ')[0];
+            
+            const row = [
+                entryDate,
+                bedtimeDate,
+                bedtimeTime,
+                wakeupDate,
+                wakeupTimeStr,
+                data.duration || 0,
+                data.quality || 0,
+                data.screenHoursBeforeBed || 0,
+                data.caffeineHoursBeforeBed || 0,
+                data.stress ? 'Yes' : 'No',
+                data.exercise ? 'Yes' : 'No',
+                data.alcohol ? 'Yes' : 'No',
+                data.awakenings || 0,
+                data.nap ? 'Yes' : 'No',
+                data.sleepDepth || 0,
+                data.sleepLatency || 0
+            ].map(field => `"${field}"`).join(',');
+            
+            csv += row + '\n';
         });
 
-        const blob = new Blob([csv], { type: 'text/csv' });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `sleepwell-data-${new Date().toISOString().split('T')[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `sleepwell-export-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(link);
+        link.click();
         
-        showAlert("Data exported successfully!", "success");
+        setTimeout(() => {
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }, 100);
+
+        showAlert(`Exported ${querySnapshot.size} sleep records successfully`, "success");
         
     } catch (error) {
-        console.error("Error exporting data:", error);
-        showAlert("Failed to export data. Please try again.", "danger");
+        console.error("Export error:", error);
+        showAlert(`Failed to export data: ${error.message}`, "danger");
     } finally {
         exportDataBtn.innerHTML = '<i class="bi bi-download"></i> Export Sleep Data';
         exportDataBtn.disabled = false;
     }
 });
+
 
     deleteAccountBtn.addEventListener('click', async () => {
         const user = auth.currentUser;
